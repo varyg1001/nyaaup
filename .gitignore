@@ -1,0 +1,16 @@
+# python
+__pycache__
+.python-version
+
+# pyinstaller
+build
+release
+dist
+*spec
+*zip
+.venv/
+
+# nyaaup
+*.torrent
+test/
+.git.code-workspace

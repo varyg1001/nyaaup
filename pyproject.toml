@@ -1,0 +1,33 @@
+[tool.poetry]
+name = "nyaaup"
+version = "1.0.0"
+description = "Nyaa.si auto torrent uploader"
+authors = ["varyg"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+requests = "^2.28.1"
+mal-api = "^0.5.2"
+torf = "^4.0.4"
+argparse = "^1.4.0"
+pymediainfo = "^5.1.0"
+langcodes = "^3.3.0"
+wand = "^0.6.10"
+pyoxipng = "^6.0.0"
+pathlib = "^1.0.1"
+platformdirs = "^2.5.2"
+rich = "^12.6.0"
+humanize = "^4.4.0"
+bencode-py = "^4.0.0"
+pymal = "^0.6"
+ruamel-yaml = "^0.17.21"
+language-data = "^1.1"
+
+[tool.poetry.scripts]
+nyaaup = "nyaaup.cli:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+virtualenvs.prefer-active-python = "true"
