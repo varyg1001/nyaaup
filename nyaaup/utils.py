@@ -1,7 +1,3 @@
-import humanize
-import sys, re
-from json import loads
-import shutil
 import requests
 import humanize
 import random
@@ -263,7 +259,7 @@ def creat_torrent(self, name, filename)  -> bool:
 
         def update_progress(torrent: Torrent, filepath: str, pieces_done: int, pieces_total: int) -> None:
             if filepath not in files:
-                print(f'Hashing [white]{Path(filepath).name}...')
+                print(f'[white not bold]Hashing {Path(filepath).name}...[white /not bold]')
                 files.append(filepath)
 
             progress.update(

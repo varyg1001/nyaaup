@@ -14,8 +14,8 @@ from rich.tree import Tree
 from rich import print
 
 class Nyaasi():
-    
-    def upload(self, torrent_byte, name: str, description: str, info: str, infos: Tree) -> dict:
+
+    def upload(self, torrent_byte, name, display_name, description, info, infos):
         session = requests.Session()
         retry = Retry(connect=5, backoff_factor=0.5)
         adapter = HTTPAdapter(max_retries=retry)
@@ -27,7 +27,7 @@ class Nyaasi():
         payload = {
             "torrent_data": json.dumps(
                 {
-                    "name": name,
+                    "name": display_name,
                     "category": self.cat,
                     "information": info,
                     "description": description,
@@ -138,7 +138,6 @@ class Nyaasi():
 
             self.url = ""
             description = ""
-            self.information = ""
             name_plus = []
 
             if not in_file.exists(): 
@@ -176,7 +175,7 @@ class Nyaasi():
             if add_mal:
                 if info_form_json and anime:
                     if self.args.myanimelist: information = self.args.myanimelist
-                    else: information = search.url.split('/')[:-1]
+                    else: information = "/".join(search.url.split('/')[:-1])
                 elif not info_form_json:
                     information = info_form_json
 
@@ -213,8 +212,8 @@ class Nyaasi():
             if multi_sub:
                 name_plus.append('Multi-Subs')
             if name_plus:
-                torrent_name = (f'{name.replace(".", " ")} ({", ".join(name_plus)})')
-            else: torrent_name = name.replace(".", " ")
+                display_name = (f'{name.replace(".", " ")} ({", ".join(name_plus)})')
+            else: display_name = name.replace(".", " ")
 
             if self.pic_num != 0 and not self.args.skip_upload:
                     snapshots = generate_snapshots(self, file, name, mediainfo_from_input)
@@ -231,7 +230,7 @@ class Nyaasi():
                 infos.add(medlink)
                 if self.pic_num != 0:
                     infos.add(images)
-                link = self.upload(torrent_fd, torrent_name, description, information, infos)
+                link = self.upload(torrent_fd, name, display_name, description, information, infos)
                 if not link:
                     log.wprint(f'Something happened during the uploading!', True)
                 else:
