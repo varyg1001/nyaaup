@@ -15,7 +15,7 @@ from rich import print
 
 class Nyaasi():
 
-    def upload(self, torrent_byte, name, display_name, description, info, infos):
+    def upload(self, torrent_byte, name: str, display_name: str, description: str, info: str, infos: Tree) -> dict:
         session = requests.Session()
         retry = Retry(connect=5, backoff_factor=0.5)
         adapter = HTTPAdapter(max_retries=retry)

@@ -9,7 +9,7 @@ from json import loads
 from pathlib import Path
 
 def main():
-    parser = argparse.ArgumentParser(description='Nyaa.si auto torrent uploader.', prog='nyaaup')
+    parser = argparse.ArgumentParser(description='Auto torrent uploader to Nyaa.si', prog='nyaaup')
     parser.add_argument('-ch', '--category-help',
                         action='store_true',
                         help='Print available categories.')
