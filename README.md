@@ -1,5 +1,5 @@
 <p align="center">
-<sup><em>Nyaa.si auto torrent uploader</em></sup>
+<sup><em>Auto torrent uploader to Nyaa.si</em></sup>
 </p>
 
 # Nyaaup
