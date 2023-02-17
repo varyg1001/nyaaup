@@ -350,7 +350,7 @@ def get_mal_link(anime, myanimelist, name) -> str:
                 TimeElapsedColumn(),
             ) as progress:
             if myanimelist:
-                malid = str(myanimelist).split("/")[4]
+                malid = "/".join(str(myanimelist).split("/")[4])
                 progress.add_task("[not bold]Getting MyAnimeList info form input link![/not bold]")
                 while not search:
                     search = Anime(malid)
