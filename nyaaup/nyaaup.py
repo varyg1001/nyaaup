@@ -79,9 +79,6 @@ class Nyaasi():
             parser.print_help(sys.stderr)
             sys.exit(1)
 
-        if self.args.add_credential:
-            Config().add(self.args.add_credential)
-
         self.cat = self.get_category(self.args.category)
         categorys_help = Tree(f"[chartreuse2]Available categorys:[white /not bold]")
         categorys_help.add(f"[1] [cornflower_blue not bold]Anime - English-translated[white /not bold]")

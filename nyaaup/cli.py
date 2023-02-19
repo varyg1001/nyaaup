@@ -1,75 +1,82 @@
 #!/usr/bin/env python3
 
 from .nyaaup import Nyaasi
+from .auth import Auth
 
 import argparse
 import sys
-from json import loads
-
 from pathlib import Path
 
 def main():
     parser = argparse.ArgumentParser(description='Auto torrent uploader to Nyaa.si', prog='nyaaup')
-    parser.add_argument('-ch', '--category-help',
+    subparsers =  parser.add_subparsers(dest="command")
+    parser_auth = subparsers.add_parser("auth")
+    parser_up = subparsers.add_parser("up")
+    parser_auth.add_argument('-add', '--add-credential',
+                        type=str,
+                        default=None,
+                        help="Add or replace credential in config file.")
+
+    parser_up.add_argument('-ch', '--category-help',
                         action='store_true',
                         help='Print available categories.')
-    parser.add_argument('-ms', '--multi-subs',
+    parser_up.add_argument('-ms', '--multi-subs',
                         action='store_true',
                         help='Add Multi-Subs tag to title.')
-    parser.add_argument('-da', '--dual-audios',
+    parser_up.add_argument('-da', '--dual-audios',
                         action='store_true',
                         help='Add Dual-audios tag to title.')
-    parser.add_argument('-ma', '--multi-audios',
+    parser_up.add_argument('-ma', '--multi-audios',
                         action='store_true',
                         help='Add Multi-audios tag to title.')
-    parser.add_argument('-A', '--auto',
+    parser_up.add_argument('-A', '--auto',
                         action='store_true',
                         help='Detect multi-subs, multi-audios and dual-audios (if sub or audio more than one it will add the tags)')
-    parser.add_argument('-a', '--anonymous',
+    parser_up.add_argument('-a', '--anonymous',
                         action='store_true',
                         help='Upload torrent as anonymous.')
-    parser.add_argument('-H', '--hidden',
+    parser_up.add_argument('-H', '--hidden',
                         action='store_true',
                         help='Upload the torrent as hidden.')
-    parser.add_argument('-C', '--complete',
+    parser_up.add_argument('-C', '--complete',
                         action='store_true',
                         help='If the torrnet is a complete batch.')
-    parser.add_argument('-s', '--skip-upload',
+    parser_up.add_argument('-s', '--skip-upload',
                         action='store_true',
                         help='Skip torrent upload.')
-    parser.add_argument('-e', '--edit-code',
+    parser_up.add_argument('-e', '--edit-code',
                         type=str,
                         default=None,
                         help='Use uniq edit code for mediainfo on rentry.co')
-    parser.add_argument('-p', '--pictures-number',
+    parser_up.add_argument('-p', '--pictures-number',
                         type=int,
                         default=3,
                         help='Number of picture to upload to the torrent (default: 3).'),
-    parser.add_argument('-mal', '--myanimelist',
+    parser_up.add_argument('-mal', '--myanimelist',
                         type=str,
                         default=None,
                         help='MyAnimeList link.') 
-    parser.add_argument('-c', '--category',
+    parser_up.add_argument('-c', '--category',
                         type=str,
                         choices=['1', 'Anime - English-translated', '2', 'Anime - Non-English-translated', '3', 'Anime - Raw', '4', 'Live Action - English-translated', '5', 'Live Action - Raw', '6', 'Live Action - Non-English-translate'],
                         default=None,
                         help='Select a category to upload the torrent.')
-    parser.add_argument("path",
+    parser_up.add_argument("path",
                         type=Path,
                         nargs="*",
                         default=None,
                         help="File or directory to upload.")
-    parser.add_argument('-add', '--add-credential',
-                        type=str,
-                        default=None,
-                        help="Add or replace credential in config file.")
+    parser.set_defaults(default_command=True, command='up')
     args = parser.parse_args()
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)
 
-    Nyaasi(args, parser)
+    if args.command == "auth":
+        Auth(args, parser)
+    else:
+        Nyaasi(args, parser)
 
 if __name__ == "__main__":
     main()
