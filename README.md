@@ -25,9 +25,11 @@ $ ./install.sh
 
 ### Examples
 
-`$ nyaaup -p 5 -c 1 -A -mal https://myanimelist.net/anime/50652/ /path/Boku.to.Roboco.S01E06.1080p.AMZN.WEB-DL.DDP2.0.H.264-VARYG.mkv`
+`$ nyaaup auth -add user:pass`
 </br>
-`$ nyaaup -ms -c 1 /path/My.Master.Has.No.Tail.S01.1080p.AMZN.WEB-DL.DDP2.0.H.264-VARYG`
+`$ nyaaup up -p 5 -c 1 -A -mal https://myanimelist.net/anime/50652/ /path/Boku.to.Roboco.S01E06.1080p.AMZN.WEB-DL.DDP2.0.H.264-VARYG.mkv`
+</br>
+`$ nyaaup up -ms -c 1 /path/My.Master.Has.No.Tail.S01.1080p.AMZN.WEB-DL.DDP2.0.H.264-VARYG`
 
 ### Usage
 
