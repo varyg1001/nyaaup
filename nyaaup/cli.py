@@ -15,8 +15,7 @@ def main():
     parser_auth.add_argument('-add', '--add-credential',
                         type=str,
                         default=None,
-                        help="Add or replace credential in config file.")
-
+                        help="Add or replace credential in config file. (format: user:pass)")
     parser_up.add_argument('-ch', '--category-help',
                         action='store_true',
                         help='Print available categories.')
