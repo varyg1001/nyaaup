@@ -154,6 +154,33 @@ files = [
 ]
 
 [[package]]
+name = "click"
+version = "8.1.3"
+description = "Composable command line interface toolkit"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "click-8.1.3-py3-none-any.whl", hash = "sha256:bb4d8133cb15a609f44e8213d9b391b0809795062913b383c62be0ee95b1db48"},
+    {file = "click-8.1.3.tar.gz", hash = "sha256:7682dc8afb30297001674575ea00d1814d808d6a36af415a82bd481d37ba7b8e"},
+]
+
+[package.dependencies]
+colorama = {version = "*", markers = "platform_system == \"Windows\""}
+
+[[package]]
+name = "colorama"
+version = "0.4.6"
+description = "Cross-platform colored terminal text."
+category = "main"
+optional = false
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
+files = [
+    {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
+    {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
+]
+
+[[package]]
 name = "commonmark"
 version = "0.9.1"
 description = "Python parser for the CommonMark Markdown spec"
@@ -276,13 +303,14 @@ marisa-trie = ">=0.7.7,<0.8.0"
 
 [[package]]
 name = "mal-api"
-version = "0.5.2"
+version = "0.5.3"
 description = "A local MyAnimeList API"
 category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "mal-api-0.5.2.tar.gz", hash = "sha256:c369cd15b00cb0123f7da45d68be4047d268ae4d817f102e644c8fd1755b7a18"},
+    {file = "mal-api-0.5.3.tar.gz", hash = "sha256:406df47769bbea10176d97c2136fe0013c2a2c6161408442745341f60626fa78"},
+    {file = "mal_api-0.5.3-py3-none-any.whl", hash = "sha256:950fb8cf7ac5516f46fe0d9a40779d74eed711eb90a7d25ccf379c710bb6f887"},
 ]
 
 [package.dependencies]
@@ -668,14 +696,14 @@ files = [
 
 [[package]]
 name = "setuptools"
-version = "67.3.2"
+version = "67.4.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "setuptools-67.3.2-py3-none-any.whl", hash = "sha256:bb6d8e508de562768f2027902929f8523932fcd1fb784e6d573d2cafac995a48"},
-    {file = "setuptools-67.3.2.tar.gz", hash = "sha256:95f00380ef2ffa41d9bba85d95b27689d923c93dfbafed4aecd7cf988a25e012"},
+    {file = "setuptools-67.4.0-py3-none-any.whl", hash = "sha256:f106dee1b506dee5102cc3f3e9e68137bbad6d47b616be7991714b0c62204251"},
+    {file = "setuptools-67.4.0.tar.gz", hash = "sha256:e5fd0a713141a4a105412233c63dc4e17ba0090c8e8334594ac790ec97792330"},
 ]
 
 [package.extras]
@@ -791,4 +819,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "288975ae510ac2fc9cdc35bfa9aba907f758d8860300e3fbb56ad29ba06b268d"
+content-hash = "bff9233b0999833fb4cb25594fa050f9485cddd931cc0a5b0947c91e00983852"

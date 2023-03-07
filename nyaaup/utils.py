@@ -6,7 +6,10 @@ import sys, re
 import json
 from json import loads
 import shutil
+import argparse
 
+from rich.padding import Padding
+from rich.rule import Rule
 from rich.console import Console
 from typing import Any, IO, Literal, NoReturn, overload
 from ruamel.yaml import YAML
@@ -26,19 +29,70 @@ from rich.progress import (
     BarColumn,
     TextColumn,
     ProgressColumn,
-    TimeElapsedColumn,
     TaskProgressColumn,
     MofNCompleteColumn,
     TimeRemainingColumn,
 )
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+from rich.panel import Panel
 #import torf
 #import hashlib
 #import bencodepy as bcp
 
 dirs = PlatformDirs(appname="nyaaup", appauthor=False)
+console = Console()
 
+PROG_VERSION='1.1.0'
+
+class RParse(argparse.ArgumentParser):
+    def __init__(self, *args: Any, **kwargs: Any):
+        kwargs.setdefault("formatter_class", lambda prog: CustomHelpFormatter(prog))
+        super().__init__(*args, **kwargs)
+
+    def _print_message(self, message: str, file: IO[str] | None = None) -> None:
+        if message:
+            console.print(
+                f"[b]nyaaup[/b] [magenta bold]v{PROG_VERSION}[/]\n\n[dim]Auto torrent uploader to Nyaa.si\n",
+                justify="center",
+            )
+            if message.startswith("usage"):
+                message = re.sub(r"(-[a-z]+\s*|\[)([A-Z-_]+)(?=]|,|\s\s|\s\.)", r"\1[bold color(231)]\2[/]", message)
+                message = re.sub(r"((-|--)[a-z-A-Z]+)", r"[green]\1[/]", message)
+                message = message.replace("usage", "[yellow]USAGE[/]")
+                message = message.replace(" file ", "[bold magenta] file [/]", 2)
+                message = message.replace(self.prog, f"[bold cyan]{self.prog}[/]")
+            message = f"{message.strip()}"
+            if "options:" in message:
+                m = message.split("options:")
+                if "positional arguments:" in m[0]:
+                    op = m[0].split("positional arguments:")
+                    print(op[0].strip())
+                    print('')
+                    console.print(
+                        Panel(
+                            op[1].strip(), border_style="dim", title="Positional arguments", title_align="left"
+                        )
+                    )
+                else: print(m[0].strip())
+                print('')
+                console.print(
+                    Panel(
+                        m[1].strip(), border_style="dim", title="Options", title_align="left"
+                    )
+                )
+
+class CustomHelpFormatter(argparse.RawTextHelpFormatter):
+    def __init__(self, *args: Any, **kwargs: Any):
+        kwargs.setdefault("max_help_position", 80)
+        super().__init__(*args, **kwargs)
+
+    def _format_action_invocation(self, action: argparse.Action) -> str:
+        if not action.option_strings or action.nargs == 0:
+            return super()._format_action_invocation(action)
+        default = self._get_default_metavar_for_optional(action)
+        args_string = self._format_args(action, default)
+        return ", ".join(action.option_strings) + " " + args_string
 
 class CustomTransferSpeedColumn(ProgressColumn):
     def render(self, task: Task) -> Text:
@@ -72,6 +126,10 @@ class log():
         if fatal:
             sys.exit(exit_code)
         return None
+
+    def info(text: str, up: int = 1, down: int = 1) -> None:
+        text = Padding(f"[bold green]{text}[white]", (up, 0, down, 0), expand=False)
+        print(text)
 
     def wprint(text: str) -> None:
         if text.startswith("\n"):
@@ -110,7 +168,7 @@ class Config():
         data["credentials"]["username"] = credential.groups()[0]
         data["credentials"]["password"] = credential.groups()[1]
         self.yaml.dump(data, self.config_path)
-        log.print("[chartreuse2 not bold]\nCredential successfully added![white /not bold]")
+        log.print("[bold green]\nCredential successfully added![white]")
         sys.exit(1)
 
 class GetTracksInfo():
@@ -140,13 +198,14 @@ def generate_snapshots(self, input: Path, name: str, mediainfo_obj)  -> list:
         
     with Progress(
         TextColumn("[progress.description]{task.description}[/]"),
+        "•",
         BarColumn(),
         MofNCompleteColumn(),
         TaskProgressColumn(),
-        TextColumn("Remaining:"),
+        TextColumn("Time:"),
         TimeRemainingColumn(elapsed_when_finished=True),
     ) as progress:
-        task1 = progress.add_task("[not bold]Generating snapshots...[/not bold]", total=self.pic_num)
+        task1 = progress.add_task("[bold magenta]Generating snapshots[not bold white]", total=self.pic_num)
         while not progress.finished:
             snapshots = []
             num_snapshots=self.pic_num + 1
@@ -183,17 +242,18 @@ def image_upload(self, snapshots: list, description: str)  -> any:
             kek_request = requests.post('https://kek.sh/api/v1/posts', files={'file': file })
             return kek_request.json()["filename"]
     
-    images = Tree(f"[not bold]Images:")
+    images = Tree("[bold white]Images[not bold]")
     
     with Progress(
         TextColumn("[progress.description]{task.description}[/]"),
+        "•",
         BarColumn(),
         MofNCompleteColumn(),
         TaskProgressColumn(),
-        TextColumn("Remaining:"),
+        TextColumn("Time:"),
         TimeRemainingColumn(elapsed_when_finished=True),
     ) as progress:
-            task1 = progress.add_task("[not bold]Uploading snapshots...", total=self.pic_num)
+            task1 = progress.add_task("[bold magenta]Uploading snapshots[white]", total=self.pic_num)
             for i in snapshots:
                 image_link = image_uploader(i)
                 description+=f'![](https://i.kek.sh/{image_link})\n'
@@ -203,7 +263,6 @@ def image_upload(self, snapshots: list, description: str)  -> any:
     return images, description
 
 def creat_torrent(self, name, filename)  -> bool:
-
     if Path((f'{self.cache_dir}/{name}.torrent')).is_file():
         
         """
@@ -236,8 +295,7 @@ def creat_torrent(self, name, filename)  -> bool:
         """
         log.wprint(f"Torrent file already exists, removing...")
         Path(f'{self.cache_dir}/{name}.torrent').unlink()
-    
-    log.print(f'[chartreuse2 not bold]Creating torrent...\n[white /not bold]')
+    log.info("Creating torrent...")
 
     torrent = Torrent(
         filename,
@@ -249,28 +307,29 @@ def creat_torrent(self, name, filename)  -> bool:
     )
     
     with Progress(
+        TextColumn("[progress.description]{task.description}[/]"),
+        "•",
         BarColumn(),
         CustomTransferSpeedColumn(),
         TaskProgressColumn(),
-        TextColumn("Remaining:"),
+        TextColumn("Time:"),
         TimeRemainingColumn(elapsed_when_finished=True),
     ) as progress:
         files = []
 
         def update_progress(torrent: Torrent, filepath: str, pieces_done: int, pieces_total: int) -> None:
             if filepath not in files:
-                print(f'[white not bold]Hashing {Path(filepath).name}...[white /not bold]')
+                progress.console.print(f'[bold white]Hashing [not bold white]{Path(filepath).name}...')
                 files.append(filepath)
 
             progress.update(
                 task, completed=pieces_done * torrent.piece_size, total=pieces_total * torrent.piece_size
             )
-
-        task = progress.add_task(description="")
+        task = progress.add_task(description="[bold magenta]Torrent creating[not bold white]")
         #torrent.randomize_infohash = True
         torrent.generate(callback=update_progress, interval=1)
         torrent.write(f'{self.cache_dir}/{name}.torrent')
-
+    print('')
     return True
 
 def rentry_upload(self) -> dict:
@@ -319,9 +378,9 @@ def get_description(self, input: Path, mediainfo_obj)  -> list:
             if info["type"] == "audio":
                 temp = []
                 temp.append(GetTracksInfo(info).get_info())
-                try: temp.append(f"**~{mediainfo_obj.audio_tracks[audio_t_num].bit_rate//1000} kbps**")
+                try: temp.append(f"(**~{int(mediainfo_obj.audio_tracks[audio_t_num].bit_rate)//1000} kbps**)")
                 except: log.wprint(f"Couldn't get audio bitrate!")
-                audio_info.append(" | ".join(temp))
+                audio_info.append(" ".join(temp))
                 audio_t_num += 1
             if info["type"] == "subtitles":
                 subtitles_info.append(GetTracksInfo(info).get_info())
@@ -341,25 +400,19 @@ def get_description(self, input: Path, mediainfo_obj)  -> list:
     return video_info, audio_info, subtitles_info
 
 def get_mal_link(anime, myanimelist, name) -> str:
-
     if anime:
         search = False
-        with Progress(
-                TextColumn("[progress.description]{task.description}[/]"),
-                TextColumn("Elapsed:"),
-                TimeElapsedColumn(),
-            ) as progress:
-            if myanimelist:
-                malid = "/".join(str(myanimelist).split("/")[4])
-                progress.add_task("[not bold]Getting MyAnimeList info form input link![/not bold]")
-                while not search:
-                    search = Anime(malid)
-                name_to_mal = search.title
-            else:
-                print('')
+        if myanimelist:
+            with console.status("[bold magenta]Getting MyAnimeList info form input link...") as status:
+                    malid = str(myanimelist).split("/")[4]
+                    while not search:
+                        search = Anime(malid)
+                    name_to_mal = search.title
+        else:
+            with console.status("[bold magenta]Searching MyAnimeList link form input name...") as status:
                 name_to_mal = re.sub(r"\.S\d+.*", "", name).replace(".", " ")
-                progress.add_task("[not bold]Searching MyAnimeList link form input name!")
                 while not search:
                     search = AnimeSearch(name_to_mal).results[0]
+        log.info("[bold magenta]Myanimelist link successfuly founded![not bold white]", up=0, down=0)
 
     return search, name_to_mal

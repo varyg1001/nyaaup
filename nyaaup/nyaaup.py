@@ -7,15 +7,20 @@ import json
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-
 from pathlib import Path
+
+from rich.panel import Panel
 from pymediainfo import MediaInfo
 from rich.tree import Tree
 from rich import print
+from rich.traceback import install
+
+install(show_locals=True)
 
 class Nyaasi():
 
     def upload(self, torrent_byte, name: str, display_name: str, description: str, info: str, infos: Tree) -> dict:
+        log.info("Uploading...", down=0)
         session = requests.Session()
         retry = Retry(connect=5, backoff_factor=0.5)
         adapter = HTTPAdapter(max_retries=retry)
@@ -50,11 +55,11 @@ class Nyaasi():
 
         if response.json().get("errors") and "This torrent already exists" in response.json().get("errors").get("torrent")[0]:
             log.eprint(f'\nThe torrent once uploaded in the past!\n')
-            print(infos)
+            print(Panel.fit(infos, border_style="red"))
             sys.exit(1)
 
         return response.json()
-    
+
     def get_category(self, category: str)  -> str:
         match category:
             case "Anime - English-translated" | "1": return "1_2"
@@ -69,7 +74,7 @@ class Nyaasi():
             case "4_1": return "Live Action - English-Translated"
             case "4_3": return "Live Action - Non-English-translated"
             case "4_4": return "Live Action - Raw"
-    
+
     def __init__(self, args, parser):
 
         self.args = args
@@ -103,11 +108,11 @@ class Nyaasi():
             sys.exit(1)
 
         self.pic_num = self.args.pictures_number
-        
+
         self.hidden = 'hidden' if self.args.hidden else None
         self.anonymous = 'anonymous' if self.args.anonymous else None
         self.complete = 'complete' if self.args.complete else None
-        
+
         self.main()
 
     def main(self):
@@ -121,12 +126,12 @@ class Nyaasi():
 
         info_form_json = self.config["preferences"]["info"] if self.config["preferences"]["info"].lower() == "mal" else ""
         add_mal = self.config["preferences"]["mal"]
-        
+
         if not self.config["credentials"]["username"] or self.config["credentials"]["username"] == "user":
             log.eprint(f"Set your username!", True)
         if not self.config["credentials"]["password"] or self.config["credentials"]["password"] == "pass":
             log.eprint(f"Set your password!", True)
-        
+
         multi_sub = self.args.multi_subs
         multi_audio = self.args.multi_audios
         dual_audio = self.args.dual_audios
@@ -157,7 +162,7 @@ class Nyaasi():
                 creat_torrent(self, name, in_file)
                 torrent_fd = open(f'{self.cache_dir}/{name}.torrent', "rb")
             else: log.wprint(f"No torrent file created!")
-            
+
             mediainfo_from_input = MediaInfo.parse(file)
 
             self.text = MediaInfo.parse(file, output="", full=False).replace(f"Complete name                            : {file}", f"Complete name                            : {file.name}")
@@ -216,14 +221,14 @@ class Nyaasi():
                     snapshots = generate_snapshots(self, file, name, mediainfo_from_input)
                     images, description = image_upload(self, snapshots, description)
 
-            infos = Tree(f"Informations:")
+            infos = Tree("[bold white]Informations[not bold]")
             if add_mal and anime and info_form_json:
-                infos.add(f"[not bold white]MAL link ({name_to_mal}): [cornflower_blue]{information}[white /not bold]")
-            infos.add(f"[not bold]Selected category: [cornflower_blue]{self.get_category(self.cat)}[white /not bold]")
+                infos.add(f"[bold white]MAL link ({name_to_mal}): [cornflower_blue not bold]{information}[white]")
+            infos.add(f"[bold white]Selected category: [cornflower_blue not bold]{self.get_category(self.cat)}[white]")
 
             if not self.args.skip_upload:
-                medlink = Tree(f"[not bold white]Mediainfo link: [cornflower_blue]{mediainfo_url}")
-                medlink.add(f"[not bold white]Edit code: [cornflower_blue]{edit_code}[white /not bold]")
+                medlink = Tree(f"[bold white]Mediainfo link: [cornflower_blue not bold]{mediainfo_url}[white]")
+                medlink.add(f"[bold white]Edit code: [cornflower_blue not bold]{edit_code}[white]")
                 infos.add(medlink)
                 if self.pic_num != 0:
                     infos.add(images)
@@ -231,9 +236,13 @@ class Nyaasi():
                 if not link:
                     log.wprint(f'Something happened during the uploading!', True)
                 else:
-                    infos.add(f'[white]Torrent page link: [cornflower_blue]{link["url"]}')
-                    infos.add(f'[white]Torrent download link:[cornflower_blue] https://nyaa.si/download/{link["id"]}.torrent')
-                    log.print(f'[chartreuse2 not bold]\nTorrent successfuly uploaded![white /not bold]\n')
-            else: log.wprint(f"Torrent is not uploaded!")
-
-            print(infos)
+                    infos.add(f'[bold white]Page link: [cornflower_blue not bold]{link["url"]}[white]')
+                    infos.add(f'[bold white]Download link:[cornflower_blue not bold] https://nyaa.si/download/{link["id"]}.torrent[white]')
+                    style = "bold green"
+                    title = "Torrent successfuly uploaded!"
+            else:
+                log.wprint(f"Torrent is not uploaded!")
+                title = ""
+                style = "yellow"
+            print('')
+            print(Panel.fit(infos, title=title, border_style=style))

@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
-
+from .utils import RParse
 from .nyaaup import Nyaasi
 from .auth import Auth
 
 import argparse
 import sys
 from pathlib import Path
+from rich.traceback import install
+
+install(show_locals=True)
 
 def main():
     parser = argparse.ArgumentParser(description='Auto torrent uploader to Nyaa.si', prog='nyaaup')
+    parser = RParse()
     subparsers =  parser.add_subparsers(dest="command")
     parser_auth = subparsers.add_parser("auth")
     parser_up = subparsers.add_parser("up")
@@ -21,16 +25,16 @@ def main():
                         help='Print available categories.')
     parser_up.add_argument('-ms', '--multi-subs',
                         action='store_true',
-                        help='Add Multi-Subs tag to title.')
+                        help='Add Multi Subs tag to title.')
     parser_up.add_argument('-da', '--dual-audios',
                         action='store_true',
-                        help='Add Dual-audios tag to title.')
+                        help='Add Dual audios tag to title.')
     parser_up.add_argument('-ma', '--multi-audios',
                         action='store_true',
-                        help='Add Multi-audios tag to title.')
+                        help='Add Multi audios tag to title.')
     parser_up.add_argument('-A', '--auto',
                         action='store_true',
-                        help='Detect multi-subs, multi-audios and dual-audios (if sub or audio more than one it will add the tags)')
+                        help='Detect multi subs, multi audios and dual audios.')
     parser_up.add_argument('-a', '--anonymous',
                         action='store_true',
                         help='Upload torrent as anonymous.')
@@ -57,20 +61,18 @@ def main():
                         help='MyAnimeList link.') 
     parser_up.add_argument('-c', '--category',
                         type=str,
-                        choices=['1', 'Anime - English-translated', '2', 'Anime - Non-English-translated', '3', 'Anime - Raw', '4', 'Live Action - English-translated', '5', 'Live Action - Raw', '6', 'Live Action - Non-English-translate'],
                         default=None,
-                        help='Select a category to upload the torrent.')
+                        help='Select a category, for help use: --category-help (1-6).')
     parser_up.add_argument("path",
                         type=Path,
                         nargs="*",
                         default=None,
                         help="File or directory to upload.")
     parser.set_defaults(default_command=True, command='up')
-    args = parser.parse_args()
-
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)
+    args = parser.parse_args()
 
     if args.command == "auth":
         Auth(args, parser)
