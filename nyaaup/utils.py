@@ -7,9 +7,8 @@ import json
 from json import loads
 import shutil
 import argparse
-
+from pprint import pprint
 from rich.padding import Padding
-from rich.rule import Rule
 from rich.console import Console
 from typing import Any, IO, Literal, NoReturn, overload
 from ruamel.yaml import YAML
@@ -36,26 +35,36 @@ from rich.progress import (
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from rich.panel import Panel
-#import torf
-#import hashlib
-#import bencodepy as bcp
+import torf
+import hashlib
+import bencodepy as bcp
 
 dirs = PlatformDirs(appname="nyaaup", appauthor=False)
 console = Console()
 
-PROG_VERSION='1.1.0'
-
+MAP = {
+    #subtitle codecs
+    "SubRip/SRT": "SRT",
+    "SubStationAlpha": "ASS",
+    #audio codecs
+    "E-AC-3": "DDP",
+    "E-AC": "DD",
+    "AAC": "AAC",
+    #channels
+    1: 1.0,
+    2: 2.0,
+    6: 5.1,
+    8: 7.1,
+}
 class RParse(argparse.ArgumentParser):
     def __init__(self, *args: Any, **kwargs: Any):
         kwargs.setdefault("formatter_class", lambda prog: CustomHelpFormatter(prog))
         super().__init__(*args, **kwargs)
 
     def _print_message(self, message: str, file: IO[str] | None = None) -> None:
+        if "error" in message:
+                print(f'[white not bold]{message}')
         if message:
-            console.print(
-                f"[b]nyaaup[/b] [magenta bold]v{PROG_VERSION}[/]\n\n[dim]Auto torrent uploader to Nyaa.si\n",
-                justify="center",
-            )
             if message.startswith("usage"):
                 message = re.sub(r"(-[a-z]+\s*|\[)([A-Z-_]+)(?=]|,|\s\s|\s\.)", r"\1[bold color(231)]\2[/]", message)
                 message = re.sub(r"((-|--)[a-z-A-Z]+)", r"[green]\1[/]", message)
@@ -74,8 +83,9 @@ class RParse(argparse.ArgumentParser):
                             op[1].strip(), border_style="dim", title="Positional arguments", title_align="left"
                         )
                     )
-                else: print(m[0].strip())
-                print('')
+                else:
+                    print(m[0].strip())
+                    print('')
                 console.print(
                     Panel(
                         m[1].strip(), border_style="dim", title="Options", title_align="left"
@@ -140,14 +150,14 @@ class log():
 class Config():
     def __init__(self):
         self.dirs = dirs
-        self.config_path = Path(dirs.user_config_path / "config.ymal")
+        self.config_path = Path(dirs.user_config_path / "nyaaup.ymal")
         self.yaml = YAML()
 
     def get_dirs(self):
         return self.dirs
     
     def creat(self, exit: bool = False):
-        shutil.copy(Path(__file__).with_name('config.yaml.example'), self.config_path)
+        shutil.copy(Path(__file__).with_name('nyaaup.yaml.example'), self.config_path)
         log.eprint(f"Config file doesn't exist, created to: {self.config_path}.", exit)
 
     def load(self):
@@ -264,10 +274,18 @@ def image_upload(self, snapshots: list, description: str)  -> any:
 
 def creat_torrent(self, name, filename)  -> bool:
     if Path((f'{self.cache_dir}/{name}.torrent')).is_file():
-        
         """
         bencodepy = bcp.Bencode(encoding="utf-8", encoding_fallback="value")
-        tor = open(f'{cache_dir}/{name}.torrent', mode='rb')
+        tor = open(f'{self.cache_dir}/{name}.torrent', mode='rb')
+        tor = tor.read()
+        torrent_file = bencodepy.decode(tor)
+        print(hashlib.sha1(torrent_file["info"]["pieces"]).hexdigest())
+        if update := torrent_file.update():
+            info = torrent_file.encode(update["info"])
+            info_hash = hashlib.sha1(info).hexdigest()
+        item = bencodepy.decode(tor)
+        #info_hash = hashlib.sha1(infos).hexdigest()
+
         tor = tor.read()
         torrent_file = bencodepy.decode(tor)
         if update := torrent_file.update():
@@ -295,7 +313,7 @@ def creat_torrent(self, name, filename)  -> bool:
         """
         log.wprint(f"Torrent file already exists, removing...")
         Path(f'{self.cache_dir}/{name}.torrent').unlink()
-    log.info("Creating torrent...")
+    log.info("Creating torrent...", 0)
 
     torrent = Torrent(
         filename,
@@ -305,7 +323,7 @@ def creat_torrent(self, name, filename)  -> bool:
         created_by=None,
         exclude_regexs=[r".*\.(ffindex|jpg|nfo|png|srt|torrent|txt)$"],
     )
-    
+
     with Progress(
         TextColumn("[progress.description]{task.description}[/]"),
         "•",
@@ -329,7 +347,7 @@ def creat_torrent(self, name, filename)  -> bool:
         #torrent.randomize_infohash = True
         torrent.generate(callback=update_progress, interval=1)
         torrent.write(f'{self.cache_dir}/{name}.torrent')
-    print('')
+
     return True
 
 def rentry_upload(self) -> dict:
@@ -378,12 +396,17 @@ def get_description(self, input: Path, mediainfo_obj)  -> list:
             if info["type"] == "audio":
                 temp = []
                 temp.append(GetTracksInfo(info).get_info())
-                try: temp.append(f"(**~{int(mediainfo_obj.audio_tracks[audio_t_num].bit_rate)//1000} kbps**)")
+                temp.append(f'{MAP.get(info["codec"])}')
+                temp.append(f'{MAP.get(info["properties"]["audio_channels"])}')
+                try: temp.append(f"~{round(mediainfo_obj.audio_tracks[audio_t_num].bit_rate/1000)} kbps")
                 except: log.wprint(f"Couldn't get audio bitrate!")
-                audio_info.append(" ".join(temp))
+                audio_info.append(" | ".join(temp))
                 audio_t_num += 1
             if info["type"] == "subtitles":
-                subtitles_info.append(GetTracksInfo(info).get_info())
+                temp = []
+                temp.append(GetTracksInfo(info).get_info())
+                temp.append(f'{MAP.get(info["codec"])}')
+                subtitles_info.append(" | ".join(temp))
 
         if video_t_num != 1:
             raise log.eprint(f"Founded video tracks number: {video_t_num}", True)
@@ -413,6 +436,6 @@ def get_mal_link(anime, myanimelist, name) -> str:
                 name_to_mal = re.sub(r"\.S\d+.*", "", name).replace(".", " ")
                 while not search:
                     search = AnimeSearch(name_to_mal).results[0]
-        log.info("[bold magenta]Myanimelist link successfuly founded![not bold white]", up=0, down=0)
+        log.info("[bold magenta]Myanimelist page successfuly found![not bold white]", up=0, down=0)
 
     return search, name_to_mal
