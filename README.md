@@ -34,7 +34,7 @@ $ ./install.sh
 ### Usage
 
 ```
-                                                   nyaaup v1.1.0
+                                                   nyaaup v1.1.1
 
                                           Auto torrent uploader to Nyaa.si
 
