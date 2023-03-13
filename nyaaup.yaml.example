@@ -1,0 +1,9 @@
+credentials:
+    username: user
+    password: pass
+
+preferences:
+    edit_code:  # If you keep it blank, it will be random.
+    info: mal # This will be put to Information part. ('mal' will put MyAnimeList.net link into it.)
+    mal: true # Use MyAnimeList.net to add anime original name to display name.
+    mediainfo: true # Do not attach mediainfo to the torrent (provider rentry.co)
