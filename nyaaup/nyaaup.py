@@ -20,7 +20,7 @@ install(show_locals=True)
 class Nyaasi():
 
     def upload(self, torrent_byte, name: str, display_name: str, description: str, info: str, infos: Tree) -> dict:
-        log.info("Uploading...", down=0)
+        log.info("Uploading to Nyaa.si!", down=0)
         session = requests.Session()
         retry = Retry(connect=5, backoff_factor=0.5)
         adapter = HTTPAdapter(max_retries=retry)
@@ -126,6 +126,7 @@ class Nyaasi():
 
         info_form_json = self.config["preferences"]["info"] if self.config["preferences"]["info"].lower() == "mal" else ""
         add_mal = self.config["preferences"]["mal"]
+        mediainfo_to_torrent = self.config["preferences"]["mediainfo"] if not self.args.no_mediainfo else False
 
         if not self.config["credentials"]["username"] or self.config["credentials"]["username"] == "user":
             log.eprint(f"Set your username!", True)
@@ -165,7 +166,7 @@ class Nyaasi():
 
             mediainfo_from_input = MediaInfo.parse(file)
 
-            self.text = MediaInfo.parse(file, output="", full=False).replace(f"Complete name                            : {file}", f"Complete name                            : {file.name}")
+            self.text = MediaInfo.parse(file, output="", full=False).replace(str(file),str(file.name))
             anime = False
 
             if self.cat in {"1_2", "1_3", "1_4"}:
@@ -183,12 +184,13 @@ class Nyaasi():
 
             videode, audiode, subde = get_description(self, file, mediainfo_from_input)
             description += f'Informations:\n* Video: {" | ".join(videode)}\n* Audio(s): {", ".join(audiode)}\n* Subtitle(s): {", ".join(subde)}\n* Duration: **~{mediainfo_from_input.video_tracks[0].other_duration[4]}**'
-
-            if not self.args.skip_upload:
+            if not self.args.skip_upload and mediainfo_to_torrent:
                 rentry_response = rentry_upload(self)
                 mediainfo_url  = rentry_response['url']
                 edit_code = rentry_response['edit_code']
-                description += f"\n\n[MediaInfo]({mediainfo_url}/raw)\n\n---\n\n"
+                description += f"\n\n[MediaInfo]({mediainfo_url}/raw)"
+            else: log.wprint("Mediainfo won't be attached to the torrent!")
+            description += "\n\n---\n\n"
 
             sublen = len(subde)
             if sublen != 0:
@@ -227,9 +229,10 @@ class Nyaasi():
             infos.add(f"[bold white]Selected category: [cornflower_blue not bold]{self.get_category(self.cat)}[white]")
 
             if not self.args.skip_upload:
-                medlink = Tree(f"[bold white]Mediainfo link: [cornflower_blue not bold]{mediainfo_url}[white]")
-                medlink.add(f"[bold white]Edit code: [cornflower_blue not bold]{edit_code}[white]")
-                infos.add(medlink)
+                if mediainfo_to_torrent:
+                    medlink = Tree(f"[bold white]Mediainfo link: [cornflower_blue not bold]{mediainfo_url}[white]")
+                    medlink.add(f"[bold white]Edit code: [cornflower_blue not bold]{edit_code}[white]")
+                    infos.add(medlink)
                 if self.pic_num != 0:
                     infos.add(images)
                 link = self.upload(torrent_fd, name, display_name, description, information, infos)
