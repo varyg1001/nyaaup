@@ -84,19 +84,24 @@ class RParse(argparse.ArgumentParser):
                 m = message.split("options:")
                 if "positional arguments:" in m[0]:
                     op = m[0].split("positional arguments:")
-                    print(op[0].strip())
+                    pa = op[1].strip().replace(
+                        "}", "").replace("{", "").split(",")
+                    pa = f'[green]{"[/], [green]".join(pa)}[/]'
+                    print(op[0].strip().replace(op[1].strip(), pa))
                     print('')
                     console.print(
                         Panel(
-                            op[1].strip(), border_style="dim", title="Positional arguments", title_align="left"
+                            f"  {pa}", border_style="dim", title="Positional arguments", title_align="left"
                         )
                     )
+                    print('')
                 else:
                     print(m[0].strip())
                     print('')
+
                 console.print(
                     Panel(
-                        m[1].strip(), border_style="dim", title="Options", title_align="left"
+                        f"  {m[1].strip()}", border_style="dim", title="Options", title_align="left"
                     )
                 )
 
@@ -411,7 +416,9 @@ def rentry_upload(self) -> dict:
 
 def get_description(self, input: Path, mediainfo_obj) -> list:
 
-    video_info, audio_info, subtitles_info = [], [], []
+    video_info = []
+    audio_info = []
+    subtitles_info = []
 
     if input.suffix == ".mkv":
         mediainfo = json.loads(subprocess.run(

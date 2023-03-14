@@ -209,7 +209,7 @@ class Nyaasi():
                 description += f"\n\n[MediaInfo]({mediainfo_url}/raw)"
             else:
                 log.wprint("Mediainfo won't be attached to the torrent!")
-            description += "\n\n---\n\n"
+            description += "\n---\n"
 
             sublen = len(subde)
             if sublen != 0:

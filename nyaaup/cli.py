@@ -16,6 +16,11 @@ PROG_VERSION = '1.1.1'
 
 
 def main():
+    console.print(
+        f"[b]nyaaup[/b] [magenta bold]v{PROG_VERSION}[/]\n\n[dim]Auto torrent uploader to Nyaa.si\n",
+        justify="center",
+    )
+
     parser = argparse.ArgumentParser(
         description='Auto torrent uploader to Nyaa.si', prog='nyaaup')
     parser = RParse()
@@ -83,10 +88,7 @@ def main():
         parser.print_help(sys.stderr)
         sys.exit(1)
     args = parser.parse_args()
-    console.print(
-        f"[b]nyaaup[/b] [magenta bold]v{PROG_VERSION}[/]\n\n[dim]Auto torrent uploader to Nyaa.si\n",
-        justify="center",
-    )
+
     if args.command == "auth":
         Auth(args, parser)
     else:
