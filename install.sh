@@ -1,25 +1,36 @@
 #!/bin/sh
 
-if ! [ -x "$(command -v poetry)" ]; then
-  echo "ERROR: poetry is not installed." >&2
-  echo "[+] Installing Poetry"
+destdir="$HOME/.local/bin"
+
+if [ -z "$VIRTUAL_ENV" ]; then
+    echo "[+] Creating virtual environment"
+    if [ -x "$(command -v virtualenv)" ]; then
+        virtualenv -p python3 .venv
+    else
+        python3 -m venv .venv
+    fi
+    # shellcheck disable=SC1091
+    . .venv/bin/activate
+    echo "[+] Upgrading base packages"
+    pip install --upgrade pip setuptools wheel
+    echo "[+] Installing Poetry"
     pip install --upgrade poetry
 fi
 
 echo "[+] Updating Poetry"
-curl -fsSL https://install.python-poetry.org | python3
+pip install --upgrade poetry
 
-poetry install
+echo "[+] Installing dependencies"
+git submodule update --init
+poetry install "$@"
 
-venv=${VIRTUAL_ENV:-$(poetry env info --path)}
-if [ -z "$venv" ]; then
-  echo "ERROR: Unable to find virtualenv." >&2
-fi
+echo "[+] Creating launcher script"
+ln -sf "$(realpath .venv/bin/vt)" ~/.local/bin/vt
 
-executable="$venv/bin/nyaaup"
-if ! [ -f "$executable" ]; then
-  echo "ERROR: $executable doesn't exist." >&2
-  exit 1
-fi
-mkdir -p ~/.local/bin
-ln -sf "$executable" ~/.local/bin/
+echo "[*] Successfully installed to $destdir/vt"
+case "$PATH" in
+    *"$destdir"*)
+        ;;
+    *)
+        echo "[!] Warning: $destdir is not in PATH. You will not be able to run 'nyaaup' from outside the tool's directory."
+esac
