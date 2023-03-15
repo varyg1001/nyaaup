@@ -175,7 +175,7 @@ class Config():
         return self.dirs
 
     def creat(self, exit: bool = False):
-        shutil.copy(Path(__file__).replace("nyaaup/nyaaup", "nyaaup").with_name(
+        shutil.copy(Path(__file__.replace('nyaaup/nyaaup', "nyaaup")).with_name(
             'nyaaup.yaml.example'), self.config_path)
         log.eprint(
             f"Config file doesn't exist, created to: {self.config_path}.", exit)
