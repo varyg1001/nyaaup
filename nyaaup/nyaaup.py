@@ -203,13 +203,14 @@ class Nyaasi():
                 self, file, mediainfo_from_input)
             description += f'Informations:\n* Video: {" | ".join(videode)}\n* Audio(s): {", ".join(audiode)}\n* Subtitle(s): {", ".join(subde)}\n* Duration: **~{mediainfo_from_input.video_tracks[0].other_duration[4]}**'
             if not self.args.skip_upload and mediainfo_to_torrent:
-                rentry_response = rentry_upload(self)
-                mediainfo_url = rentry_response['url']
-                edit_code = rentry_response['edit_code']
-                description += f"\n\n[MediaInfo]({mediainfo_url}/raw)"
-            else:
-                log.wprint("Mediainfo won't be attached to the torrent!")
-            description += "\n---\n"
+                try:
+                    rentry_response = rentry_upload(self)
+                    mediainfo_url = rentry_response['url']
+                    edit_code = rentry_response['edit_code']
+                    description += f"\n\n[MediaInfo]({mediainfo_url}/raw)"
+                except requests.HTTPError as e:
+                    log.wprint(f"Failed to upload mediainfo to rentry.co! ({e.response})")
+            description += "\n\n---\n\n"
 
             sublen = len(subde)
             if sublen != 0:
