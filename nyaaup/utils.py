@@ -71,7 +71,7 @@ class RParse(argparse.ArgumentParser):
         if message:
             if message.startswith("usage"):
                 message = re.sub(
-                    r"(-[a-z]+\s*|\[)([A-Z-_]+)(?=]|,|\s\s|\s\.)", r"\1[bold color(231)]\2[/]", message)
+                    r"(-[a-z-A-Z]+\s*|\[)([A-Z-_:]+)(?=]|,|\s\s|\s\.)", r"\1[bold color(231)]\2[/]", message)
                 message = re.sub(
                     r"((-|--)[a-z-A-Z]+)", r"[green]\1[/]", message)
                 message = message.replace("usage", "[yellow]USAGE[/]")
@@ -175,10 +175,10 @@ class Config():
         return self.dirs
 
     def creat(self, exit: bool = False):
-        shutil.copy(Path(__file__.replace('nyaaup/nyaaup', "nyaaup")).with_name(
+        shutil.copy(Path(__file__).resolve().parent.parent.with_name(
             'nyaaup.yaml.example'), self.config_path)
         log.eprint(
-            f"Config file doesn't exist, created to: {self.config_path}.", exit)
+            f"Config file doesn't exist, created to: {self.config_path}", exit)
 
     def load(self):
         try:
