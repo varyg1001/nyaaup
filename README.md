@@ -14,7 +14,7 @@ This tool you can use with Linux systems. (On Windows you can use WSL.)
 
 ### Dependencies
 
-- [FFmpeg](https://fmpeg.org/) for image generating.
+- [FFmpeg](https://ffmpeg.org/) for image generating.
 - [MKVToolNix](https://mkvtoolnix.download/downloads.html) to get info from `.mkv` file.
 
 ### Installation
