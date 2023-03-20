@@ -28,8 +28,9 @@ def main():
     parser_auth = subparsers.add_parser("auth")
     parser_auth.add_argument('-add', '--add-credential',
                              type=str,
+                             metavar="USER:PASS",
                              default=None,
-                             help="Add or replace credential in config file. (format: user:pass)")
+                             help="Add or replace credential in config file.")
     parser_up = subparsers.add_parser("up")
     parser_up.add_argument('-ch', '--category-help',
                            action='store_true',
@@ -43,10 +44,10 @@ def main():
     parser_up.add_argument('-ma', '--multi-audios',
                            action='store_true',
                            help='Add Multi audios tag to title.')
-    parser_up.add_argument('-A', '--auto',
+    parser_up.add_argument('-a', '--auto',
                            action='store_true',
                            help='Detect multi subs, multi audios and dual audios.')
-    parser_up.add_argument('-a', '--anonymous',
+    parser_up.add_argument('-A', '--anonymous',
                            action='store_true',
                            help='Upload torrent as anonymous.')
     parser_up.add_argument('-H', '--hidden',
