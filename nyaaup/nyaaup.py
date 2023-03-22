@@ -178,6 +178,8 @@ class Nyaasi():
                 log.wprint(f"No torrent file created!")
 
             mediainfo_from_input = MediaInfo.parse(file)
+            mediainfo_from_input_xml = MediaInfo('<?xml version="1.0" encoding="UTF-8"?><MediaInfo></MediaInfo>')
+            mediainfo_from_input_xml.tracks += MediaInfo.parse(file).tracks
 
             self.text = MediaInfo.parse(file, output="", full=False).replace(
                 str(file), str(file.name))
@@ -200,7 +202,7 @@ class Nyaasi():
                     information = info_form_json
 
             videode, audiode, subde = get_description(
-                self, file, mediainfo_from_input)
+                self, file, mediainfo_from_input, mediainfo_from_input_xml)
             description += f'Informations:\n* Video: {" | ".join(videode)}\n* Audio(s): {", ".join(audiode)}\n* Subtitle(s): {", ".join(subde)}\n* Duration: **~{mediainfo_from_input.video_tracks[0].other_duration[4]}**'
             if not self.args.skip_upload and mediainfo_to_torrent:
                 try:
