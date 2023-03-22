@@ -50,7 +50,6 @@ MAP = {
     # audio codecs
     "E-AC-3": "DDP",
     "E-AC": "DD",
-    "AAC": "AAC",
     # channels
     1: 1.0,
     2: 2.0,
@@ -414,7 +413,7 @@ def rentry_upload(self) -> dict:
     return res
 
 
-def get_description(self, input: Path, mediainfo_obj) -> list:
+def get_description(self, input: Path, mediainfo_obj, mediainfo_obj_xml) -> list:
 
     video_info = []
     audio_info = []
@@ -430,7 +429,7 @@ def get_description(self, input: Path, mediainfo_obj) -> list:
 
             if not video_info:
                 video_info.append(
-                    f'**{(str(info.get("codec")).split("/")[1])}**')
+                    f'**{mediainfo_obj_xml.video_tracks[0].format} {mediainfo_obj_xml.video_tracks[0].format_profile}**')
             if info["type"] == "video":
                 video_t_num += 1
                 video_info.append(
@@ -438,7 +437,10 @@ def get_description(self, input: Path, mediainfo_obj) -> list:
             if info["type"] == "audio":
                 temp = []
                 temp.append(GetTracksInfo(info).get_info())
-                temp.append(f'{MAP.get(info["codec"])}')
+                at = str(mediainfo_obj_xml.audio_tracks[audio_t_num].format)
+                if mediainfo_obj_xml.audio_tracks[audio_t_num].format_additionalfeatures and "JOC" in mediainfo_obj_xml.audio_tracks[audio_t_num].format_additionalfeatures:
+                    at += "Atmos"
+                temp.append(at)
                 temp.append(f'{MAP.get(info["properties"]["audio_channels"])}')
                 try:
                     temp.append(
