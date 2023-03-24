@@ -63,3 +63,6 @@ USAGE: nyaaup up [-h] [-ch] [-ms] [-da] [-ma] [-A] [-a] [-H] [-C] [-s] [-e EDIT_
 │   -c, --category CATEGORY                Select a category, for help use: --category-help (1-6).                  │
 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
+
+![img](https://i.kek.sh/1nLQYikOtLj.jpg)
+<!---https://i.kek.sh/1nLQYikOtLj.jpg--->
