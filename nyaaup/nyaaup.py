@@ -203,7 +203,7 @@ class Nyaasi():
 
             videode, audiode, subde = get_description(
                 self, file, mediainfo_from_input, mediainfo_from_input_xml)
-            description += f'Informations:\n* Video: {" | ".join(videode)}\n* Audio(s): {", ".join(audiode)}\n* Subtitle(s): {", ".join(subde)}\n* Duration: **~{mediainfo_from_input.video_tracks[0].other_duration[4]}**'
+            description += f'* Video: {" | ".join(videode)}\n* Audio(s): {", ".join(audiode)}\n* Subtitle(s): {", ".join(subde)}\n* Duration: **~{mediainfo_from_input.video_tracks[0].other_duration[4]}**'
             if not self.args.skip_upload and mediainfo_to_torrent:
                 try:
                     rentry_response = rentry_upload(self)
@@ -241,7 +241,8 @@ class Nyaasi():
                 display_name = (
                     f'{name.replace(".", " ")} ({", ".join(name_plus)})')
             else:
-                display_name = name.replace(".", " ")
+                display_name = name.replace(".", " ").replace("2 0", "2.0"
+                ).replace("5 1", "5.1").replace("7 1", "7.1")
 
             if self.pic_num != 0 and not self.args.skip_upload:
                 snapshots = generate_snapshots(

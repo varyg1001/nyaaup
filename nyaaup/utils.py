@@ -8,7 +8,6 @@ import json
 from json import loads
 import shutil
 import argparse
-from pprint import pprint
 from rich.padding import Padding
 from rich.console import Console
 from typing import Any, IO, Literal, NoReturn, overload
