@@ -25,9 +25,9 @@ git submodule update --init
 poetry install "$@"
 
 echo "[+] Creating launcher script"
-ln -sf "$(realpath .venv/bin/vt)" ~/.local/bin/vt
+ln -sf "$(realpath .venv/bin/nyaaup)" ~/.local/bin/nyaaup
 
-echo "[*] Successfully installed to $destdir/vt"
+echo "[*] Successfully installed to $destdir/nyaaup"
 case "$PATH" in
     *"$destdir"*)
         ;;
