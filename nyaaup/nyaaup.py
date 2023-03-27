@@ -21,7 +21,7 @@ install(show_locals=True)
 class Nyaasi():
 
     def upload(self, torrent_byte, name: str, display_name: str, description: str, info: str, infos: Tree) -> dict:
-        log.info("Uploading to Nyaa.si!", down=0)
+        log.info("Uploading to Nyaa.si...", down=0)
         session = requests.Session()
         retry = Retry(connect=5, backoff_factor=0.5)
         adapter = HTTPAdapter(max_retries=retry)

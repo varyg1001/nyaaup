@@ -457,7 +457,7 @@ def get_description(self, input: Path, mediainfo_obj, mediainfo_obj_xml) -> list
 
         if video_t_num != 1:
             raise log.eprint(
-                f"Founded video tracks number: {video_t_num}", True)
+                f"More than 1 video found in file! ({video_t_num})", True)
 
         if not audio_info:
             raise log.eprint(f"Unable to determine audio language!", True)
