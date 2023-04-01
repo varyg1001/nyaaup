@@ -203,7 +203,7 @@ class Nyaasi():
 
             videode, audiode, subde = get_description(
                 self, file, mediainfo_from_input, mediainfo_from_input_xml)
-            description += f'* Video: {" | ".join(videode)}\n* Audio(s): {", ".join(audiode)}\n* Subtitle(s): {", ".join(subde)}\n* Duration: **~{mediainfo_from_input.video_tracks[0].other_duration[4]}**'
+            description += f'Informations:\n* Video: {" | ".join(videode)}\n* Audio(s): {", ".join(audiode)}\n* Subtitle(s): {", ".join(subde)}\n* Duration: **~{mediainfo_from_input.video_tracks[0].other_duration[4]}**'
             if not self.args.skip_upload and mediainfo_to_torrent:
                 try:
                     rentry_response = rentry_upload(self)
@@ -230,19 +230,19 @@ class Nyaasi():
 
             if add_mal and anime:
                 name_plus.append(search.title)
-
+            name = name.replace(".", " ").replace(".", " ").replace("2 0", "2.0"
+                ).replace("5 1", "5.1").replace("7 1", "7.1")
             if dual_audio:
-                name_plus.append('Dual-audios')
+                name_plus.append('Dual-audio')
             elif multi_audio:
                 name_plus.append('Multi-Audios')
             if multi_sub:
                 name_plus.append('Multi-Subs')
             if name_plus:
                 display_name = (
-                    f'{name.replace(".", " ")} ({", ".join(name_plus)})')
+                    f'{name} ({", ".join(name_plus)})')
             else:
-                display_name = name.replace(".", " ").replace("2 0", "2.0"
-                ).replace("5 1", "5.1").replace("7 1", "7.1")
+                display_name = name
 
             if self.pic_num != 0 and not self.args.skip_upload:
                 snapshots = generate_snapshots(
