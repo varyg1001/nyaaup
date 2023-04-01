@@ -436,7 +436,7 @@ def get_description(self, input: Path, mediainfo_obj, mediainfo_obj_xml) -> list
             if info["type"] == "audio":
                 temp = []
                 temp.append(GetTracksInfo(info).get_info())
-                at = str(mediainfo_obj_xml.audio_tracks[audio_t_num].format)
+                at = MAP.get(str(mediainfo_obj_xml.audio_tracks[audio_t_num].format))
                 if mediainfo_obj_xml.audio_tracks[audio_t_num].format_additionalfeatures and "JOC" in mediainfo_obj_xml.audio_tracks[audio_t_num].format_additionalfeatures:
                     at += "Atmos"
                 temp.append(at)
