@@ -48,6 +48,7 @@ MAP = {
     "SubStationAlpha": "ASS",
     # audio codecs
     "E-AC-3": "DDP",
+    "AAC": "AAC",
     "E-AC": "DD",
     # channels
     1: 1.0,
