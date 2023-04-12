@@ -189,7 +189,7 @@ class Nyaasi():
                 anime = True
 
             if anime:
-                search, name_to_mal = get_mal_link(
+                mal_data, name_to_mal = get_mal_link(
                     anime, self.args.myanimelist, name)
 
             if add_mal:
@@ -197,7 +197,7 @@ class Nyaasi():
                     if self.args.myanimelist:
                         information = self.args.myanimelist
                     else:
-                        information = "/".join(search.url.split('/')[:-1])
+                        information = "/".join(mal_data.url.split('/')[:-1])
                 elif not info_form_json:
                     information = info_form_json
 
@@ -229,7 +229,12 @@ class Nyaasi():
                     multi_sub = True
 
             if add_mal and anime:
-                name_plus.append(search.title)
+                if self.cat in {"1_3", "1_4"}:
+                    if mal_data.title_english and mal_data.title_english not in display_name:
+                        name_plus.append(mal_data.title_english)
+                else:
+                    name_plus.append(mal_data.title)
+
             name = name.replace(".", " ").replace(".", " ").replace("2 0", "2.0"
                 ).replace("5 1", "5.1").replace("7 1", "7.1")
             if dual_audio:

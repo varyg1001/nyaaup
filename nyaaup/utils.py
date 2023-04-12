@@ -5,7 +5,6 @@ import subprocess
 import sys
 import re
 import json
-from json import loads
 import shutil
 import argparse
 from rich.padding import Padding
@@ -477,19 +476,22 @@ def get_description(self, input: Path, mediainfo_obj, mediainfo_obj_xml) -> list
 
 def get_mal_link(anime, myanimelist, name) -> str:
     if anime:
-        search = False
+        mal_data = None
         if myanimelist:
             with console.status("[bold magenta]Getting MyAnimeList info form input link...") as status:
                 malid = str(myanimelist).split("/")[4]
-                while not search:
-                    search = Anime(malid)
-                name_to_mal = search.title
+                while not mal_data:
+                    mal_data = Anime(malid)
+                name_to_mal = mal_data.title
         else:
             with console.status("[bold magenta]Searching MyAnimeList link form input name...") as status:
-                name_to_mal = re.sub(r"\.S\d+.*", "", name).replace(".", " ")
-                while not search:
-                    search = AnimeSearch(name_to_mal).results[0]
+                name_to_mal = re.sub(r"\.S\d+.*", "", name)
+                if name_to_mal == name:
+                    name_to_mal = re.sub(r"\.\d\d\d\d\..*", "", name)
+                name_to_mal = name_to_mal.replace(".", " ")
+                while not mal_data:
+                    mal_data = Anime(AnimeSearch(name_to_mal).results[0].mal_id)
         log.info(
             "[bold magenta]Myanimelist page successfuly found![not bold white]", up=0, down=0)
 
-    return search, name_to_mal
+    return mal_data, name_to_mal
