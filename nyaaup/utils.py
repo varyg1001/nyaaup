@@ -45,10 +45,6 @@ MAP = {
     # subtitle codecs
     "SubRip/SRT": "SRT",
     "SubStationAlpha": "ASS",
-    # audio codecs
-    "E-AC-3": "DDP",
-    "AAC": "AAC",
-    "E-AC": "DD",
     # channels
     1: 1.0,
     2: 2.0,
@@ -206,7 +202,7 @@ class GetTracksInfo():
     def __init__(self, data) -> None:
         self.track_info = []
         self.lang = Language.get(data["properties"].get("language_ietf")
-                                 or data["properties"].get("language")).display_name()
+                    or data["properties"].get("language")).display_name()
         self.track_name = data["properties"].get("track_name") or None
 
     def greturn(self, lang: str, track_name: str = None) -> str:
@@ -436,7 +432,7 @@ def get_description(self, input: Path, mediainfo_obj, mediainfo_obj_xml) -> list
             if info["type"] == "audio":
                 temp = []
                 temp.append(GetTracksInfo(info).get_info())
-                at = MAP.get(str(mediainfo_obj_xml.audio_tracks[audio_t_num].format))
+                at = str(mediainfo_obj_xml.audio_tracks[audio_t_num].format)
                 if mediainfo_obj_xml.audio_tracks[audio_t_num].format_additionalfeatures and "JOC" in mediainfo_obj_xml.audio_tracks[audio_t_num].format_additionalfeatures:
                     at += "Atmos"
                 temp.append(at)

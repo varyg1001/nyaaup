@@ -228,15 +228,16 @@ class Nyaasi():
                 if sublen > 1:
                     multi_sub = True
 
+            name = name.replace(".", " ").replace(".", " ").replace("2 0", "2.0"
+                ).replace("5 1", "5.1").replace("7 1", "7.1")
+
             if add_mal and anime:
                 if self.cat in {"1_3", "1_4"}:
-                    if mal_data.title_english and mal_data.title_english not in display_name:
+                    if mal_data.title_english and mal_data.title_english not in name:
                         name_plus.append(mal_data.title_english)
                 else:
                     name_plus.append(mal_data.title)
 
-            name = name.replace(".", " ").replace(".", " ").replace("2 0", "2.0"
-                ).replace("5 1", "5.1").replace("7 1", "7.1")
             if dual_audio:
                 name_plus.append('Dual-audio')
             elif multi_audio:
