@@ -182,6 +182,8 @@ class Config():
 
     @staticmethod
     def get_cred(self, cred: str):
+        if cred == "user:pass":
+            log.eprint("Set valid credentials!", True)
         try:
             return re.fullmatch(r"^([^:]+?):([^:]+?)(?::(.+))?$", cred).groups()
         except: 
