@@ -180,11 +180,12 @@ class Config():
         except:
             self.creat(True)
 
+    @staticmethod
     def get_cred(self, cred: str):
         try:
             return re.fullmatch(r"^([^:]+?):([^:]+?)(?::(.+))?$", cred).groups()
         except: 
-            log.eprint(f"Incorrect credentials format!", True)
+            log.eprint("Incorrect credentials format!", True)
 
     def add(self, text: str):
         credential = self.get_cred(text)
@@ -214,9 +215,9 @@ class GetTracksInfo():
         if track_name:
             if track_name == "SDH":
                 return f"**{lang}** [{track_name}]"
-            elif track_name == "Forced":
+            if track_name == "Forced":
                 return f"**{lang}** [{track_name}]"
-            try: 
+            try:
                 r = re.search(r"(.*) \((SDH|Forced)\)", track_name)
                 return f"**{lang}** ({r[1]}) [{r[2]}]"
             except:

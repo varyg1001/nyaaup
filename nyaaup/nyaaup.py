@@ -189,12 +189,12 @@ class Nyaasi():
                     anime, self.args.myanimelist, name)
 
             if add_mal:
-                if info_form_config and anime:
+                if not info_form_config and anime:
                     if self.args.myanimelist:
                         information = self.args.myanimelist
                     else:
                         information = "/".join(mal_data.url.split('/')[:-1])
-                elif not info_form_config: information = self.config["preferences"]["info"]
+                elif info_form_config: information = self.config["preferences"]["info"]
             else: information = None
 
             videode, audiode, subde = get_description(
