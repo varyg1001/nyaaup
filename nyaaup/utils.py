@@ -181,12 +181,12 @@ class Config():
             self.creat(True)
 
     @staticmethod
-    def get_cred(self, cred: str):
+    def get_cred(cred: str):
         if cred == "user:pass":
             log.eprint("Set valid credentials!", True)
         try:
             return re.fullmatch(r"^([^:]+?):([^:]+?)(?::(.+))?$", cred).groups()
-        except: 
+        except:
             log.eprint("Incorrect credentials format!", True)
 
     def add(self, text: str):
