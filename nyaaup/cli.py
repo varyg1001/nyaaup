@@ -12,7 +12,7 @@ from rich.console import Console
 console = Console()
 install(show_locals=True)
 
-PROG_VERSION = '1.1.1'
+PROG_VERSION = '1.1.2'
 
 
 def main():
