@@ -27,9 +27,6 @@ class Nyaasi():
         adapter = HTTPAdapter(max_retries=retry)
         session.mount('https://', adapter)
 
-        username = self.config["credentials"]["username"]
-        password = self.config["credentials"]["password"]
-
         payload = {
             "torrent_data": json.dumps(
                 {
@@ -51,7 +48,7 @@ class Nyaasi():
                 "torrent": (f'{name}.torrent', torrent_byte, "application/x-bittorrent")
             },
             data=payload,
-            auth=(username, password),
+            auth=(self.credentials[0], self.credentials[1]),
         )
 
         if response.json().get("errors") and "This torrent already exists" in response.json().get("errors").get("torrent")[0]:
@@ -133,15 +130,14 @@ class Nyaasi():
         else:
             self.edit_code = self.args.edit_code
 
-        info_form_json = self.config["preferences"]["info"] if self.config["preferences"]["info"].lower(
-        ) == "mal" else ""
+        self.credentials = Config.get_cred(self, self.config["credentials"])
+
+        if self.config["preferences"]["info"].lower() == "mal":
+            info_form_config = False
+        else: info_form_config = True
+
         add_mal = self.config["preferences"]["mal"]
         mediainfo_to_torrent = self.config["preferences"]["mediainfo"] if not self.args.no_mediainfo else False
-
-        if not self.config["credentials"]["username"] or self.config["credentials"]["username"] == "user":
-            log.eprint(f"Set your username!", True)
-        if not self.config["credentials"]["password"] or self.config["credentials"]["password"] == "pass":
-            log.eprint(f"Set your password!", True)
 
         multi_sub = self.args.multi_subs
         multi_audio = self.args.multi_audios
@@ -188,18 +184,18 @@ class Nyaasi():
             if self.cat in {"1_2", "1_3", "1_4"}:
                 anime = True
 
-            if anime:
+            if anime and add_mal and not info_form_config:
                 mal_data, name_to_mal = get_mal_link(
                     anime, self.args.myanimelist, name)
 
             if add_mal:
-                if info_form_json and anime:
+                if info_form_config and anime:
                     if self.args.myanimelist:
                         information = self.args.myanimelist
                     else:
                         information = "/".join(mal_data.url.split('/')[:-1])
-                elif not info_form_json:
-                    information = info_form_json
+                elif not info_form_config: information = self.config["preferences"]["info"]
+            else: information = None
 
             videode, audiode, subde = get_description(
                 self, file, mediainfo_from_input, mediainfo_from_input_xml)
@@ -257,7 +253,7 @@ class Nyaasi():
                     self, snapshots, description)
 
             infos = Tree("[bold white]Informations[not bold]")
-            if add_mal and anime and info_form_json:
+            if add_mal and anime and info_form_config:
                 infos.add(
                     f"[bold white]MAL link ({name_to_mal}): [cornflower_blue not bold]{information}[white]")
             infos.add(

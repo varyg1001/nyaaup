@@ -180,8 +180,14 @@ class Config():
         except:
             self.creat(True)
 
+    def get_cred(self, cred: str):
+        try:
+            return re.fullmatch(r"^([^:]+?):([^:]+?)(?::(.+))?$", cred).groups()
+        except: 
+            log.eprint(f"Incorrect credentials format!", True)
+
     def add(self, text: str):
-        credential = re.fullmatch(r"^([^:]+?):([^:]+?)(?::(.+))?$", text)
+        credential = self.get_cred(text)
         if credential:
             try:
                 data = self.yaml.load(self.config_path)
@@ -191,8 +197,7 @@ class Config():
         else:
             log.eprint(
                 "No credentials found in text. Format: `username:password`")
-        data["credentials"]["username"] = credential.groups()[0]
-        data["credentials"]["password"] = credential.groups()[1]
+        data["credentials"] = text
         self.yaml.dump(data, self.config_path)
         log.print("[bold green]\nCredential successfully added![white]")
         sys.exit(1)
@@ -207,7 +212,15 @@ class GetTracksInfo():
 
     def greturn(self, lang: str, track_name: str = None) -> str:
         if track_name:
-            return f"**{lang}** ({track_name})"
+            if track_name == "SDH":
+                return f"**{lang}** [{track_name}]"
+            elif track_name == "Forced":
+                return f"**{lang}** [{track_name}]"
+            try: 
+                r = re.search(r"(.*) \((SDH|Forced)\)", track_name)
+                return f"**{lang}** ({r[1]}) [{r[2]}]"
+            except:
+                return f"**{lang}** ({track_name})"
         else:
             return f"**{lang}**"
 
