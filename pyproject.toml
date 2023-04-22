@@ -31,4 +31,3 @@ nyaaup = "nyaaup.cli:main"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-virtualenvs.prefer-active-python = "true"
