@@ -52,7 +52,7 @@ class Nyaasi():
         )
 
         if response.json().get("errors") and "This torrent already exists" in response.json().get("errors").get("torrent")[0]:
-            log.eprint(f'\nThe torrent once uploaded in the past!\n')
+            log.eprint('\nThe torrent once uploaded in the past!\n')
             print(Panel.fit(infos, border_style="red"))
             sys.exit(1)
 
@@ -84,31 +84,31 @@ class Nyaasi():
 
         self.cat = self.get_category(self.args.category)
         categorys_help = Tree(
-            f"[chartreuse2]Available categorys:[white /not bold]")
+            "[chartreuse2]Available categorys:[white /not bold]")
         categorys_help.add(
-            f"[1] [cornflower_blue not bold]Anime - English-translated[white /not bold]")
+            "[1] [cornflower_blue not bold]Anime - English-translated[white /not bold]")
         categorys_help.add(
-            f"[2] [cornflower_blue not bold]Anime - Non-English-translated[white /not bold]")
+            "[2] [cornflower_blue not bold]Anime - Non-English-translated[white /not bold]")
         categorys_help.add(
-            f"[3] [cornflower_blue not bold]Anime - Raw[white /not bold]")
+            "[3] [cornflower_blue not bold]Anime - Raw[white /not bold]")
         categorys_help.add(
-            f"[4] [cornflower_blue not bold]Live Action - English-translated[white /not bold]")
+            "[4] [cornflower_blue not bold]Live Action - English-translated[white /not bold]")
         categorys_help.add(
-            f"[5] [cornflower_blue not bold]Live Action - Non-English-translated[white /not bold]")
+            "[5] [cornflower_blue not bold]Live Action - Non-English-translated[white /not bold]")
         categorys_help.add(
-            f"[6] [cornflower_blue not bold]Live Action - Raw[white /not bold]")
+            "[6] [cornflower_blue not bold]Live Action - Raw[white /not bold]")
 
         if self.args.category_help:
             print(categorys_help)
             sys.exit(1)
 
         if not self.args.path:
-            log.eprint(f'No input!\n')
+            log.eprint('No input!\n')
             self.parser.print_help(sys.stdeerr)
             sys.exit(1)
 
         if not self.args.category:
-            log.eprint(f'No selected category!\n')
+            log.eprint('No selected category!\n')
             print(categorys_help)
             sys.exit(1)
 
@@ -150,7 +150,7 @@ class Nyaasi():
             name_plus = []
 
             if not in_file.exists():
-                log.eprint(f"Input file doens't exist!", True)
+                log.eprint("Input file doens't exist!", True)
 
             if in_file.is_file():
                 file = in_file
@@ -171,7 +171,7 @@ class Nyaasi():
                 creat_torrent(self, name, in_file)
                 torrent_fd = open(f'{self.cache_dir}/{name}.torrent', "rb")
             else:
-                log.wprint(f"No torrent file created!")
+                log.wprint("No torrent file created!")
 
             mediainfo_from_input = MediaInfo.parse(file)
             mediainfo_from_input_xml = MediaInfo('<?xml version="1.0" encoding="UTF-8"?><MediaInfo></MediaInfo>')
@@ -273,7 +273,7 @@ class Nyaasi():
                                    description, information, infos)
                 if not link:
                     log.wprint(
-                        f'Something happened during the uploading!', True)
+                        'Something happened during the uploading!', True)
                 else:
                     infos.add(
                         f'[bold white]Page link: [cornflower_blue not bold]{link["url"]}[white]')
@@ -282,7 +282,7 @@ class Nyaasi():
                     style = "bold green"
                     title = "Torrent successfuly uploaded!"
             else:
-                log.wprint(f"Torrent is not uploaded!")
+                log.wprint("Torrent is not uploaded!")
                 title = ""
                 style = "yellow"
             print('')
