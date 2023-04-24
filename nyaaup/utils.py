@@ -354,7 +354,7 @@ def creat_torrent(self, name, filename) -> bool:
             torrent.source = 'nyaa.si'
             torrent.write(f'{cache_dir}/{name}.torrent')
         """
-        log.wprint(f"Torrent file already exists, removing...")
+        log.wprint("Torrent file already exists, removing...")
         Path(f'{self.cache_dir}/{name}.torrent').unlink()
     log.info("Creating torrent...", 0)
 
@@ -457,7 +457,7 @@ def get_description(self, input: Path, mediainfo_obj, mediainfo_obj_xml) -> list
                     temp.append(
                         f"~{round(mediainfo_obj.audio_tracks[audio_t_num].bit_rate/1000)} kbps")
                 except:
-                    log.wprint(f"Couldn't get audio bitrate!")
+                    log.wprint("Couldn't get audio bitrate!")
                 audio_info.append(" | ".join(temp))
                 audio_t_num += 1
             if info["type"] == "subtitles":
@@ -471,18 +471,18 @@ def get_description(self, input: Path, mediainfo_obj, mediainfo_obj_xml) -> list
                 f"More than 1 video found in file! ({video_t_num})", True)
 
         if not audio_info:
-            raise log.eprint(f"Unable to determine audio language!", True)
+            raise log.eprint("Unable to determine audio language!", True)
 
         if not subtitles_info:
             subtitles_info.append('N/A')
-            log.wprint(f"Unable to determine subtitle language!")
+            log.wprint("Unable to determine subtitle language!")
         video_info.append(
             f'**{mediainfo_obj.video_tracks[0].frame_rate} FPS**')
         try:
             video_info.append(
                 f'**~{mediainfo_obj.video_tracks[0].bit_rate//1000} kbps**')
         except:
-            log.wprint(f"Couldn't get video bitrate!")
+            log.wprint("Couldn't get video bitrate!")
     return video_info, audio_info, subtitles_info
 
 
