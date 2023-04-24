@@ -242,8 +242,7 @@ class Nyaasi():
             if multi_sub:
                 name_plus.append('Multi-Subs')
             if name_plus:
-                display_name = (
-                    f'{name} ({", ".join(name_plus)})')
+                display_name = (f'{name} ({", ".join(name_plus)})')
             else:
                 display_name = name
 
@@ -255,30 +254,23 @@ class Nyaasi():
 
             infos = Tree("[bold white]Informations[not bold]")
             if add_mal and anime and info_form_config:
-                infos.add(
-                    f"[bold white]MAL link ({name_to_mal}): [cornflower_blue not bold]{information}[white]")
-            infos.add(
-                f"[bold white]Selected category: [cornflower_blue not bold]{self.get_category(self.cat)}[white]")
+                infos.add(f"[bold white]MAL link ({name_to_mal}): [cornflower_blue not bold]{information}[white]")
+            infos.add(f"[bold white]Selected category: [cornflower_blue not bold]{self.get_category(self.cat)}[white]")
 
             if not self.args.skip_upload:
                 if mediainfo_to_torrent:
-                    medlink = Tree(
-                        f"[bold white]Mediainfo link: [cornflower_blue not bold]{mediainfo_url}[white]")
-                    medlink.add(
-                        f"[bold white]Edit code: [cornflower_blue not bold]{edit_code}[white]")
+                    medlink = Tree(f"[bold white]Mediainfo link: [cornflower_blue not bold]{mediainfo_url}[white]")
+                    medlink.add(f"[bold white]Edit code: [cornflower_blue not bold]{edit_code}[white]")
                     infos.add(medlink)
                 if self.pic_num != 0:
                     infos.add(images)
                 link = self.upload(torrent_fd, name, display_name,
                                    description, information, infos)
                 if not link:
-                    log.wprint(
-                        'Something happened during the uploading!', True)
+                    log.wprint("Something happened during the uploading!", True)
                 else:
-                    infos.add(
-                        f'[bold white]Page link: [cornflower_blue not bold]{link["url"]}[white]')
-                    infos.add(
-                        f'[bold white]Download link:[cornflower_blue not bold] https://nyaa.si/download/{link["id"]}.torrent[white]')
+                    infos.add(f'[bold white]Page link: [cornflower_blue not bold]{link["url"]}[white]')
+                    infos.add(f'[bold white]Download link:[cornflower_blue not bold] https://nyaa.si/download/{link["id"]}.torrent[white]')
                     style = "bold green"
                     title = "Torrent successfuly uploaded!"
             else:

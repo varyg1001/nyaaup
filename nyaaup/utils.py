@@ -55,8 +55,7 @@ MAP = {
 
 class RParse(argparse.ArgumentParser):
     def __init__(self, *args: Any, **kwargs: Any):
-        kwargs.setdefault("formatter_class",
-                          lambda prog: CustomHelpFormatter(prog))
+        kwargs.setdefault("formatter_class", lambda prog: CustomHelpFormatter(prog))
         super().__init__(*args, **kwargs)
 
     def _print_message(self, message: str, file: IO[str] | None = None) -> None:
@@ -419,7 +418,7 @@ def rentry_upload(self) -> dict:
             },
         ).json()
     except requests.HTTPError as e:
-        raise log.eprint(e.response, True)
+        log.eprint(e.response, True)
 
     return res
 
@@ -467,11 +466,11 @@ def get_description(self, input: Path, mediainfo_obj, mediainfo_obj_xml) -> list
                 subtitles_info.append(" | ".join(temp))
 
         if video_t_num != 1:
-            raise log.eprint(
+            log.eprint(
                 f"More than 1 video found in file! ({video_t_num})", True)
 
         if not audio_info:
-            raise log.eprint("Unable to determine audio language!", True)
+            log.eprint("Unable to determine audio language!", True)
 
         if not subtitles_info:
             subtitles_info.append('N/A')
