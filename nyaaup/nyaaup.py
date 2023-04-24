@@ -130,7 +130,7 @@ class Nyaasi():
         else:
             self.edit_code = self.args.edit_code
 
-        self.credentials = Config.get_cred(self, self.config["credentials"])
+        self.credentials = Config.get_cred(self.config["credentials"])
 
         if self.config["preferences"]["info"].lower() == "mal":
             info_form_config = False
@@ -194,7 +194,8 @@ class Nyaasi():
                         information = self.args.myanimelist
                     else:
                         information = "/".join(mal_data.url.split('/')[:-1])
-                elif info_form_config: information = self.config["preferences"]["info"]
+                elif info_form_config:
+                    information = self.config["preferences"]["info"]
             else: information = None
 
             videode, audiode, subde = get_description(
