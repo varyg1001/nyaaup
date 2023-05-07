@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 import requests
 import humanize
 import random
 import subprocess
 import sys
 import re
-import json
 import shutil
 import argparse
 from rich.padding import Padding
@@ -37,19 +38,19 @@ from rich.panel import Panel
 import torf
 import hashlib
 import bencodepy as bcp
-
+from pprint import pprint
 dirs = PlatformDirs(appname="nyaaup", appauthor=False)
 console = Console()
 
 MAP = {
     # subtitle codecs
-    "SubRip/SRT": "SRT",
-    "SubStationAlpha": "ASS",
+    "UTF-8": "SRT",
+    "ASS": "ASS",
     # channels
-    1: 1.0,
-    2: 2.0,
-    6: 5.1,
-    8: 7.1,
+    "1": "1.0",
+    "2": "2.0",
+    "6": "5.1",
+    "8": "7.1",
 }
 
 
@@ -208,9 +209,8 @@ class Config():
 class GetTracksInfo():
     def __init__(self, data) -> None:
         self.track_info = []
-        self.lang = Language.get(data["properties"].get("language_ietf")
-                    or data["properties"].get("language")).display_name()
-        self.track_name = data["properties"].get("track_name") or None
+        self.lang = Language.get(data.get("Language")).display_name()
+        self.track_name = data.get("Title") or None
 
     def greturn(self, lang: str, track_name: str = None) -> str:
         if track_name:
@@ -423,65 +423,71 @@ def rentry_upload(self) -> dict:
     return res
 
 
-def get_description(self, input: Path, mediainfo_obj, mediainfo_obj_xml) -> list:
+def get_description(mediainfo) -> list:
 
-    video_info = []
+    video_info = ""
     audio_info = []
     subtitles_info = []
 
-    if input.suffix == ".mkv":
-        mediainfo = json.loads(subprocess.run(
-            ["mkvmerge", "-J", input], capture_output=True, encoding="utf-8").stdout)
-        video_t_num = 0
-        audio_t_num = 0
+    video_t_num = 0
 
-        for info in mediainfo["tracks"]:
+    for info in mediainfo:
 
-            if not video_info:
-                video_info.append(
-                    f'**{mediainfo_obj_xml.video_tracks[0].format} {mediainfo_obj_xml.video_tracks[0].format_profile}**')
-            if info["type"] == "video":
-                video_t_num += 1
-                video_info.append(
-                    f'**{info["properties"].get("pixel_dimensions")}**')
-            if info["type"] == "audio":
-                temp = []
-                temp.append(GetTracksInfo(info).get_info())
-                at = str(mediainfo_obj_xml.audio_tracks[audio_t_num].format)
-                if mediainfo_obj_xml.audio_tracks[audio_t_num].format_additionalfeatures and "JOC" in mediainfo_obj_xml.audio_tracks[audio_t_num].format_additionalfeatures:
-                    at += "Atmos"
-                temp.append(at)
-                temp.append(f'{MAP.get(info["properties"]["audio_channels"])}')
-                try:
-                    temp.append(
-                        f"~{round(mediainfo_obj.audio_tracks[audio_t_num].bit_rate/1000)} kbps")
-                except:
-                    log.wprint("Couldn't get audio bitrate!")
-                audio_info.append(" | ".join(temp))
-                audio_t_num += 1
-            if info["type"] == "subtitles":
-                temp = []
-                temp.append(GetTracksInfo(info).get_info())
-                temp.append(f'{MAP.get(info["codec"])}')
-                subtitles_info.append(" | ".join(temp))
+        if info["@type"] == "Video":
 
-        if video_t_num != 1:
-            log.eprint(
-                f"More than 1 video found in file! ({video_t_num})", True)
+            v_bitrate = None
+            try:
+                v_bitrate = f'**~{round(float(info["BitRate"])/1000)} kbps**'
+            except KeyError:
+                log.wprint("Couldn't get video bitrate!")
 
-        if not audio_info:
-            log.eprint("Unable to determine audio language!", True)
+            video_info += " │ ".join([
+                x for x in [
+                    f'**{info.get("Format")} {info.get("Format_Profile")}@{info.get("Format_Level")}**',
+                    f'**{info.get("Width")}x{info.get("Height")}**',
+                    f'**{info.get("FrameRate")} fps**',
+                    v_bitrate,
+                ] if x
+            ])
 
-        if not subtitles_info:
-            subtitles_info.append('N/A')
-            log.wprint("Unable to determine subtitle language!")
-        video_info.append(
-            f'**{mediainfo_obj.video_tracks[0].frame_rate} FPS**')
-        try:
-            video_info.append(
-                f'**~{mediainfo_obj.video_tracks[0].bit_rate//1000} kbps**')
-        except:
-            log.wprint("Couldn't get video bitrate!")
+            video_t_num =+ 1
+
+        if info["@type"] == "Audio":
+
+            a_bitrate = None
+            try:
+                a_bitrate = f"~{round(float(info['BitRate'])/1000)} kbps"
+            except KeyError:
+                log.wprint("Couldn't get audio bitrate!")
+
+            audio_info += [ " │ ".join([
+                x for x in [
+                    GetTracksInfo(info).get_info(),
+                    info.get("Format") + " Atmos" if info.get("Format_AdditionalFeatures") and "JOC" in info.get("Format_AdditionalFeatures") else "",
+                    f'{MAP.get(info["Channels"])}',
+                    a_bitrate,
+                ] if x
+            ])]
+
+        if info["@type"] == "Text":
+            subtitles_info += [ " │ ".join([
+                x for x in [
+                    GetTracksInfo(info).get_info(),
+                    f'{MAP.get(info["Format"])}',
+                ] if x
+            ])]
+
+    if video_t_num != 1:
+        log.eprint(
+            f"Not only 1 video found in the file! ({video_t_num})", True)
+
+    if not audio_info:
+        log.eprint("Unable to determine audio language!", True)
+
+    if not subtitles_info:
+        subtitles_info.append('N/A')
+        log.wprint("Unable to determine subtitle language!")
+
     return video_info, audio_info, subtitles_info
 
 
