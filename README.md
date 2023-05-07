@@ -34,32 +34,34 @@ $ ./install.sh
 ### Usage
 
 ```
-                                                   nyaaup v1.1.1
+                                                   nyaaup v1.1.3
 
                                           Auto torrent uploader to Nyaa.si
 
-USAGE: nyaaup up [-h] [-ch] [-ms] [-da] [-ma] [-A] [-a] [-H] [-C] [-s] [-e EDIT_CODE] [-p PICTURES_NUMBER]
-                 [-mal MYANIMELIST] [-c CATEGORY]
+USAGE: nyaaup up [-h] [-ch] [-ms] [-da] [-ma] [-a] [-A] [-H] [-C] [-s] [-e EDIT_CODE] [-p PICTURES_NUMBER]
+                 [-M NO_MEDIAINFO] [-m MYANIMELIST] [--skip-myanimelist] [-c CATEGORY]
 
 
 ╭─ Positional arguments ────────────────────────────────────────────────────────────────────────────────────────────╮
-│ path                                   File or directory to upload.                                               │
+│   path                                   File or directory to upload.                                             │
 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
 ╭─ Options ─────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ -h, --help                             show this help message and exit                                            │
+│   -h, --help                             show this help message and exit                                          │
 │   -ch, --category-help                   Print available categories.                                              │
 │   -ms, --multi-subs                      Add Multi Subs tag to title.                                             │
 │   -da, --dual-audios                     Add Dual audios tag to title.                                            │
 │   -ma, --multi-audios                    Add Multi audios tag to title.                                           │
-│   -A, --auto                             Detect multi subs, multi audios and dual audios.                         │
-│   -a, --anonymous                        Upload torrent as anonymous.                                             │
+│   -a, --auto                             Detect multi subs, multi audios and dual audios.                         │
+│   -A, --anonymous                        Upload torrent as anonymous.                                             │
 │   -H, --hidden                           Upload the torrent as hidden.                                            │
 │   -C, --complete                         If the torrnet is a complete batch.                                      │
 │   -s, --skip-upload                      Skip torrent upload.                                                     │
 │   -e, --edit-code EDIT_CODE              Use uniq edit code for mediainfo on rentry.co                            │
 │   -p, --pictures-number PICTURES_NUMBER  Number of picture to upload to the torrent (default: 3).                 │
-│   -mal, --myanimelist MYANIMELIST        MyAnimeList link.                                                        │
+│   -M, --no-mediainfo NO_MEDIAINFO        Do not attach mediainfo to the torrent (provider rentry.co).             │
+│   -m, --myanimelist MYANIMELIST          MyAnimeList link.                                                        │
+│   --skip-myanimelist                     Skip anything that connect to MyAnimeList (in case of downtime).         │
 │   -c, --category CATEGORY                Select a category, for help use: --category-help (1-6).                  │
 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
