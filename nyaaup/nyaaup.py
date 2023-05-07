@@ -1,7 +1,6 @@
-from .utils import Config, log, generate_snapshots, image_upload, creat_torrent, rentry_upload, get_description, get_mal_link
+from __future__ import annotations
 
 import sys
-from json import loads
 import glob
 import json
 import requests
@@ -9,13 +8,18 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from pathlib import Path
 
+from rich.console import Console
+import subprocess
 from rich.panel import Panel
 from pymediainfo import MediaInfo
 from rich.tree import Tree
 from rich import print
 from rich.traceback import install
 
+from .utils import Config, log, generate_snapshots, image_upload, creat_torrent, rentry_upload, get_description, get_mal_link
+
 install(show_locals=True)
+console = Console()
 
 
 class Nyaasi():
@@ -132,9 +136,12 @@ class Nyaasi():
 
         self.credentials = Config.get_cred(self.config["credentials"])
 
-        if self.config["preferences"]["info"].lower() == "mal":
+        try:
+            if self.config["preferences"]["info"].lower() == "mal":
+                info_form_config = False
+            else: info_form_config = True
+        except AttributeError:
             info_form_config = False
-        else: info_form_config = True
 
         add_mal = self.config["preferences"]["mal"]
         mediainfo_to_torrent = self.config["preferences"]["mediainfo"] if not self.args.no_mediainfo else False
@@ -154,7 +161,7 @@ class Nyaasi():
 
             if in_file.is_file():
                 file = in_file
-                name = str(in_file.name).removesuffix('.mkv')
+                name = str(in_file.name).removesuffix('.mkv').removesuffix('.mp4')
             else:
                 file = Path(
                     sorted([*in_file.glob("*.mkv"), *in_file.glob("*.mp4")])[0])
@@ -163,9 +170,9 @@ class Nyaasi():
             self.cache_dir = dirs.user_cache_path / f"{name}_files"
             self.cache_dir.mkdir(parents=True, exist_ok=True)
 
-            if Path(file).suffix != ".mkv":  # TODO
-                log.eprint(
-                    f"{Path(file).suffix} is not supported format.", True)
+            #if Path(file).suffix != ".mkv":  # TODO
+            #    log.eprint(
+            #        f"{Path(file).suffix} is not supported format.", True)
 
             if not self.args.skip_upload:
                 creat_torrent(self, name, in_file)
@@ -173,9 +180,13 @@ class Nyaasi():
             else:
                 log.wprint("No torrent file created!")
 
-            mediainfo_from_input = MediaInfo.parse(file)
-            mediainfo_from_input_xml = MediaInfo('<?xml version="1.0" encoding="UTF-8"?><MediaInfo></MediaInfo>')
-            mediainfo_from_input_xml.tracks += MediaInfo.parse(file).tracks
+            with console.status("[bold magenta]MediaInfo parseing...") as status:
+                mediainfo = json.loads(subprocess.run(
+                    ["mediainfo", "--ParseSpeed=1.0", "--output=JSON", file], capture_output=True, encoding="utf-8").stdout)["media"]["track"]
+
+                mediainfo_from_input = MediaInfo.parse(file)
+                mediainfo_from_input_xml = MediaInfo('<?xml version="1.0" encoding="UTF-8"?><MediaInfo></MediaInfo>')
+                mediainfo_from_input_xml.tracks += MediaInfo.parse(file).tracks
 
             self.text = MediaInfo.parse(file, output="", full=False).replace(
                 str(file), str(file.name))
@@ -184,12 +195,12 @@ class Nyaasi():
             if self.cat in {"1_2", "1_3", "1_4"}:
                 anime = True
 
-            if anime and add_mal and not info_form_config:
+            if anime and add_mal and not info_form_config and not self.args.skip_myanimelist:
                 mal_data, name_to_mal = get_mal_link(
                     anime, self.args.myanimelist, name)
 
             if add_mal:
-                if not info_form_config and anime:
+                if not info_form_config and anime and not self.args.skip_myanimelist:
                     if self.args.myanimelist:
                         information = self.args.myanimelist
                     else:
@@ -198,9 +209,9 @@ class Nyaasi():
                     information = self.config["preferences"]["info"]
             else: information = None
 
-            videode, audiode, subde = get_description(
-                self, file, mediainfo_from_input, mediainfo_from_input_xml)
-            description += f'Informations:\n* Video: {" | ".join(videode)}\n* Audio(s): {", ".join(audiode)}\n* Subtitle(s): {", ".join(subde)}\n* Duration: **~{mediainfo_from_input.video_tracks[0].other_duration[4]}**'
+            videode, audiode, subde = get_description(mediainfo)
+            description += f'Informations:\n* Video: {videode}\n* Audio(s): {", ".join(audiode)}\n* Subtitle(s): {", ".join(subde)}\n* Duration: **~{mediainfo_from_input.video_tracks[0].other_duration[4]}**'
+
             if not self.args.skip_upload and mediainfo_to_torrent:
                 try:
                     rentry_response = rentry_upload(self)
