@@ -75,6 +75,10 @@ def main():
                            type=str,
                            default=None,
                            help='MyAnimeList link.')
+    parser_up.add_argument('--skip-myanimelist',
+                           action='store_true',
+                           default=False,
+                           help='Skip anything that connect to MyAnimeList (in case of downtime).')
     parser_up.add_argument('-c', '--category',
                            type=str,
                            default=None,
