@@ -8,13 +8,16 @@ import sys
 import re
 import shutil
 import argparse
+from pathlib import Path
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
 from rich.padding import Padding
 from rich.console import Console
 from typing import Any, IO, Literal, NoReturn, overload
 from ruamel.yaml import YAML
 import oxipng
 from torf import Torrent
-from pathlib import Path
 from wand.image import Image
 from langcodes import Language
 from mal import AnimeSearch, Anime
@@ -22,6 +25,7 @@ from platformdirs import PlatformDirs
 from rich.tree import Tree
 from rich.text import Text
 from rich import print
+from rich.panel import Panel
 from rich.progress import (
     Task,
     Progress,
@@ -32,15 +36,14 @@ from rich.progress import (
     MofNCompleteColumn,
     TimeRemainingColumn,
 )
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
-from rich.panel import Panel
-import torf
-import hashlib
-import bencodepy as bcp
-from pprint import pprint
+#import torf
+#import hashlib
+#import bencodepy as bcp
+
+
 dirs = PlatformDirs(appname="nyaaup", appauthor=False)
 console = Console()
+
 
 MAP = {
     # subtitle codecs
@@ -122,41 +125,40 @@ class CustomTransferSpeedColumn(ProgressColumn):
         return Text(f"{data_speed}/s", style="progress.data.speed")
 
 
-class log():
-    def print(
-            text: Any = "", highlight: bool = False, file: IO[str] = sys.stdout, flush: bool = False, **kwargs: Any) -> None:
-        with Console(highlight=highlight) as console:
-            console.print(text, **kwargs)
-            if flush:
-                file.flush()
+def print(
+        text: Any = "", highlight: bool = False, file: IO[str] = sys.stdout, flush: bool = False, **kwargs: Any) -> None:
+    with Console(highlight=highlight) as console:
+        console.print(text, **kwargs)
+        if flush:
+            file.flush()
 
-    @overload
-    def eprint(text: str, fatal: Literal[False] = False, exit_code: int = 1) -> None:
-        ...
+@overload
+def eprint(text: str, fatal: Literal[False] = False, exit_code: int = 1) -> None:
+    ...
 
-    @overload
-    def eprint(text: str, fatal: Literal[True], exit_code: int = 1) -> NoReturn:
-        ...
+@overload
+def eprint(text: str, fatal: Literal[True], exit_code: int = 1) -> NoReturn:
+    ...
 
-    def eprint(text: str, fatal: bool = False, exit_code: int = 1) -> None | NoReturn:
-        if text.startswith("\n"):
-            text = text.lstrip("\n")
-            print()
-        print(f"[bold color(231) on red]ERROR:[/] [red]{text}[/]")
-        if fatal:
-            sys.exit(exit_code)
-        return None
+def eprint(text: str, fatal: bool = False, exit_code: int = 1) -> None | NoReturn:
+    if text.startswith("\n"):
+        text = text.lstrip("\n")
+        print()
+    print(f"[bold color(231) on red]ERROR:[/] [red]{text}[/]")
+    if fatal:
+        sys.exit(exit_code)
+    return None
 
-    def info(text: str, up: int = 1, down: int = 1) -> None:
-        text = Padding(f"[bold green]{text}[white]",
-                       (up, 0, down, 0), expand=False)
-        print(text)
+def iprint(text: str, up: int = 1, down: int = 1) -> None:
+    text = Padding(f"[bold green]{text}[white]",
+                    (up, 0, down, 0), expand=False)
+    print(text)
 
-    def wprint(text: str) -> None:
-        if text.startswith("\n"):
-            text = text.lstrip("\n")
-            print()
-        print(f"[bold color(231) on yellow]WARNING:[/] [yellow]{text}[/]")
+def wprint(text: str) -> None:
+    if text.startswith("\n"):
+        text = text.lstrip("\n")
+        print()
+    print(f"[bold color(231) on yellow]WARNING:[/] [yellow]{text}[/]")
 
 
 class Config():
@@ -171,8 +173,7 @@ class Config():
     def creat(self, exit: bool = False):
         shutil.copy(Path(__file__).resolve().parent.parent.with_name(
             'nyaaup.yaml.example'), self.config_path)
-        log.eprint(
-            f"Config file doesn't exist, created to: {self.config_path}", exit)
+        eprint(f"Config file doesn't exist, created to: {self.config_path}", exit)
 
     def load(self):
         try:
@@ -183,11 +184,11 @@ class Config():
     @staticmethod
     def get_cred(cred: str):
         if cred == "user:pass":
-            log.eprint("Set valid credentials!", True)
+            eprint("Set valid credentials!", True)
         try:
             return re.fullmatch(r"^([^:]+?):([^:]+?)(?::(.+))?$", cred).groups()
         except:
-            log.eprint("Incorrect credentials format!", True)
+            eprint("Incorrect credentials format!", True)
 
     def add(self, text: str):
         credential = self.get_cred(text)
@@ -198,25 +199,22 @@ class Config():
                 self.creat()
                 data = self.yaml.load(self.config_path)
         else:
-            log.eprint(
-                "No credentials found in text. Format: `username:password`")
+            eprint("No credentials found in text. Format: `user:pass`")
         data["credentials"] = text
         self.yaml.dump(data, self.config_path)
-        log.print("[bold green]\nCredential successfully added![white]")
+        print("[bold green]\nCredential successfully added![white]")
         sys.exit(1)
 
 
 class GetTracksInfo():
-    def __init__(self, data) -> None:
+    def __init__(self, data):
         self.track_info = []
         self.lang = Language.get(data.get("Language")).display_name()
         self.track_name = data.get("Title") or None
 
     def greturn(self, lang: str, track_name: str = None) -> str:
         if track_name:
-            if track_name == "SDH":
-                return f"**{lang}** [{track_name}]"
-            if track_name == "Forced":
+            if track_name in {"SDH", "Forced"}:
                 return f"**{lang}** [{track_name}]"
             try:
                 r = re.search(r"(.*) \((SDH|Forced)\)", track_name)
@@ -287,9 +285,9 @@ def image_upload(self, snapshots: list, description: str) -> any:
 
     def image_uploader(image_path: Path) -> str:
         with open(image_path, 'rb') as file:
-            kek_request = requests.post(
+            res = requests.post(
                 'https://kek.sh/api/v1/posts', files={'file': file})
-            return kek_request.json()["filename"]
+            return res.json()["filename"]
 
     images = Tree("[bold white]Images[not bold]")
 
@@ -302,14 +300,14 @@ def image_upload(self, snapshots: list, description: str) -> any:
         TextColumn("Time:"),
         TimeRemainingColumn(elapsed_when_finished=True),
     ) as progress:
-        task1 = progress.add_task(
+        upload = progress.add_task(
             "[bold magenta]Uploading snapshots[white]", total=self.pic_num)
         for i in snapshots:
             image_link = image_uploader(i)
             description += f'![](https://i.kek.sh/{image_link})\n'
             images.add(
                 f"[not bold cornflower_blue]https://i.kek.sh/{image_link}[white /not bold]")
-            progress.update(task1, advance=1)
+            progress.update(upload, advance=1)
 
     return images, description
 
@@ -353,9 +351,9 @@ def creat_torrent(self, name, filename) -> bool:
             torrent.source = 'nyaa.si'
             torrent.write(f'{cache_dir}/{name}.torrent')
         """
-        log.wprint("Torrent file already exists, removing...")
+        wprint("Torrent file already exists, removing...")
         Path(f'{self.cache_dir}/{name}.torrent').unlink()
-    log.info("Creating torrent...", 0)
+    iprint("Creating torrent...", 0)
 
     torrent = Torrent(
         filename,
@@ -384,9 +382,9 @@ def creat_torrent(self, name, filename) -> bool:
                 files.append(filepath)
 
             progress.update(
-                task, completed=pieces_done * torrent.piece_size, total=pieces_total * torrent.piece_size
+                creat, completed=pieces_done * torrent.piece_size, total=pieces_total * torrent.piece_size
             )
-        task = progress.add_task(
+        creat = progress.add_task(
             description="[bold magenta]Torrent creating[not bold white]")
         # torrent.randomize_infohash = True
         torrent.generate(callback=update_progress, interval=1)
@@ -418,7 +416,7 @@ def rentry_upload(self) -> dict:
             },
         ).json()
     except requests.HTTPError as e:
-        log.eprint(e.response, True)
+        eprint(e.response, True)
 
     return res
 
@@ -437,16 +435,15 @@ def get_description(mediainfo) -> list:
 
             v_bitrate = None
             try:
-                v_bitrate = f'**~{round(float(info["BitRate"])/1000)} kbps**'
+                v_bitrate = f' @ **{round(float(info["BitRate"])/1000)} kbps**'
             except KeyError:
-                log.wprint("Couldn't get video bitrate!")
+                wprint("Couldn't get video bitrate!")
 
-            video_info += " │ ".join([
+            video_info += ", ".join([
                 x for x in [
                     f'**{info.get("Format")} {info.get("Format_Profile")}@{info.get("Format_Level")}**',
-                    f'**{info.get("Width")}x{info.get("Height")}**',
+                    f'**{info.get("Width")}x{info.get("Height")}**' + v_bitrate,
                     f'**{info.get("FrameRate")} fps**',
-                    v_bitrate,
                 ] if x
             ])
 
@@ -456,21 +453,22 @@ def get_description(mediainfo) -> list:
 
             a_bitrate = None
             try:
-                a_bitrate = f"~{round(float(info['BitRate'])/1000)} kbps"
+                a_bitrate = f" @ {round(float(info['BitRate'])/1000)} kbps"
             except KeyError:
-                log.wprint("Couldn't get audio bitrate!")
+                wprint("Couldn't get audio bitrate!")
+            atmos = info.get("Format_AdditionalFeatures")
 
-            audio_info += [ " │ ".join([
+            audio_info += [ ", ".join([
                 x for x in [
                     GetTracksInfo(info).get_info(),
-                    info.get("Format") + " Atmos" if info.get("Format_AdditionalFeatures") and "JOC" in info.get("Format_AdditionalFeatures") else "",
-                    f'{MAP.get(info["Channels"])}',
-                    a_bitrate,
+                    f'{info.get("Format")}{" Atmos" if atmos and "JOC" in atmos else ""}',
+                    f'{MAP.get(info["Channels"])}' + a_bitrate,
                 ] if x
             ])]
 
         if info["@type"] == "Text":
-            subtitles_info += [ " │ ".join([
+
+            subtitles_info += [ ", ".join([
                 x for x in [
                     GetTracksInfo(info).get_info(),
                     f'{MAP.get(info["Format"])}',
@@ -478,15 +476,14 @@ def get_description(mediainfo) -> list:
             ])]
 
     if video_t_num != 1:
-        log.eprint(
-            f"Not only 1 video found in the file! ({video_t_num})", True)
+        eprint(f"Not only 1 video found in the file! ({video_t_num})", True)
 
     if not audio_info:
-        log.eprint("Unable to determine audio language!", True)
+        eprint("Unable to determine audio language!", True)
 
     if not subtitles_info:
         subtitles_info.append('N/A')
-        log.wprint("Unable to determine subtitle language!")
+        wprint("Unable to determine subtitle language!")
 
     return video_info, audio_info, subtitles_info
 
@@ -508,7 +505,6 @@ def get_mal_link(anime, myanimelist, name) -> str:
                 name_to_mal = name_to_mal.replace(".", " ")
                 while not mal_data:
                     mal_data = Anime(AnimeSearch(name_to_mal).results[0].mal_id)
-        log.info(
-            "[bold magenta]Myanimelist page successfuly found![not bold white]", up=0, down=0)
+        iprint("[bold magenta]Myanimelist page successfuly found![not bold white]", up=0, down=0)
 
     return mal_data, name_to_mal
