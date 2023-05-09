@@ -4,7 +4,7 @@
 
 # Nyaaup
 
-Nyaaup is an auto torrent uploader to [Nyaa.si](https://nyaa.si/), working with `.mkv` videos (primarily for animes and live-actions).
+Nyaaup is an auto torrent uploader to [Nyaa.si](https://nyaa.si/), especially for video.
 This tool you can use with Linux systems. (On Windows you can use WSL.)
 
 ## Requirements
@@ -15,7 +15,7 @@ This tool you can use with Linux systems. (On Windows you can use WSL.)
 ### Dependencies
 
 - [FFmpeg](https://ffmpeg.org/) for image generating.
-- [MKVToolNix](https://mkvtoolnix.download/downloads.html) to get info from `.mkv` file.
+- [MediaInfo](https://mediaarea.net/en/MediaInfo/Download) to get info from video.
 
 ### Installation
 
