@@ -16,7 +16,19 @@ from rich.tree import Tree
 from rich import print
 from rich.traceback import install
 
-from .utils import Config, log, generate_snapshots, image_upload, creat_torrent, rentry_upload, get_description, get_mal_link
+from .utils import (
+    Config,
+    generate_snapshots,
+    image_upload,
+    creat_torrent,
+    rentry_upload,
+    get_description,
+    get_mal_link,
+    wprint,
+    print,
+    eprint,
+    iprint,
+) 
 
 install(show_locals=True)
 console = Console()
@@ -25,7 +37,7 @@ console = Console()
 class Nyaasi():
 
     def upload(self, torrent_byte, name: str, display_name: str, description: str, info: str, infos: Tree) -> dict:
-        log.info("Uploading to Nyaa.si...", down=0)
+        iprint("Uploading to Nyaa.si...", down=0)
         session = requests.Session()
         retry = Retry(connect=5, backoff_factor=0.5)
         adapter = HTTPAdapter(max_retries=retry)
@@ -56,7 +68,7 @@ class Nyaasi():
         )
 
         if response.json().get("errors") and "This torrent already exists" in response.json().get("errors").get("torrent")[0]:
-            log.eprint('\nThe torrent once uploaded in the past!\n')
+            eprint('\nThe torrent once uploaded in the past!\n')
             print(Panel.fit(infos, border_style="red"))
             sys.exit(1)
 
@@ -107,12 +119,12 @@ class Nyaasi():
             sys.exit(1)
 
         if not self.args.path:
-            log.eprint('No input!\n')
+            eprint('No input!\n')
             self.parser.print_help(sys.stdeerr)
             sys.exit(1)
 
         if not self.args.category:
-            log.eprint('No selected category!\n')
+            eprint('No selected category!\n')
             print(categorys_help)
             sys.exit(1)
 
@@ -157,7 +169,7 @@ class Nyaasi():
             name_plus = []
 
             if not in_file.exists():
-                log.eprint("Input file doens't exist!", True)
+                eprint("Input file doens't exist!", True)
 
             if in_file.is_file():
                 file = in_file
@@ -171,14 +183,14 @@ class Nyaasi():
             self.cache_dir.mkdir(parents=True, exist_ok=True)
 
             #if Path(file).suffix != ".mkv":  # TODO
-            #    log.eprint(
+            #    eprint(
             #        f"{Path(file).suffix} is not supported format.", True)
 
             if not self.args.skip_upload:
                 creat_torrent(self, name, in_file)
                 torrent_fd = open(f'{self.cache_dir}/{name}.torrent', "rb")
             else:
-                log.wprint("No torrent file created!")
+                wprint("No torrent file created!")
 
             with console.status("[bold magenta]MediaInfo parseing...") as status:
                 mediainfo = json.loads(subprocess.run(
@@ -188,8 +200,8 @@ class Nyaasi():
                 mediainfo_from_input_xml = MediaInfo('<?xml version="1.0" encoding="UTF-8"?><MediaInfo></MediaInfo>')
                 mediainfo_from_input_xml.tracks += MediaInfo.parse(file).tracks
 
-            self.text = MediaInfo.parse(file, output="", full=False).replace(
-                str(file), str(file.name))
+                self.text = MediaInfo.parse(file, output="", full=False).replace(
+                    str(file), str(file.name))
             anime = False
 
             if self.cat in {"1_2", "1_3", "1_4"}:
@@ -210,7 +222,7 @@ class Nyaasi():
             else: information = None
 
             videode, audiode, subde = get_description(mediainfo)
-            description += f'Informations:\n* Video: {videode}\n* Audio(s): {", ".join(audiode)}\n* Subtitle(s): {", ".join(subde)}\n* Duration: **~{mediainfo_from_input.video_tracks[0].other_duration[4]}**'
+            description += f'Informations:\n* Video: {videode}\n* Audio(s): {" │ ".join(audiode)}\n* Subtitle(s): {" │ ".join(subde)}\n* Duration: **~{mediainfo_from_input.video_tracks[0].other_duration[4]}**'
 
             if not self.args.skip_upload and mediainfo_to_torrent:
                 try:
@@ -219,7 +231,7 @@ class Nyaasi():
                     edit_code = rentry_response['edit_code']
                     description += f"\n\n[MediaInfo]({mediainfo_url}/raw)"
                 except requests.HTTPError as e:
-                    log.wprint(f"Failed to upload mediainfo to rentry.co! ({e.response})")
+                    wprint(f"Failed to upload mediainfo to rentry.co! ({e.response})")
             description += "\n\n---\n\n"
 
             sublen = len(subde)
@@ -236,7 +248,7 @@ class Nyaasi():
                 if sublen > 1:
                     multi_sub = True
 
-            name = name.replace(".", " ").replace(".", " ").replace("2 0", "2.0"
+            name = name.replace(".", " ").replace("2 0", "2.0"
                 ).replace("5 1", "5.1").replace("7 1", "7.1")
 
             if add_mal and anime:
@@ -275,17 +287,16 @@ class Nyaasi():
                     infos.add(medlink)
                 if self.pic_num != 0:
                     infos.add(images)
-                link = self.upload(torrent_fd, name, display_name,
-                                   description, information, infos)
+                link = self.upload(torrent_fd, name, display_name,description, information, infos)
                 if not link:
-                    log.wprint("Something happened during the uploading!", True)
+                    wprint("Something happened during the uploading!", True)
                 else:
                     infos.add(f'[bold white]Page link: [cornflower_blue not bold]{link["url"]}[white]')
                     infos.add(f'[bold white]Download link:[cornflower_blue not bold] https://nyaa.si/download/{link["id"]}.torrent[white]')
                     style = "bold green"
                     title = "Torrent successfuly uploaded!"
             else:
-                log.wprint("Torrent is not uploaded!")
+                wprint("Torrent is not uploaded!")
                 title = ""
                 style = "yellow"
             print('')
