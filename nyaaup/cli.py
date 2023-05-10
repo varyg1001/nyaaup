@@ -27,67 +27,65 @@ def main():
     subparsers = parser.add_subparsers(dest="command", required=True)
     parser_auth = subparsers.add_parser("auth")
     parser_auth.add_argument('-add', '--add-credential',
-                             type=str,
-                             metavar="USER:PASS",
-                             default=None,
-                             help="Add or replace credential in config file.")
+                            type=str,
+                            metavar="USER:PASS",
+                            default=None,
+                            help="Add or replace credential in config file.")
     parser_up = subparsers.add_parser("up")
     parser_up.add_argument('-ch', '--category-help',
-                           action='store_true',
-                           help='Print available categories.')
+                            action='store_true',
+                            help='Print available categories.')
     parser_up.add_argument('-ms', '--multi-subs',
-                           action='store_true',
-                           help='Add Multi Subs tag to title.')
+                            action='store_true',
+                            help='Add Multi Subs tag to title.')
     parser_up.add_argument('-da', '--dual-audios',
-                           action='store_true',
-                           help='Add Dual audios tag to title.')
+                            action='store_true',
+                            help='Add Dual audios tag to title.')
     parser_up.add_argument('-ma', '--multi-audios',
-                           action='store_true',
-                           help='Add Multi audios tag to title.')
+                            action='store_true',
+                            help='Add Multi audios tag to title.')
     parser_up.add_argument('-a', '--auto',
-                           action='store_true',
-                           help='Detect multi subs, multi audios and dual audios.')
+                            action='store_true',
+                            help='Detect multi subs, multi audios and dual audios.')
     parser_up.add_argument('-A', '--anonymous',
-                           action='store_true',
-                           help='Upload torrent as anonymous.')
+                            action='store_true',
+                            help='Upload torrent as anonymous.')
     parser_up.add_argument('-H', '--hidden',
-                           action='store_true',
-                           help='Upload the torrent as hidden.')
+                            action='store_true',
+                            help='Upload the torrent as hidden.')
     parser_up.add_argument('-C', '--complete',
-                           action='store_true',
-                           help='If the torrnet is a complete batch.')
+                            action='store_true',
+                            help='If the torrnet is a complete batch.')
     parser_up.add_argument('-s', '--skip-upload',
-                           action='store_true',
-                           help='Skip torrent upload.')
+                            action='store_true',
+                            help='Skip torrent upload.')
     parser_up.add_argument('-e', '--edit-code',
-                           type=str,
-                           default=None,
-                           help='Use uniq edit code for mediainfo on rentry.co')
+                            type=str,
+                            default=None,
+                            help='Use uniq edit code for mediainfo on rentry.co')
     parser_up.add_argument('-p', '--pictures-number',
-                           type=int,
-                           default=3,
-                           help='Number of picture to upload to the torrent (default: 3).'),
+                            type=int,
+                            default=3,
+                            help='Number of picture to upload to the torrent (default: 3).'),
     parser_up.add_argument('-M', '--no-mediainfo',
-                           type=str,
-                           default=None,
-                           help='Do not attach mediainfo to the torrent (provider rentry.co).')
+                            action='store_true',
+                            help='Do not attach mediainfo to the torrent (provider rentry.co).')
     parser_up.add_argument('-m', '--myanimelist',
-                           type=str,
-                           default=None,
-                           help='MyAnimeList link.')
+                            type=str,
+                            default=None,
+                            help='MyAnimeList link.')
     parser_up.add_argument('--skip-myanimelist',
-                           action='store_true',
-                           default=False,
-                           help='Skip anything that connect to MyAnimeList (in case of downtime).')
+                            action='store_true',
+                            help='Skip anything that connect to MyAnimeList (in case of downtime).')
     parser_up.add_argument('-c', '--category',
-                           type=str,
-                           default=None,
-                           help='Select a category, for help use: --category-help (1-6).')
+                            type=str,
+                            default=None,
+                            help='Select a category, for help use: --category-help (1-6).')
     parser_up.add_argument("path",
-                           type=Path,
-                           nargs="*",
-                           default=None,
-                           help="File or directory to upload.")
+                            type=Path,
+                            nargs="*",
+                            default=None,
+                            help="File or directory to upload.")
     parser.set_defaults(default_command=True, command='up')
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)

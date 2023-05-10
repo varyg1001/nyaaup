@@ -211,8 +211,8 @@ class Nyaasi():
                 mal_data, name_to_mal = get_mal_link(
                     anime, self.args.myanimelist, name)
 
-            if add_mal:
-                if not info_form_config and anime and not self.args.skip_myanimelist:
+            if add_mal and not self.args.skip_myanimelist:
+                if not info_form_config and anime:
                     if self.args.myanimelist:
                         information = self.args.myanimelist
                     else:
@@ -251,7 +251,7 @@ class Nyaasi():
             name = name.replace(".", " ").replace("2 0", "2.0"
                 ).replace("5 1", "5.1").replace("7 1", "7.1")
 
-            if add_mal and anime:
+            if add_mal and anime and not self.args.skip_myanimelist:
                 if self.cat in {"1_3", "1_4"}:
                     if mal_data.title_english and mal_data.title_english not in name:
                         name_plus.append(mal_data.title_english)
