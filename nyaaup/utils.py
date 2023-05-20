@@ -36,6 +36,7 @@ from rich.progress import (
     MofNCompleteColumn,
     TimeRemainingColumn,
 )
+from rich.live import Live
 #import torf
 #import hashlib
 #import bencodepy as bcp
@@ -237,57 +238,38 @@ class GetTracksInfo():
             return self.greturn(self.lang)
 
 
-def generate_snapshots(self, input: Path, name: str, mediainfo_obj) -> list:
+def snapshot(self, input: Path, name: str, mediainfo: list, description: str):
 
-    with Progress(
-        TextColumn("[progress.description]{task.description}[/]"),
-        "•",
-        BarColumn(),
-        MofNCompleteColumn(),
-        TaskProgressColumn(),
-        TextColumn("Time:"),
-        TimeRemainingColumn(elapsed_when_finished=True),
-    ) as progress:
-        task1 = progress.add_task(
-            "[bold magenta]Generating snapshots[not bold white]", total=self.pic_num)
-        while not progress.finished:
-            snapshots = []
-            num_snapshots = self.pic_num + 1
-            for x in range(1, num_snapshots):
-
-                snap = f'{self.cache_dir}/{name}_{x}.png'
-                duration = float(mediainfo_obj.video_tracks[0].duration) / 1000
-                interval = duration / (num_snapshots + 1)
-                subprocess.run([
-                    "ffmpeg",
-                    "-y",
-                    "-v", "error",
-                    "-ss", str(
-                        random.randint(
-                            round(interval * 10), round(interval * 10 * num_snapshots)) / 10
-                    ),
-                    "-i", input,
-                    "-vf", "scale='max(sar,1)*iw':'max(1/sar,1)*ih'",
-                    "-frames:v", "1",
-                    snap,
-                ], check=True)
-                with Image(filename=snap) as img:
-                    img.depth = 8
-                    img.save(filename=snap)
-                oxipng.optimize(snap)
-                snapshots.append(snap)
-                progress.update(task1, advance=1)
-
-    return snapshots
-
-
-def image_upload(self, snapshots: list, description: str) -> any:
-
-    def image_uploader(image_path: Path) -> str:
+    def up(image_path: Path) -> str:
         with open(image_path, 'rb') as file:
             res = requests.post(
                 'https://kek.sh/api/v1/posts', files={'file': file})
-            return res.json()["filename"]
+            return f'https://i.kek.sh/{res.json()["filename"]}'
+
+    def gen(x: int) -> None:
+        snap = f'{self.cache_dir}/{name}_{x}.png'
+        duration = float(mediainfo[0].get("Duration"))
+        interval = duration / (num_snapshots + 1)
+
+        subprocess.run([
+            "ffmpeg",
+            "-y",
+            "-v", "error",
+            "-ss", str(
+                random.randint(
+                    round(interval * 10), round(interval * 10 * num_snapshots)) / 10
+            ),
+            "-i", input,
+            "-vf", "scale='max(sar,1)*iw':'max(1/sar,1)*ih'",
+            "-frames:v", "1",
+            snap,
+        ], check=True)
+
+        with Image(filename=snap) as img:
+            img.depth = 8
+            img.save(filename=snap)
+        oxipng.optimize(snap)
+        snapshots.append(snap)
 
     images = Tree("[bold white]Images[not bold]")
 
@@ -298,18 +280,26 @@ def image_upload(self, snapshots: list, description: str) -> any:
         MofNCompleteColumn(),
         TaskProgressColumn(),
         TextColumn("Time:"),
-        TimeRemainingColumn(elapsed_when_finished=True),
+        TimeRemainingColumn(elapsed_when_finished=True, compact=True),
     ) as progress:
-        upload = progress.add_task(
-            "[bold magenta]Uploading snapshots[white]", total=self.pic_num)
-        for i in snapshots:
-            image_link = image_uploader(i)
-            description += f'![](https://i.kek.sh/{image_link})\n'
-            images.add(
-                f"[not bold cornflower_blue]https://i.kek.sh/{image_link}[white /not bold]")
+        snapshots = []
+        num_snapshots = self.pic_num + 1
+
+        generate = progress.add_task("[bold magenta]Generating snapshots[not bold white]", total=self.pic_num)
+
+        for x in range(1, num_snapshots):
+            gen(x)
+            progress.update(generate, advance=1)
+
+        upload = progress.add_task("[bold magenta]Uploading snapshots[white]", total=self.pic_num)
+
+        for x in range(1, num_snapshots):
+            link = up(snapshots[x - 1])
+            description += f'![]({link})\n'
+            images.add(f"[not bold cornflower_blue]{link}[white /not bold]")
             progress.update(upload, advance=1)
 
-    return images, description
+        return images, description
 
 
 def creat_torrent(self, name, filename) -> bool:
@@ -386,7 +376,7 @@ def creat_torrent(self, name, filename) -> bool:
             )
         creat = progress.add_task(
             description="[bold magenta]Torrent creating[not bold white]")
-        # torrent.randomize_infohash = True
+        #torrent.randomize_infohash = True
         torrent.generate(callback=update_progress, interval=1)
         torrent.write(f'{self.cache_dir}/{name}.torrent')
 
@@ -421,7 +411,7 @@ def rentry_upload(self) -> dict:
     return res
 
 
-def get_description(mediainfo) -> list:
+def get_description(mediainfo: list) -> list:
 
     video_info = ""
     audio_info = []
@@ -433,7 +423,7 @@ def get_description(mediainfo) -> list:
 
         if info["@type"] == "Video":
 
-            v_bitrate = None
+            v_bitrate = ""
             try:
                 v_bitrate = f' @ **{round(float(info["BitRate"])/1000)} kbps**'
             except KeyError:
@@ -441,7 +431,7 @@ def get_description(mediainfo) -> list:
 
             video_info += ", ".join([
                 x for x in [
-                    f'**{info.get("Format")} {info.get("Format_Profile")}@{info.get("Format_Level")}**',
+                    f'**{info.get("Format")} {info.get("Format_Profile")}@L{info.get("Format_Level")}**',
                     f'**{info.get("Width")}x{info.get("Height")}**' + v_bitrate,
                     f'**{info.get("FrameRate")} fps**',
                 ] if x
@@ -451,7 +441,7 @@ def get_description(mediainfo) -> list:
 
         if info["@type"] == "Audio":
 
-            a_bitrate = None
+            a_bitrate = ""
             try:
                 a_bitrate = f" @ {round(float(info['BitRate'])/1000)} kbps"
             except KeyError:
