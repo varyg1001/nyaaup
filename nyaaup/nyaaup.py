@@ -18,8 +18,6 @@ from rich.traceback import install
 
 from .utils import (
     Config,
-    generate_snapshots,
-    image_upload,
     creat_torrent,
     rentry_upload,
     get_description,
@@ -28,6 +26,7 @@ from .utils import (
     print,
     eprint,
     iprint,
+    snapshot,
 ) 
 
 install(show_locals=True)
@@ -194,22 +193,17 @@ class Nyaasi():
 
             with console.status("[bold magenta]MediaInfo parseing...") as status:
                 mediainfo = json.loads(subprocess.run(
-                    ["mediainfo", "--ParseSpeed=1.0", "--output=JSON", file], capture_output=True, encoding="utf-8").stdout)["media"]["track"]
-
-                mediainfo_from_input = MediaInfo.parse(file)
-                mediainfo_from_input_xml = MediaInfo('<?xml version="1.0" encoding="UTF-8"?><MediaInfo></MediaInfo>')
-                mediainfo_from_input_xml.tracks += MediaInfo.parse(file).tracks
+                    ["mediainfo",  "--ParseSpeed=1.0", "-f", "--output=JSON", file], capture_output=True, encoding="utf-8").stdout)["media"]["track"]
 
                 self.text = MediaInfo.parse(file, output="", full=False).replace(
                     str(file), str(file.name))
-            anime = False
 
             if self.cat in {"1_2", "1_3", "1_4"}:
                 anime = True
+            else: anime = False
 
             if anime and add_mal and not info_form_config and not self.args.skip_myanimelist:
-                mal_data, name_to_mal = get_mal_link(
-                    anime, self.args.myanimelist, name)
+                mal_data, name_to_mal = get_mal_link(anime, self.args.myanimelist, name)
 
             if add_mal and not self.args.skip_myanimelist:
                 if not info_form_config and anime:
@@ -222,7 +216,7 @@ class Nyaasi():
             else: information = None
 
             videode, audiode, subde = get_description(mediainfo)
-            description += f'Informations:\n* Video: {videode}\n* Audio(s): {" │ ".join(audiode)}\n* Subtitle(s): {" │ ".join(subde)}\n* Duration: **~{mediainfo_from_input.video_tracks[0].other_duration[4]}**'
+            description += f'Informations:\n* Video: {videode}\n* Audio(s): {" │ ".join(audiode)}\n* Subtitle(s): {" │ ".join(subde)}\n* Duration: **~{mediainfo[0].get("Duration_String4")}**'
 
             if not self.args.skip_upload and mediainfo_to_torrent:
                 try:
@@ -253,10 +247,11 @@ class Nyaasi():
 
             if add_mal and anime and not self.args.skip_myanimelist:
                 if self.cat in {"1_3", "1_4"}:
-                    if mal_data.title_english and mal_data.title_english not in name:
+                    if mal_data.title_english and mal_data.title_english.casefold() not in name.casefold():
                         name_plus.append(mal_data.title_english)
                 else:
-                    name_plus.append(mal_data.title)
+                    if mal_data.title.casefold() not in name.casefold():
+                        name_plus.append(mal_data.title)
 
             if dual_audio:
                 name_plus.append('Dual-audio')
@@ -265,15 +260,12 @@ class Nyaasi():
             if multi_sub:
                 name_plus.append('Multi-Subs')
             if name_plus:
-                display_name = (f'{name} ({", ".join(name_plus)})')
+                display_name = f'{name} ({", ".join(name_plus)})'
             else:
                 display_name = name
 
             if self.pic_num != 0 and not self.args.skip_upload:
-                snapshots = generate_snapshots(
-                    self, file, name, mediainfo_from_input)
-                images, description = image_upload(
-                    self, snapshots, description)
+                images, description = snapshot(self, file, name, mediainfo, description)
 
             infos = Tree("[bold white]Informations[not bold]")
             if add_mal and anime and info_form_config:
