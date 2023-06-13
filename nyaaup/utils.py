@@ -14,7 +14,7 @@ from urllib3.util.retry import Retry
 
 from rich.padding import Padding
 from rich.console import Console
-from typing import Any, IO, Literal, NoReturn, overload
+from typing import Any, IO, Literal, NoReturn, overload, Optional
 from ruamel.yaml import YAML
 import oxipng
 from torf import Torrent
@@ -172,7 +172,7 @@ class Config():
         return self.dirs
 
     def creat(self, exit: bool = False):
-        shutil.copy(Path(__file__).resolve().parent.parent.with_name(
+        shutil.copy(Path(__file__).resolve().parent.with_name(
             'nyaaup.yaml.example'), self.config_path)
         eprint(f"Config file doesn't exist, created to: {self.config_path}", exit)
 
@@ -188,15 +188,16 @@ class Config():
             eprint("Set valid credentials!", True)
         try:
             return re.fullmatch(r"^([^:]+?):([^:]+?)(?::(.+))?$", cred).groups()
-        except:
+        except AttributeError:
             eprint("Incorrect credentials format!", True)
 
     def add(self, text: str):
         credential = self.get_cred(text)
+        data = dict()
         if credential:
             try:
                 data = self.yaml.load(self.config_path)
-            except:
+            except FileNotFoundError:
                 self.creat()
                 data = self.yaml.load(self.config_path)
         else:
@@ -208,7 +209,7 @@ class Config():
 
 
 class GetTracksInfo():
-    def __init__(self, data):
+    def __init__(self, data: dict):
         self.track_info = []
         self.lang = Language.get(data.get("Language")).display_name()
         self.track_name = data.get("Title") or None
@@ -238,7 +239,7 @@ class GetTracksInfo():
             return self.greturn(self.lang)
 
 
-def snapshot(self, input: Path, name: str, mediainfo: list, description: str):
+def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
 
     def up(image_path: Path) -> str:
         with open(image_path, 'rb') as file:
@@ -295,14 +296,14 @@ def snapshot(self, input: Path, name: str, mediainfo: list, description: str):
 
         for x in range(1, num_snapshots):
             link = up(snapshots[x - 1])
-            description += f'![]({link})\n'
+            self.description += f'![]({link})\n'
             images.add(f"[not bold cornflower_blue]{link}[white /not bold]")
             progress.update(upload, advance=1)
 
-        return images, description
+        return images
 
 
-def creat_torrent(self, name, filename) -> bool:
+def creat_torrent(self, name: str, filename: Path) -> bool:
     if Path((f'{self.cache_dir}/{name}.torrent')).is_file():
         """
         bencodepy = bcp.Bencode(encoding="utf-8", encoding_fallback="value")
@@ -350,7 +351,7 @@ def creat_torrent(self, name, filename) -> bool:
         trackers=['http://nyaa.tracker.wf:7777/announce'],
         source='nyaa.si',
         creation_date=None,
-        created_by=None,
+        created_by="",
         exclude_regexs=[r".*\.(ffindex|jpg|nfo|png|srt|torrent|txt)$"],
     )
 
@@ -376,7 +377,7 @@ def creat_torrent(self, name, filename) -> bool:
             )
         creat = progress.add_task(
             description="[bold magenta]Torrent creating[not bold white]")
-        #torrent.randomize_infohash = True
+        #  torrent.randomize_infohash = True
         torrent.generate(callback=update_progress, interval=1)
         torrent.write(f'{self.cache_dir}/{name}.torrent')
 
@@ -400,7 +401,6 @@ def rentry_upload(self) -> dict:
             },
             data={
                 'csrfmiddlewaretoken': session.cookies['csrftoken'],
-                'url': self.url,
                 'edit_code': self.edit_code,
                 'text': self.text
             },
@@ -411,11 +411,11 @@ def rentry_upload(self) -> dict:
     return res
 
 
-def get_description(mediainfo: list) -> list:
+def get_description(mediainfo: list) -> list[str] and str:
 
     video_info = ""
-    audio_info = []
-    subtitles_info = []
+    audio_info: list[str] = []
+    subtitles_info: list[str] = []
 
     video_t_num = 0
 
@@ -448,7 +448,7 @@ def get_description(mediainfo: list) -> list:
                 wprint("Couldn't get audio bitrate!")
             atmos = info.get("Format_AdditionalFeatures")
 
-            audio_info += [ ", ".join([
+            audio_info += [", ".join([
                 x for x in [
                     GetTracksInfo(info).get_info(),
                     f'{info.get("Format")}{" Atmos" if atmos and "JOC" in atmos else ""}',
@@ -458,7 +458,7 @@ def get_description(mediainfo: list) -> list:
 
         if info["@type"] == "Text":
 
-            subtitles_info += [ ", ".join([
+            subtitles_info += [", ".join([
                 x for x in [
                     GetTracksInfo(info).get_info(),
                     f'{MAP.get(info["Format"])}',
@@ -478,12 +478,12 @@ def get_description(mediainfo: list) -> list:
     return video_info, audio_info, subtitles_info
 
 
-def get_mal_link(anime, myanimelist, name) -> str:
+def get_mal_link(anime, myanimelist, name) -> str and Anime:
     if anime:
-        mal_data = None
+        mal_data: Optional[Anime] = None
         if myanimelist:
             with console.status("[bold magenta]Getting MyAnimeList info form input link...") as status:
-                malid = str(myanimelist).split("/")[4]
+                malid: str = str(myanimelist).split("/")[4]
                 while not mal_data:
                     mal_data = Anime(malid)
                 name_to_mal = mal_data.title
