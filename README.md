@@ -11,6 +11,7 @@ This tool you can use with Linux systems. (On Windows you can use WSL.)
 
 - [Python](https://python.org/) 3.10 or 3.11
 - [Poetry](https://python-poetry.org/) 1.2.0 or newer (to install Python package dependencies)
+- [ImageMagick](https://imagemagick.org/script/download.php)
 
 ### Dependencies
 
