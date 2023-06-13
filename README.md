@@ -11,12 +11,12 @@ Works both on Linux and windows.
 
 - [Python](https://python.org/) 3.10 or 3.11
 - [Poetry](https://python-poetry.org/) 1.2.0 or newer (to install Python package dependencies)
-- [ImageMagick](https://imagemagick.org/script/download.php) for pyoxipng
 
 ### Dependencies
 
 - [FFmpeg](https://ffmpeg.org/) for image generating.
 - [MediaInfo](https://mediaarea.net/en/MediaInfo/Download) to get info from video.
+- [ImageMagick](https://imagemagick.org/script/download.php) for pyoxipng
 
 ### Installation
 
@@ -26,9 +26,7 @@ Works both on Linux and windows.
 4. `poetry install`
 5. `nyaaup -h`
 
-OR
-
-for Linux
+or for Linux auto installer
 
 ```shell
 $ ./install.sh
@@ -43,10 +41,6 @@ $ ./install.sh
 `$ nyaaup up -ms -c 1 /path/My.Master.Has.No.Tail.S01.1080p.AMZN.WEB-DL.DDP2.0.H.264-VARYG`
 
 ### Usage
-
-```
-
-```
 
 ```
                                                    nyaaup v1.1.3
