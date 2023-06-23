@@ -431,9 +431,9 @@ def get_description(mediainfo: list) -> list[str] and str:
 
             video_info += ", ".join([
                 x for x in [
-                    f'**{info.get("Format")} {info.get("Format_Profile")}@L{info.get("Format_Level")}**',
+                    f'**{info.get("InternetMediaType").split("/")[1]} {info.get("Format_Profile")}@L{info.get("Format_Level")}**',
                     f'**{info.get("Width")}x{info.get("Height")}**' + v_bitrate,
-                    f'**{info.get("FrameRate")} fps**',
+                    f'**{info.get("FrameRate_String")}**',
                 ] if x
             ])
 
