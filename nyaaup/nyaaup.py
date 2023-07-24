@@ -263,7 +263,7 @@ class Nyaasi():
 
             if not self.args.skip_upload:
                 if mediainfo_to_torrent:
-                    medlink = Tree(f"[bold white]Mediainfo link: [cornflower_blue not bold]{mediainfo_url}[white]")
+                    medlink = Tree(f"[bold white]Mediainfo link: [cornflower_blue not bold][link={mediainfo_url}]{mediainfo_url}[/link][white]")
                     medlink.add(f"[bold white]Edit code: [cornflower_blue not bold]{edit_code}[white]")
                     infos.add(medlink)
                 if self.pic_num != 0:
@@ -272,8 +272,8 @@ class Nyaasi():
                 if not link:
                     wprint("Something happened during the uploading!", True)
                 else:
-                    infos.add(f'[bold white]Page link: [cornflower_blue not bold]{link["url"]}[white]')
-                    infos.add(f'[bold white]Download link:[cornflower_blue not bold] https://nyaa.si/download/{link["id"]}.torrent[white]')
+                    infos.add(f'[bold white]Page link: [cornflower_blue not bold][link={link["url"]}]{link["url"]}[/link][white]')
+                    infos.add(f'[bold white]Download link: [cornflower_blue not bold][link=https://nyaa.si/download/{link["id"]}.torrent]https://nyaa.si/download/{link["id"]}.torrent[/link][white]')
                     style = "bold green"
                     title = "Torrent successfuly uploaded!"
             else:

@@ -302,7 +302,7 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
         for x in range(1, num_snapshots):
             link = up(snapshots[x - 1])
             self.description += f'![]({link})\n'
-            images.add(f"[not bold cornflower_blue]{link}[white /not bold]")
+            images.add(f"[not bold cornflower_blue][link={link}]{link}[/link][white /not bold]")
             progress.update(upload, advance=1)
 
         return images
