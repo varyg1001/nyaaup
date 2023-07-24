@@ -159,6 +159,8 @@ class Nyaasi():
         for in_file in self.args.path:
 
             self.description: str = ""
+            if note := self.args.note:
+                self.description += f"{note}\n\n---\n\n"
             name_plus = list()
 
             if not in_file.exists():

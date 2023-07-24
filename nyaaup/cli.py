@@ -92,6 +92,12 @@ def main():
         help='Number of picture to upload to the torrent (default: 3).'
     ),
     parser_up.add_argument(
+        '-n', '--note',
+        type=str,
+        default=None,
+        help='Put a note in to the description.'
+    ),
+    parser_up.add_argument(
         '-M', '--no-mediainfo',
         action='store_true',
         help='Do not attach mediainfo to the torrent (provider rentry.co).'
