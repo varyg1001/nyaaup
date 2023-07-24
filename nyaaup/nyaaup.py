@@ -208,8 +208,7 @@ class Nyaasi():
                     information = self.config["preferences"]["info"]
 
             videode, audiode, subde = get_description(mediainfo)
-            self.description += f'Informations:\n* Video: {videode}\n* Audio(s): \
-            {" │ ".join(audiode)}\n* Subtitle(s): {" │ ".join(subde)}\n* Duration: **~{mediainfo[0].get("Duration_String4")}**'
+            self.description += f'Informations:\n* Video: {videode}\n* Audio(s): {" │ ".join(audiode)}\n* Subtitle(s): {" │ ".join(subde)}\n* Duration: **~{mediainfo[0].get("Duration_String4")}**'
 
             if not self.args.skip_upload and mediainfo_to_torrent:
                 try:
