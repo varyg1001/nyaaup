@@ -43,12 +43,12 @@ $ ./install.sh
 ### Usage
 
 ```
-                                                   nyaaup v1.1.3
+                                                   nyaaup v2.0.0
 
                                           Auto torrent uploader to Nyaa.si
 
 USAGE: nyaaup up [-h] [-ch] [-ms] [-da] [-ma] [-a] [-A] [-H] [-C] [-s] [-e EDIT_CODE] [-p PICTURES_NUMBER]
-                 [-M NO_MEDIAINFO] [-m MYANIMELIST] [--skip-myanimelist] [-c CATEGORY]
+                 [-n NOTE] [-M] [-m MYANIMELIST] [--skip-myanimelist] [-c CATEGORY]
 
 
 ╭─ Positional arguments ────────────────────────────────────────────────────────────────────────────────────────────╮
@@ -68,7 +68,8 @@ USAGE: nyaaup up [-h] [-ch] [-ms] [-da] [-ma] [-a] [-A] [-H] [-C] [-s] [-e EDIT_
 │   -s, --skip-upload                      Skip torrent upload.                                                     │
 │   -e, --edit-code EDIT_CODE              Use uniq edit code for mediainfo on rentry.co                            │
 │   -p, --pictures-number PICTURES_NUMBER  Number of picture to upload to the torrent (default: 3).                 │
-│   -M, --no-mediainfo NO_MEDIAINFO        Do not attach mediainfo to the torrent (provider rentry.co).             │
+│   -n, --note NOTE                        Put a note in to the description.                                        │
+│   -M, --no-mediainfo                     Do not attach mediainfo to the torrent (provider rentry.co).             │
 │   -m, --myanimelist MYANIMELIST          MyAnimeList link.                                                        │
 │   --skip-myanimelist                     Skip anything that connect to MyAnimeList (in case of downtime).         │
 │   -c, --category CATEGORY                Select a category, for help use: --category-help (1-6).                  │
