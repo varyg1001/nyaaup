@@ -211,7 +211,12 @@ class Config():
 class GetTracksInfo():
     def __init__(self, data: dict):
         self.track_info = []
-        self.lang = Language.get(data.get("Language")).display_name()
+        lang = data.get("Language")
+        if not lang:
+            self.lang = "Und"
+            wprint("One track has unknown language!")
+        else:
+            self.lang = Language.get(data.get("Language")).display_name()
         self.track_name = data.get("Title") or None
 
     def greturn(self, lang: str, track_name: str = None) -> str:
