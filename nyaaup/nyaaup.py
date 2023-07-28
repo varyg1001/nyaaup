@@ -141,7 +141,6 @@ class Nyaasi():
         self.config = Config().load()
 
         self.edit_code: Optional[str] = self.config["preferences"]["edit_code"] if not self.args.edit_code else self.args.edit_code
-
         self.credentials: Optional[dict] = Config.get_cred(self.config["credentials"])
 
         try:
@@ -220,8 +219,8 @@ class Nyaasi():
                     wprint(f"Failed to upload mediainfo to rentry.co! ({e.response})")
             self.description += "\n\n---\n\n"
 
-            sublen: int = len(set([x.split("**")[1] for x in subde]))
-            audiodelen: int = len(set([x.split("**")[1] for x in audiode]))
+            sublen: int = len(set([x.split("**")[1] for x in subde])) if len(subde) > 0 else subde
+            audiodelen: int = len(set([x.split("**")[1] for x in audiode])) if len(audiode) > 0 else audiode
 
             if self.args.auto:
                 if audiodelen == 2:
