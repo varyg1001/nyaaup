@@ -219,8 +219,8 @@ class Nyaasi():
                     wprint(f"Failed to upload mediainfo to rentry.co! ({e.response})")
             self.description += "\n\n---\n\n"
 
-            sublen: int = len(set([x.split("**")[1] for x in subde])) if len(subde) > 0 else subde
-            audiodelen: int = len(set([x.split("**")[1] for x in audiode])) if len(audiode) > 0 else audiode
+            sublen: int = len(set([x.split("**")[1] for x in subde])) if len(subde) > 1 else subde
+            audiodelen: int = len(set([x.split("**")[1] for x in audiode])) if len(audiode) > 1 else audiode
 
             if self.args.auto:
                 if audiodelen == 2:
