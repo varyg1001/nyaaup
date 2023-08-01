@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import requests
 import humanize
 import random
 import subprocess
@@ -9,8 +8,7 @@ import re
 import shutil
 import argparse
 from pathlib import Path
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
+import httpx
 
 from rich.padding import Padding
 from rich.console import Console
@@ -248,8 +246,8 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
 
     def up(image_path: Path) -> str:
         with open(image_path, 'rb') as file:
-            res = requests.post(
-                'https://kek.sh/api/v1/posts', files={'file': file})
+            res = httpx.post('https://kek.sh/api/v1/posts', files={'file': file})
+
             return f'https://i.kek.sh/{res.json()["filename"]}'
 
     def gen(x: int) -> None:
@@ -357,7 +355,7 @@ def creat_torrent(self, name: str, filename: Path) -> bool:
         source='nyaa.si',
         creation_date=None,
         created_by="",
-        exclude_regexs=[r".*\.(ffindex|jpg|nfo|png|srt|torrent|txt)$"],
+        exclude_regexs=[r".*\.(ffindex|jpg|nfo|png|srt|torrent|txt|json)$"],
     )
 
     with Progress(
@@ -392,26 +390,26 @@ def creat_torrent(self, name: str, filename: Path) -> bool:
 def rentry_upload(self) -> dict:
 
     # get csrftoken
-    session = requests.Session()
-    retry = Retry(connect=3, backoff_factor=0.5)
-    adapter = HTTPAdapter(max_retries=retry)
-    session.mount('https://', adapter)
-    session.get(url="https://rentry.co")
+    transport = httpx.HTTPTransport(retries=1)
+    client = httpx.Client(transport=transport)
+    client.get(url="https://rentry.co")
 
     try:
-        res = session.post(
+        res = client.post(
             'https://rentry.co/api/new',
             headers={
                 "Referer": "https://rentry.co"
             },
             data={
-                'csrfmiddlewaretoken': session.cookies['csrftoken'],
+                'csrfmiddlewaretoken': client.cookies['csrftoken'],
                 'edit_code': self.edit_code,
                 'text': self.text
             },
         ).json()
-    except requests.HTTPError as e:
+    except httpx.HTTPError as e:
         eprint(e.response, True)
+    finally:
+        client.close()
 
     return res
 

@@ -3,9 +3,7 @@ from __future__ import annotations
 import sys
 import glob
 import json
-import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
+import httpx
 from pathlib import Path
 from typing import Optional
 
@@ -37,10 +35,8 @@ class Nyaasi():
 
     def upload(self, torrent_byte, name: str, display_name: str, info: str, infos: Tree) -> dict:
         iprint("Uploading to Nyaa.si...", down=0)
-        session = requests.Session()
-        retry = Retry(connect=5, backoff_factor=0.5)
-        adapter = HTTPAdapter(max_retries=retry)
-        session.mount('https://', adapter)
+        transport = httpx.HTTPTransport(retries=1)
+        client = httpx.Client(transport=transport)
 
         payload = {
             "torrent_data": json.dumps(
@@ -57,7 +53,7 @@ class Nyaasi():
             )
         }
 
-        response = session.post(
+        response = client.post(
             "https://nyaa.si/api/v2/upload",
             files={
                 "torrent": (f'{name}.torrent', torrent_byte, "application/x-bittorrent")
@@ -65,7 +61,7 @@ class Nyaasi():
             data=payload,
             auth=(self.credentials[0], self.credentials[1]),
         )
-
+        client.close()
         if response.json().get("errors") and "This torrent already exists" in response.json().get("errors").get("torrent")[0]:
             eprint('\nThe torrent once uploaded in the past!\n')
             print(Panel.fit(infos, border_style="red"))
@@ -215,7 +211,7 @@ class Nyaasi():
                     mediainfo_url = rentry_response['url']
                     edit_code = rentry_response['edit_code']
                     self.description += f"\n\n[MediaInfo]({mediainfo_url}/raw)"
-                except requests.HTTPError as e:
+                except httpx.HTTPError as e:
                     wprint(f"Failed to upload mediainfo to rentry.co! ({e.response})")
             self.description += "\n\n---\n\n"
 
