@@ -2,6 +2,7 @@
 from .utils import RParse
 from .nyaaup import Nyaasi
 from .auth import Auth
+from .__init__ import __version__
 
 import argparse
 import sys
@@ -12,12 +13,10 @@ from rich.console import Console
 console = Console()
 install(show_locals=True)
 
-PROG_VERSION = '2.0.0'
-
 
 def main():
     console.print(
-        f"[b]nyaaup[/b] [magenta bold]v{PROG_VERSION}[/]\n\n[dim]Auto torrent uploader to Nyaa.si\n",  # noqa: E501
+        f"[b]nyaaup[/b] [magenta bold]v{__version__}[/]\n\n[dim]Auto torrent uploader to Nyaa.si\n",  # noqa: E501
         justify="center",
     )
 
