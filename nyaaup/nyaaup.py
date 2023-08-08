@@ -7,8 +7,8 @@ import httpx
 from pathlib import Path
 from typing import Optional
 
-from rich.console import Console
 import subprocess
+from rich.console import Console
 from rich.panel import Panel
 from pymediainfo import MediaInfo
 from rich.tree import Tree
@@ -24,14 +24,60 @@ from .utils import (
     wprint,
     eprint,
     iprint,
-    snapshot,
-) 
+    snapshot
+)
 
 install(show_locals=True)
 console = Console()
 
-
 class Nyaasi():
+
+    def __init__(self, args, parser):
+
+        self.args = args
+        self.parser = parser
+
+        if len(sys.argv) == 1:
+            parser.print_help(sys.stderr)
+            sys.exit(1)
+
+        self.cat = self.get_category(self.args.category)
+        categorys_help = Tree(
+            "[chartreuse2]Available categorys:[white /not bold]")
+        categorys_help.add(
+            "[1] [cornflower_blue not bold]Anime - English-translated[white /not bold]")
+        categorys_help.add(
+            "[2] [cornflower_blue not bold]Anime - Non-English-translated[white /not bold]")
+        categorys_help.add(
+            "[3] [cornflower_blue not bold]Anime - Raw[white /not bold]")
+        categorys_help.add(
+            "[4] [cornflower_blue not bold]Live Action - English-translated[white /not bold]")
+        categorys_help.add(
+            "[5] [cornflower_blue not bold]Live Action - Non-English-translated[white /not bold]")
+        categorys_help.add(
+            "[6] [cornflower_blue not bold]Live Action - Raw[white /not bold]")
+
+        if self.args.category_help:
+            print(categorys_help)
+            sys.exit(1)
+
+        if not self.args.path:
+            eprint('No input!\n')
+            self.parser.print_help(sys.stdeerr)
+            sys.exit(1)
+
+        if not self.args.category:
+            eprint('No selected category!\n')
+            print(categorys_help)
+            sys.exit(1)
+
+        self.pic_num = self.args.pictures_number
+
+        self.hidden = 'hidden' if self.args.hidden else None
+        self.anonymous = 'anonymous' if self.args.anonymous else None
+        self.complete = 'complete' if self.args.complete else None
+
+        self.main()
 
     def upload(self, torrent_byte, name: str, display_name: str, info: str, infos: Tree) -> dict:
         iprint("Uploading to Nyaa.si...", down=0)
@@ -83,53 +129,6 @@ class Nyaasi():
             case "4_1": return "Live Action - English-Translated"
             case "4_3": return "Live Action - Non-English-translated"
             case "4_4": return "Live Action - Raw"
-
-    def __init__(self, args, parser):
-
-        self.args = args
-        self.parser = parser
-
-        if len(sys.argv) == 1:
-            parser.print_help(sys.stderr)
-            sys.exit(1)
-
-        self.cat = self.get_category(self.args.category)
-        categorys_help = Tree(
-            "[chartreuse2]Available categorys:[white /not bold]")
-        categorys_help.add(
-            "[1] [cornflower_blue not bold]Anime - English-translated[white /not bold]")
-        categorys_help.add(
-            "[2] [cornflower_blue not bold]Anime - Non-English-translated[white /not bold]")
-        categorys_help.add(
-            "[3] [cornflower_blue not bold]Anime - Raw[white /not bold]")
-        categorys_help.add(
-            "[4] [cornflower_blue not bold]Live Action - English-translated[white /not bold]")
-        categorys_help.add(
-            "[5] [cornflower_blue not bold]Live Action - Non-English-translated[white /not bold]")
-        categorys_help.add(
-            "[6] [cornflower_blue not bold]Live Action - Raw[white /not bold]")
-
-        if self.args.category_help:
-            print(categorys_help)
-            sys.exit(1)
-
-        if not self.args.path:
-            eprint('No input!\n')
-            self.parser.print_help(sys.stdeerr)
-            sys.exit(1)
-
-        if not self.args.category:
-            eprint('No selected category!\n')
-            print(categorys_help)
-            sys.exit(1)
-
-        self.pic_num = self.args.pictures_number
-
-        self.hidden = 'hidden' if self.args.hidden else None
-        self.anonymous = 'anonymous' if self.args.anonymous else None
-        self.complete = 'complete' if self.args.complete else None
-
-        self.main()
 
     def main(self):
         dirs = Config().get_dirs()

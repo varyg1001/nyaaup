@@ -34,7 +34,6 @@ from rich.progress import (
     MofNCompleteColumn,
     TimeRemainingColumn,
 )
-from rich.live import Live
 #import torf
 #import hashlib
 #import bencodepy as bcp
@@ -484,18 +483,17 @@ def get_description(mediainfo: list) -> list[str] and str:
 def get_mal_link(anime, myanimelist, name) -> str and Anime:
     if anime:
         mal_data: Optional[Anime] = None
+        name_to_mal = re.sub(r"\.S\d+.*", "", name)
+        if name_to_mal == name:
+            name_to_mal = re.sub(r"\.\d\d\d\d\..*", "", name)
+        name_to_mal = name_to_mal.replace(".", " ")
         if myanimelist:
             with console.status("[bold magenta]Getting MyAnimeList info form input link...") as status:
                 malid: str = str(myanimelist).split("/")[4]
                 while not mal_data:
                     mal_data = Anime(malid)
-                name_to_mal = mal_data.title
         else:
             with console.status("[bold magenta]Searching MyAnimeList link form input name...") as status:
-                name_to_mal = re.sub(r"\.S\d+.*", "", name)
-                if name_to_mal == name:
-                    name_to_mal = re.sub(r"\.\d\d\d\d\..*", "", name)
-                name_to_mal = name_to_mal.replace(".", " ")
                 while not mal_data:
                     mal_data = Anime(AnimeSearch(name_to_mal).results[0].mal_id)
         iprint("[bold magenta]Myanimelist page successfuly found![not bold white]", up=0, down=0)
