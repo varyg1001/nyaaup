@@ -8,6 +8,7 @@ import re
 import shutil
 import argparse
 from pathlib import Path
+import requests
 import httpx
 
 from rich.padding import Padding
@@ -168,7 +169,7 @@ class Config():
     def get_dirs(self):
         return self.dirs
 
-    def creat(self, exit: bool = False):
+    def create(self, exit: bool = False):
         shutil.copy(Path(__file__).resolve().parent.with_name(
             'nyaaup.yaml.example'), self.config_path)
         eprint(f"Config file doesn't exist, created to: {self.config_path}", exit)
@@ -177,7 +178,7 @@ class Config():
         try:
             return self.yaml.load(self.config_path)
         except:
-            self.creat(True)
+            self.create(True)
 
     @staticmethod
     def get_cred(cred: str):
@@ -195,7 +196,7 @@ class Config():
             try:
                 data = self.yaml.load(self.config_path)
             except FileNotFoundError:
-                self.creat()
+                self.create()
                 data = self.yaml.load(self.config_path)
         else:
             eprint("No credentials found in text. Format: `user:pass`")
@@ -305,52 +306,21 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
         return images
 
 
-def creat_torrent(self, name: str, filename: Path) -> bool:
-    if Path((f'{self.cache_dir}/{name}.torrent')).is_file():
-        """
-        bencodepy = bcp.Bencode(encoding="utf-8", encoding_fallback="value")
-        tor = open(f'{self.cache_dir}/{name}.torrent', mode='rb')
-        tor = tor.read()
-        torrent_file = bencodepy.decode(tor)
-        print(hashlib.sha1(torrent_file["info"]["pieces"]).hexdigest())
-        if update := torrent_file.update():
-            info = torrent_file.encode(update["info"])
-            info_hash = hashlib.sha1(info).hexdigest()
-        item = bencodepy.decode(tor)
-        #info_hash = hashlib.sha1(infos).hexdigest()
-
-        tor = tor.read()
-        torrent_file = bencodepy.decode(tor)
-        if update := torrent_file.update():
-            if new_torrent := torrent_file.encode(update):
-                info = torrent_file.encode(update["info"])
-                info_hash = hashlib.sha1(info).hexdigest()
-        item = bencodepy.decode(tor)
-        infos = item.encode(item["info"])
-        print(infos)
-        info_hash = hashlib.sha1(infos).hexdigest()
-        print(info_hash)
-        t = Torrent.read(f'{cache_dir}/{name}.torrent')
-        print(t)
-        sys.exit(1)
-
-        torrent.reuse(filename)
-        try:
-            torrent.validate()
-        except torf.MetainfoError:
-            print(f'[red1]Torrent file is invalid, recreating[white]')
+def create_torrent(self, name: str, filename: Path, overwrite: bool = False) -> bool:
+    torrent_file = Path(f'{self.cache_dir}/{name}.torrent')
+    if torrent_file.is_file():
+        if overwrite:
+            wprint("Torrent file already exists, removing...")
+            torrent_file.unlink()
         else:
-            torrent.trackers = ['http://nyaa.tracker.wf:7777/announce']
-            torrent.source = 'nyaa.si'
-            torrent.write(f'{cache_dir}/{name}.torrent')
-        """
-        wprint("Torrent file already exists, removing...")
-        Path(f'{self.cache_dir}/{name}.torrent').unlink()
+            iprint("Torrent file already exists, using existing file...")
+            return True
+        
     iprint("Creating torrent...", 0)
 
     torrent = Torrent(
         filename,
-        trackers=['http://nyaa.tracker.wf:7777/announce'],
+        trackers = get_public_trackers(),
         source='nyaa.si',
         creation_date=None,
         created_by="",
@@ -375,13 +345,13 @@ def creat_torrent(self, name: str, filename: Path) -> bool:
                 files.append(filepath)
 
             progress.update(
-                creat, completed=pieces_done * torrent.piece_size, total=pieces_total * torrent.piece_size
+                create, completed=pieces_done * torrent.piece_size, total=pieces_total * torrent.piece_size
             )
-        creat = progress.add_task(
+        create = progress.add_task(
             description="[bold magenta]Torrent creating[not bold white]")
         #  torrent.randomize_infohash = True
         torrent.generate(callback=update_progress, interval=1)
-        torrent.write(f'{self.cache_dir}/{name}.torrent')
+        torrent.write(torrent_file)
 
     return True
 
@@ -499,3 +469,19 @@ def get_mal_link(anime, myanimelist, name) -> str and Anime:
         iprint("[bold magenta]Myanimelist page successfuly found![not bold white]", up=0, down=0)
 
     return mal_data, name_to_mal
+
+def get_public_trackers() -> list[str]:
+    nyaaTracker = ["http://nyaa.tracker.wf:7777/announce"]
+    url = "https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+
+        trackers = []
+        for line in response.text.splitlines():
+            if line.strip():
+                trackers.append(line.strip())
+        return nyaaTracker + trackers
+
+    except requests.exceptions.RequestException:
+        return nyaaTracker
