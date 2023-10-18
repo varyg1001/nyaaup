@@ -8,7 +8,6 @@ import re
 import shutil
 import argparse
 from pathlib import Path
-import requests
 import httpx
 
 from rich.padding import Padding
