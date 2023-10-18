@@ -119,6 +119,12 @@ def main():
         help='Select a category, for help use: --category-help (1-6).'
     )
     parser_up.add_argument(
+        '-o', '--overwrite',
+        action='store_true',
+        help='Recreate the .torrent if it already exists.'
+    )
+    
+    parser_up.add_argument(
         "path",
         type=Path,
         nargs="*",
