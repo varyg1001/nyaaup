@@ -135,7 +135,7 @@ class Nyaasi():
         Path(dirs.user_config_path).mkdir(parents=True, exist_ok=True)
         self.config = Config().load()
 
-        self.edit_code: Optional[str] = self.config["preferences"]["edit_code"] if not self.args.edit_code else self.args.edit_code
+        self.edit_code: Optional[str] = self.config["preferences"].get("edit_code") if not self.args.edit_code else self.args.edit_code
         self.credentials: Optional[dict] = Config.get_cred(self.config["credentials"])
 
         try:
@@ -143,8 +143,9 @@ class Nyaasi():
         except AttributeError:
             info_form_config: bool = False
 
-        add_mal: bool = self.config["preferences"]["mal"]
-        mediainfo_to_torrent: bool = self.config["preferences"]["mediainfo"] if not self.args.no_mediainfo else False
+        add_mal: bool = self.config["preferences"].get("mal", True)
+        mediainfo_to_torrent: bool = self.config["preferences"].get("mediainfo", True) if not self.args.no_mediainfo else False
+        self.add_pub_trackers: bool = self.config["preferences"].get("add_pub_trackers", False)
 
         multi_sub: bool = self.args.multi_subs
         multi_audio: bool = self.args.multi_audios
