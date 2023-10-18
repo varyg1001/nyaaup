@@ -17,7 +17,7 @@ from rich.traceback import install
 
 from .utils import (
     Config,
-    creat_torrent,
+    create_torrent,
     rentry_upload,
     get_description,
     get_mal_link,
@@ -42,33 +42,33 @@ class Nyaasi():
             sys.exit(1)
 
         self.cat = self.get_category(self.args.category)
-        categorys_help = Tree(
-            "[chartreuse2]Available categorys:[white /not bold]")
-        categorys_help.add(
+        categories_help = Tree(
+            "[chartreuse2]Available categories:[white /not bold]")
+        categories_help.add(
             "[1] [cornflower_blue not bold]Anime - English-translated[white /not bold]")
-        categorys_help.add(
+        categories_help.add(
             "[2] [cornflower_blue not bold]Anime - Non-English-translated[white /not bold]")
-        categorys_help.add(
+        categories_help.add(
             "[3] [cornflower_blue not bold]Anime - Raw[white /not bold]")
-        categorys_help.add(
+        categories_help.add(
             "[4] [cornflower_blue not bold]Live Action - English-translated[white /not bold]")
-        categorys_help.add(
+        categories_help.add(
             "[5] [cornflower_blue not bold]Live Action - Non-English-translated[white /not bold]")
-        categorys_help.add(
+        categories_help.add(
             "[6] [cornflower_blue not bold]Live Action - Raw[white /not bold]")
 
         if self.args.category_help:
-            print(categorys_help)
+            print(categories_help)
             sys.exit(1)
 
         if not self.args.path:
             eprint('No input!\n')
-            self.parser.print_help(sys.stdeerr)
+            self.parser.print_help(sys.stderr)
             sys.exit(1)
 
         if not self.args.category:
             eprint('No selected category!\n')
-            print(categorys_help)
+            print(categories_help)
             sys.exit(1)
 
         self.pic_num = self.args.pictures_number
@@ -158,7 +158,7 @@ class Nyaasi():
             name_plus = list()
 
             if not in_file.exists():
-                eprint("Input file doens't exist!", True)
+                eprint("Input file doesn't exist!", True)
 
             if in_file.is_file():
                 file = in_file
@@ -171,13 +171,10 @@ class Nyaasi():
             self.cache_dir = dirs.user_cache_path / f"{name}_files"
             self.cache_dir.mkdir(parents=True, exist_ok=True)
 
-            if not self.args.skip_upload:
-                creat_torrent(self, name, in_file)
-                torrent_fd = open(f'{self.cache_dir}/{name}.torrent', "rb")
-            else:
-                wprint("No torrent file created!")
+            create_torrent(self, name, in_file, self.args.overwrite)
+            torrent_fd = open(f'{self.cache_dir}/{name}.torrent', "rb")
 
-            with console.status("[bold magenta]MediaInfo parseing...") as status:
+            with console.status("[bold magenta]MediaInfo parsing...") as status:
                 mediainfo = json.loads(subprocess.run(
                     ["mediainfo",  "--ParseSpeed=1.0", "-f", "--output=JSON", file], capture_output=True, encoding="utf-8").stdout)["media"]["track"]
 
@@ -202,7 +199,7 @@ class Nyaasi():
                     information = self.config["preferences"]["info"]
 
             videode, audiode, subde = get_description(mediainfo)
-            self.description += f'Informations:\n* Video: {videode}\n* Audio(s): {" │ ".join(audiode)}\n* Subtitle(s): {" │ ".join(subde)}\n* Duration: **~{mediainfo[0].get("Duration_String4")}**'
+            self.description += f'Information:\n* Video: {videode}\n* Audio(s): {" │ ".join(audiode)}\n* Subtitle(s): {" │ ".join(subde)}\n* Duration: **~{mediainfo[0].get("Duration_String3")}**'
 
             if not self.args.skip_upload and mediainfo_to_torrent:
                 try:
@@ -236,9 +233,9 @@ class Nyaasi():
                         name_plus.append(mal_data.title)
 
             if dual_audio:
-                name_plus.append('Dual-audio')
+                name_plus.append('Dual-Audio')
             elif multi_audio:
-                name_plus.append('Multi-Audios')
+                name_plus.append('Multi-Audio')
             if multi_sub:
                 name_plus.append('Multi-Subs')
 
@@ -247,7 +244,7 @@ class Nyaasi():
             if self.pic_num != 0 and not self.args.skip_upload:
                 images: Tree = snapshot(self, file, name, mediainfo)
 
-            infos = Tree("[bold white]Informations[not bold]")
+            infos = Tree("[bold white]Information[not bold]")
             if add_mal and anime and info_form_config:
                 infos.add(f"[bold white]MAL link ({name_to_mal}): [cornflower_blue not bold]{information}[white]")
             infos.add(f"[bold white]Selected category: [cornflower_blue not bold]{self.get_category(self.cat)}[white]")
@@ -257,7 +254,7 @@ class Nyaasi():
 
             if not self.args.skip_upload:
                 if mediainfo_to_torrent:
-                    medlink = Tree(f"[bold white]Mediainfo link: [cornflower_blue not bold][link={mediainfo_url}]{mediainfo_url}[/link][white]")
+                    medlink = Tree(f"[bold white]MediaInfo link: [cornflower_blue not bold][link={mediainfo_url}]{mediainfo_url}[/link][white]")
                     medlink.add(f"[bold white]Edit code: [cornflower_blue not bold]{edit_code}[white]")
                     infos.add(medlink)
                 if self.pic_num != 0:
@@ -269,7 +266,7 @@ class Nyaasi():
                     infos.add(f'[bold white]Page link: [cornflower_blue not bold][link={link["url"]}]{link["url"]}[/link][white]')
                     infos.add(f'[bold white]Download link: [cornflower_blue not bold][link=https://nyaa.si/download/{link["id"]}.torrent]https://nyaa.si/download/{link["id"]}.torrent[/link][white]')
                     style = "bold green"
-                    title = "Torrent successfuly uploaded!"
+                    title = "Torrent successfully uploaded!"
             else:
                 wprint("Torrent is not uploaded!")
             print('')
