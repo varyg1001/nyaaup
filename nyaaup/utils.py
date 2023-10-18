@@ -42,7 +42,7 @@ from rich.progress import (
 
 dirs = PlatformDirs(appname="nyaaup", appauthor=False)
 console = Console()
-
+transport = httpx.HTTPTransport(retries=5)
 
 MAP = {
     # subtitle codecs
@@ -306,7 +306,7 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
         return images
 
 
-def create_torrent(self, name: str, filename: Path, overwrite: bool = False) -> bool:
+def create_torrent(self, name: str, filename: Path, overwrite: bool) -> bool:
     torrent_file = Path(f'{self.cache_dir}/{name}.torrent')
     if torrent_file.is_file():
         if overwrite:
@@ -320,7 +320,7 @@ def create_torrent(self, name: str, filename: Path, overwrite: bool = False) -> 
 
     torrent = Torrent(
         filename,
-        trackers = get_public_trackers(),
+        trackers = get_public_trackers(self),
         source='nyaa.si',
         creation_date=None,
         created_by="",
@@ -357,30 +357,28 @@ def create_torrent(self, name: str, filename: Path, overwrite: bool = False) -> 
 
 
 def rentry_upload(self) -> dict:
+    with httpx.Client(transport=transport) as client:
+        # get csrftoken
+        client.get(url="https://rentry.co")
 
-    # get csrftoken
-    transport = httpx.HTTPTransport(retries=1)
-    client = httpx.Client(transport=transport)
-    client.get(url="https://rentry.co")
+        try:
+            res = client.post(
+                'https://rentry.co/api/new',
+                headers={
+                    "Referer": "https://rentry.co"
+                },
+                data={
+                    'csrfmiddlewaretoken': client.cookies['csrftoken'],
+                    'edit_code': self.edit_code,
+                    'text': self.text
+                },
+            ).json()
+        except httpx.HTTPError as e:
+            eprint(e.response, True)
+        finally:
+            client.close()
 
-    try:
-        res = client.post(
-            'https://rentry.co/api/new',
-            headers={
-                "Referer": "https://rentry.co"
-            },
-            data={
-                'csrfmiddlewaretoken': client.cookies['csrftoken'],
-                'edit_code': self.edit_code,
-                'text': self.text
-            },
-        ).json()
-    except httpx.HTTPError as e:
-        eprint(e.response, True)
-    finally:
-        client.close()
-
-    return res
+        return res
 
 
 def get_description(mediainfo: list) -> list[str] and str:
@@ -470,18 +468,15 @@ def get_mal_link(anime, myanimelist, name) -> str and Anime:
 
     return mal_data, name_to_mal
 
-def get_public_trackers() -> list[str]:
-    nyaaTracker = ["http://nyaa.tracker.wf:7777/announce"]
-    url = "https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt"
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
+def get_public_trackers(self) -> list[str]:
+    trackers: list = ["http://nyaa.tracker.wf:7777/announce"]
 
-        trackers = []
-        for line in response.text.splitlines():
-            if line.strip():
-                trackers.append(line.strip())
-        return nyaaTracker + trackers
+    if self.add_pub_trackers:
+        with httpx.Client(transport=transport) as client:
+            try:
+                response = client.get("https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt")
+                trackers += [x for x in response.text.splitlines() if x]
+            except httpx.HTTPError as e:
+                eprint(e.response)
 
-    except requests.exceptions.RequestException:
-        return nyaaTracker
+    return trackers
