@@ -4,3 +4,4 @@ preferences:
     info: mal # This will be put to Information part. ('mal' will put Myanimelist link in it if can.)
     mal: true # Use MyAnimeList.net to add anime original name to display name.
     mediainfo: true # If attach mediainfo to the torrent (provider rentry.co)
+    add_pub_trackers: false # true if you want to add https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt trackers to you torrent

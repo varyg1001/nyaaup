@@ -123,7 +123,6 @@ def main():
         action='store_true',
         help='Recreate the .torrent if it already exists.'
     )
-    
     parser_up.add_argument(
         "path",
         type=Path,
