@@ -9,7 +9,7 @@ Works both on Linux and windows.
 
 ## Requirements
 
-- [Python](https://python.org/) 3.10 or 3.11
+- [Python](https://python.org/) 3.10 or newer
 - [Poetry](https://python-poetry.org/) 1.2.0 or newer (to install Python package dependencies)
 
 ### Dependencies
@@ -43,12 +43,12 @@ $ ./install.sh
 ### Usage
 
 ```
-                                                   nyaaup v2.0.0
+                                                   nyaaup v2.2.1
 
                                           Auto torrent uploader to Nyaa.si
 
 USAGE: nyaaup up [-h] [-ch] [-ms] [-da] [-ma] [-a] [-A] [-H] [-C] [-s] [-e EDIT_CODE] [-p PICTURES_NUMBER]
-                 [-n NOTE] [-M] [-m MYANIMELIST] [--skip-myanimelist] [-c CATEGORY]
+                 [-n NOTE] [-M] [-m MYANIMELIST] [--skip-myanimelist] [-c CATEGORY] [-o]
 
 
 ╭─ Positional arguments ────────────────────────────────────────────────────────────────────────────────────────────╮
@@ -73,8 +73,9 @@ USAGE: nyaaup up [-h] [-ch] [-ms] [-da] [-ma] [-a] [-A] [-H] [-C] [-s] [-e EDIT_
 │   -m, --myanimelist MYANIMELIST          MyAnimeList link.                                                        │
 │   --skip-myanimelist                     Skip anything that connect to MyAnimeList (in case of downtime).         │
 │   -c, --category CATEGORY                Select a category, for help use: --category-help (1-6).                  │
+│   -o, --overwrite                        Recreate the .torrent if it already exists.                              │
 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
-![img](https://i.kek.sh/1nLQYikOtLj.jpg)
-<!---https://i.kek.sh/1nLQYikOtLj.jpg--->
+![img](https://i.kek.sh/6ggTz484hs7.png)
+<!---https://i.kek.sh/6ggTz484hs7.png--->
