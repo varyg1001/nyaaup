@@ -23,7 +23,6 @@ from mal import AnimeSearch, Anime
 from platformdirs import PlatformDirs
 from rich.tree import Tree
 from rich.text import Text
-from rich import print
 from rich.panel import Panel
 from rich.progress import (
     Task,
@@ -35,9 +34,9 @@ from rich.progress import (
     MofNCompleteColumn,
     TimeRemainingColumn,
 )
-#import torf
-#import hashlib
-#import bencodepy as bcp
+# import torf
+# import hashlib
+# import bencodepy as bcp
 
 
 dirs = PlatformDirs(appname="nyaaup", appauthor=False)
@@ -58,7 +57,8 @@ MAP = {
 
 class RParse(argparse.ArgumentParser):
     def __init__(self, *args: Any, **kwargs: Any):
-        kwargs.setdefault("formatter_class", lambda prog: CustomHelpFormatter(prog))
+        kwargs.setdefault("formatter_class",
+                          lambda prog: CustomHelpFormatter(prog))
         super().__init__(*args, **kwargs)
 
     def _print_message(self, message: str, file: IO[str] | None = None) -> None:
@@ -126,18 +126,21 @@ class CustomTransferSpeedColumn(ProgressColumn):
 
 def print(
         text: Any = "", highlight: bool = False, file: IO[str] = sys.stdout, flush: bool = False, **kwargs: Any) -> None:
-    with Console(highlight=highlight) as console:
-        console.print(text, **kwargs)
+    with Console(highlight=highlight) as cons:
+        cons.print(text, **kwargs)
         if flush:
             file.flush()
+
 
 @overload
 def eprint(text: str, fatal: Literal[False] = False, exit_code: int = 1) -> None:
     ...
 
+
 @overload
 def eprint(text: str, fatal: Literal[True], exit_code: int = 1) -> NoReturn:
     ...
+
 
 def eprint(text: str, fatal: bool = False, exit_code: int = 1) -> None | NoReturn:
     if text.startswith("\n"):
@@ -148,10 +151,12 @@ def eprint(text: str, fatal: bool = False, exit_code: int = 1) -> None | NoRetur
         sys.exit(exit_code)
     return None
 
+
 def iprint(text: str, up: int = 1, down: int = 1) -> None:
     text = Padding(f"[bold green]{text}[white]",
-                    (up, 0, down, 0), expand=False)
+                   (up, 0, down, 0), expand=False)
     print(text)
+
 
 def wprint(text: str) -> None:
     if text.startswith("\n"):
@@ -172,7 +177,8 @@ class Config():
     def create(self, exit: bool = False):
         shutil.copy(Path(__file__).resolve().parent.with_name(
             'nyaaup.yaml.example'), self.config_path)
-        eprint(f"Config file doesn't exist, created to: {self.config_path}", exit)
+        eprint(
+            f"Config file doesn't exist, created to: {self.config_path}", exit)
 
     def load(self):
         try:
@@ -246,7 +252,8 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
 
     def up(image_path: Path) -> str:
         with open(image_path, 'rb') as file:
-            res = httpx.post('https://kek.sh/api/v1/posts', files={'file': file})
+            res = httpx.post('https://kek.sh/api/v1/posts',
+                             files={'file': file})
 
             return f'https://i.kek.sh/{res.json()["filename"]}'
 
@@ -272,10 +279,10 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
         with Image(filename=snap) as img:
             img.depth = 8
             img.save(filename=snap)
-            
+
         if self.pic_ext == 'png':
             oxipng.optimize(snap, level=6)
-            
+
         snapshots.append(snap)
 
     images = Tree("[bold white]Images[not bold]")
@@ -292,26 +299,34 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
         snapshots = []
         num_snapshots = self.pic_num + 1
 
-        generate = progress.add_task("[bold magenta]Generating snapshots[not bold white]", total=self.pic_num)
+        generate = progress.add_task(
+            "[bold magenta]Generating snapshots[not bold white]",
+            total=self.pic_num
+        )
 
         for x in range(1, num_snapshots):
             gen(idx=x)
             progress.update(generate, advance=1)
 
         if not self.args.skip_upload:
-            upload = progress.add_task("[bold magenta]Uploading snapshots[white]", total=self.pic_num)
+            upload = progress.add_task(
+                "[bold magenta]Uploading snapshots[white]",
+                total=self.pic_num
+            )
 
             for x in range(1, num_snapshots):
                 snap = snapshots[x - 1]
                 file_size = os.path.getsize(snap)
-                
+
                 if file_size > 5 * 1024 * 1024:  # 5MB in bytes
-                    wprint(f"Skipping snapshot {snap} as its size is more than 5MB")
+                    wprint(
+                        f"Skipping snapshot {snap} as its size is more than 5MB")
                 else:
                     link = up(snapshots[x - 1])
                     self.description += f'![]({link})\n'
-                    images.add(f"[not bold cornflower_blue][link={link}]{link}[/link][white /not bold]")
-                    
+                    images.add(
+                        f"[not bold cornflower_blue][link={link}]{link}[/link][white /not bold]")
+
                 progress.update(upload, advance=1)
 
         return images
@@ -326,12 +341,12 @@ def create_torrent(self, name: str, filename: Path, overwrite: bool) -> bool:
         else:
             iprint("Torrent file already exists, using existing file...")
             return True
-        
+
     iprint("Creating torrent...", 0)
 
     torrent = Torrent(
         filename,
-        trackers = get_public_trackers(self),
+        trackers=get_public_trackers(self),
         source='nyaa.si',
         creation_date=None,
         created_by="",
@@ -413,12 +428,13 @@ def get_description(mediainfo: list) -> list[str] and str:
             video_info += ", ".join([
                 x for x in [
                     f'**{info.get("InternetMediaType").split("/")[1]} {info.get("Format_Profile")}@L{info.get("Format_Level")}**',
-                    f'**{info.get("Width")}x{info.get("Height")}**' + v_bitrate,
+                    f'**{info.get("Width")}x{info.get("Height")}**' +
+                    v_bitrate,
                     f'**{info.get("FrameRate_String")}**',
                 ] if x
             ])
 
-            video_t_num =+ 1
+            video_t_num = + 1
 
         if info["@type"] == "Audio":
 
@@ -474,10 +490,13 @@ def get_mal_link(anime, myanimelist, name) -> str and Anime:
         else:
             with console.status("[bold magenta]Searching MyAnimeList link form input name...") as status:
                 while not mal_data:
-                    mal_data = Anime(AnimeSearch(name_to_mal).results[0].mal_id)
-        iprint("[bold magenta]Myanimelist page successfuly found![not bold white]", up=0, down=0)
+                    mal_data = Anime(AnimeSearch(
+                        name_to_mal).results[0].mal_id)
+        iprint(
+            "[bold magenta]Myanimelist page successfuly found![not bold white]", up=0, down=0)
 
     return mal_data, name_to_mal
+
 
 def get_public_trackers(self) -> list[str]:
     trackers: list = ["http://nyaa.tracker.wf:7777/announce"]
@@ -485,7 +504,8 @@ def get_public_trackers(self) -> list[str]:
     if self.add_pub_trackers:
         with httpx.Client(transport=transport) as client:
             try:
-                response = client.get("https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt")
+                response = client.get(
+                    "https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt")
                 trackers += [x for x in response.text.splitlines() if x]
             except httpx.HTTPError as e:
                 eprint(e.response)
