@@ -91,6 +91,12 @@ def main():
         help='Number of picture to upload to the torrent (default: 3).'
     ),
     parser_up.add_argument(
+        '-pe', '--picture-extension',
+        type=str,
+        default='png',
+        help='Extension of the snapshot to upload (default: png).'
+    )
+    parser_up.add_argument(
         '-n', '--note',
         type=str,
         default=None,
