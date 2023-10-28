@@ -63,7 +63,7 @@ class RParse(argparse.ArgumentParser):
 
     def _print_message(self, message: str, file: IO[str] | None = None) -> None:
         if "error" in message:
-            print(f'[white not bold]{message}')
+            lprint(f'[white not bold]{message}')
         if message:
             if message.startswith("usage"):
                 message = re.sub(
@@ -83,17 +83,17 @@ class RParse(argparse.ArgumentParser):
                     pa = op[1].strip().replace(
                         "}", "").replace("{", "").split(",")
                     pa = f'[green]{"[/], [green]".join(pa)}[/]'
-                    print(op[0].strip().replace(op[1].strip(), pa))
-                    print('')
+                    lprint(op[0].strip().replace(op[1].strip(), pa))
+                    lprint('')
                     console.print(
                         Panel(
                             f"  {pa}", border_style="dim", title="Positional arguments", title_align="left"
                         )
                     )
-                    print('')
+                    lprint('')
                 else:
-                    print(m[0].strip())
-                    print('')
+                    lprint(m[0].strip())
+                    lprint('')
 
                 console.print(
                     Panel(
@@ -124,7 +124,7 @@ class CustomTransferSpeedColumn(ProgressColumn):
         return Text(f"{data_speed}/s", style="progress.data.speed")
 
 
-def print(
+def lprint(
         text: Any = "", highlight: bool = False, file: IO[str] = sys.stdout, flush: bool = False, **kwargs: Any) -> None:
     with Console(highlight=highlight) as cons:
         cons.print(text, **kwargs)
@@ -145,8 +145,8 @@ def eprint(text: str, fatal: Literal[True], exit_code: int = 1) -> NoReturn:
 def eprint(text: str, fatal: bool = False, exit_code: int = 1) -> None | NoReturn:
     if text.startswith("\n"):
         text = text.lstrip("\n")
-        print()
-    print(f"[bold color(231) on red]ERROR:[/] [red]{text}[/]")
+        lprint()
+    lprint(f"[bold color(231) on red]ERROR:[/] [red]{text}[/]")
     if fatal:
         sys.exit(exit_code)
     return None
@@ -155,14 +155,14 @@ def eprint(text: str, fatal: bool = False, exit_code: int = 1) -> None | NoRetur
 def iprint(text: str, up: int = 1, down: int = 1) -> None:
     text = Padding(f"[bold green]{text}[white]",
                    (up, 0, down, 0), expand=False)
-    print(text)
+    lprint(text)
 
 
 def wprint(text: str) -> None:
     if text.startswith("\n"):
         text = text.lstrip("\n")
-        print()
-    print(f"[bold color(231) on yellow]WARNING:[/] [yellow]{text}[/]")
+        lprint()
+    lprint(f"[bold color(231) on yellow]WARNING:[/] [yellow]{text}[/]")
 
 
 class Config():
@@ -208,7 +208,7 @@ class Config():
             eprint("No credentials found in text. Format: `user:pass`")
         data["credentials"] = text
         self.yaml.dump(data, self.config_path)
-        print("[bold green]\nCredential successfully added![white]")
+        lprint("[bold green]\nCredential successfully added![white]")
         sys.exit(1)
 
 
