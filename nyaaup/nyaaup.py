@@ -71,6 +71,7 @@ class Nyaasi():
             print(categories_help)
             sys.exit(1)
 
+        self.pic_ext = self.args.picture_extension
         self.pic_num = self.args.pictures_number
 
         self.hidden = 'hidden' if self.args.hidden else None
@@ -242,7 +243,7 @@ class Nyaasi():
 
             display_name = f'{name} ({", ".join(name_plus)})' if name_plus else name
 
-            if self.pic_num != 0 and not self.args.skip_upload:
+            if self.pic_num != 0:
                 images: Tree = snapshot(self, file, name, mediainfo)
 
             infos = Tree("[bold white]Information[not bold]")

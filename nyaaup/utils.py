@@ -5,6 +5,7 @@ import random
 import subprocess
 import sys
 import re
+import os
 import shutil
 import argparse
 from pathlib import Path
@@ -249,8 +250,8 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
 
             return f'https://i.kek.sh/{res.json()["filename"]}'
 
-    def gen(x: int) -> None:
-        snap = f'{self.cache_dir}/{name}_{x}.png'
+    def gen(idx: int) -> None:
+        snap = f'{self.cache_dir}/{name}_{idx}.{self.pic_ext}'
         duration = float(mediainfo[0].get("Duration"))
         interval = duration / (num_snapshots + 1)
 
@@ -271,7 +272,10 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
         with Image(filename=snap) as img:
             img.depth = 8
             img.save(filename=snap)
-        oxipng.optimize(snap)
+            
+        if self.pic_ext == 'png':
+            oxipng.optimize(snap, level=6)
+            
         snapshots.append(snap)
 
     images = Tree("[bold white]Images[not bold]")
@@ -291,16 +295,24 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
         generate = progress.add_task("[bold magenta]Generating snapshots[not bold white]", total=self.pic_num)
 
         for x in range(1, num_snapshots):
-            gen(x)
+            gen(idx=x)
             progress.update(generate, advance=1)
 
-        upload = progress.add_task("[bold magenta]Uploading snapshots[white]", total=self.pic_num)
+        if not self.args.skip_upload:
+            upload = progress.add_task("[bold magenta]Uploading snapshots[white]", total=self.pic_num)
 
-        for x in range(1, num_snapshots):
-            link = up(snapshots[x - 1])
-            self.description += f'![]({link})\n'
-            images.add(f"[not bold cornflower_blue][link={link}]{link}[/link][white /not bold]")
-            progress.update(upload, advance=1)
+            for x in range(1, num_snapshots):
+                snap = snapshots[x - 1]
+                file_size = os.path.getsize(snap)
+                
+                if file_size > 5 * 1024 * 1024:  # 5MB in bytes
+                    wprint(f"Skipping snapshot {snap} as its size is more than 5MB")
+                else:
+                    link = up(snapshots[x - 1])
+                    self.description += f'![]({link})\n'
+                    images.add(f"[not bold cornflower_blue][link={link}]{link}[/link][white /not bold]")
+                    
+                progress.update(upload, advance=1)
 
         return images
 
