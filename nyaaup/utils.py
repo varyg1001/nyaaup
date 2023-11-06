@@ -34,16 +34,13 @@ from rich.progress import (
     MofNCompleteColumn,
     TimeRemainingColumn,
 )
-# import torf
-# import hashlib
-# import bencodepy as bcp
 
 
 dirs = PlatformDirs(appname="nyaaup", appauthor=False)
 console = Console()
 transport = httpx.HTTPTransport(retries=5)
 
-MAP = {
+MAP: dict = {
     # subtitle codecs
     "UTF-8": "SRT",
     "ASS": "ASS",
@@ -61,13 +58,13 @@ class RParse(argparse.ArgumentParser):
                           lambda prog: CustomHelpFormatter(prog))
         super().__init__(*args, **kwargs)
 
-    def _print_message(self, message: str, file: IO[str] | None = None) -> None:
+    def _print_message(self, message: str, file: IO[str] | None = None) -> None:  # noqa: E501
         if "error" in message:
             lprint(f'[white not bold]{message}')
         if message:
             if message.startswith("usage"):
                 message = re.sub(
-                    r"(-[a-z-A-Z]+\s*|\[)([A-Z-_:]+)(?=]|,|\s\s|\s\.)", r"\1[bold color(231)]\2[/]", message)
+                    r"(-[a-z-A-Z]+\s*|\[)([A-Z-_:]+)(?=]|,|\s\s|\s\.)", r"\1[bold color(231)]\2[/]", message)  # noqa: E501
                 message = re.sub(
                     r"((-|--)[a-z-A-Z]+)", r"[green]\1[/]", message)
                 message = message.replace("usage", "[yellow]USAGE[/]")
@@ -86,8 +83,8 @@ class RParse(argparse.ArgumentParser):
                     lprint(op[0].strip().replace(op[1].strip(), pa))
                     lprint('')
                     console.print(
-                        Panel(
-                            f"  {pa}", border_style="dim", title="Positional arguments", title_align="left"
+                        Panel.fit(
+                            f"  {pa}", border_style="dim", title="Positional arguments", title_align="left"  # noqa: E501
                         )
                     )
                     lprint('')
@@ -96,8 +93,8 @@ class RParse(argparse.ArgumentParser):
                     lprint('')
 
                 console.print(
-                    Panel(
-                        f"  {m[1].strip()}", border_style="dim", title="Options", title_align="left"
+                    Panel.fit(
+                        f"  {m[1].strip()}", border_style="dim", title="Options", title_align="left"  # noqa: E501
                     )
                 )
 
@@ -125,7 +122,12 @@ class CustomTransferSpeedColumn(ProgressColumn):
 
 
 def lprint(
-        text: Any = "", highlight: bool = False, file: IO[str] = sys.stdout, flush: bool = False, **kwargs: Any) -> None:
+        text: Any = "",
+        highlight: bool = False,
+        file: IO[str] = sys.stdout,
+        flush: bool = False,
+        **kwargs: Any
+) -> None:
     with Console(highlight=highlight) as cons:
         cons.print(text, **kwargs)
         if flush:
@@ -133,7 +135,11 @@ def lprint(
 
 
 @overload
-def eprint(text: str, fatal: Literal[False] = False, exit_code: int = 1) -> None:
+def eprint(
+    text: str,
+    fatal: Literal[False] = False,
+    exit_code: int = 1
+) -> None:
     ...
 
 
@@ -142,7 +148,11 @@ def eprint(text: str, fatal: Literal[True], exit_code: int = 1) -> NoReturn:
     ...
 
 
-def eprint(text: str, fatal: bool = False, exit_code: int = 1) -> None | NoReturn:
+def eprint(
+    text: str,
+    fatal: bool = False,
+    exit_code: int = 1
+) -> None | NoReturn:
     if text.startswith("\n"):
         text = text.lstrip("\n")
         lprint()
@@ -152,10 +162,13 @@ def eprint(text: str, fatal: bool = False, exit_code: int = 1) -> None | NoRetur
     return None
 
 
-def iprint(text: str, up: int = 1, down: int = 1) -> None:
-    text = Padding(f"[bold green]{text}[white]",
-                   (up, 0, down, 0), expand=False)
-    lprint(text)
+def iprint(
+    text: str,
+    up: int = 1,
+    down: int = 1
+) -> None:
+    lprint(Padding(f"[bold green]{text}[white]",
+                   (up, 0, down, 0), expand=False))
 
 
 def wprint(text: str) -> None:
@@ -174,25 +187,25 @@ class Config():
     def get_dirs(self):
         return self.dirs
 
-    def create(self, exit: bool = False):
+    def create(self, exit: Optional[bool] = False):
         shutil.copy(Path(__file__).resolve().parent.with_name(
             'nyaaup.yaml.example'), self.config_path)
         eprint(
-            f"Config file doesn't exist, created to: {self.config_path}", exit)
+            f"Config file doesn't exist, created to: {self.config_path}", fatal=exit)  # noqa: E501
 
     def load(self):
         try:
             return self.yaml.load(self.config_path)
-        except:
+        except FileNotFoundError:
             self.create(True)
 
     @staticmethod
     def get_cred(cred: str):
         if cred == "user:pass":
             eprint("Set valid credentials!", True)
-        try:
-            return re.fullmatch(r"^([^:]+?):([^:]+?)(?::(.+))?$", cred).groups()
-        except AttributeError:
+        if return_cred := re.fullmatch(r"^([^:]+?):([^:]+?)(?::(.+))?$", cred):
+            return return_cred.groups()
+        else:
             eprint("Incorrect credentials format!", True)
 
     def add(self, text: str):
@@ -220,17 +233,16 @@ class GetTracksInfo():
             self.lang = "Und"
             wprint("One track has unknown language!")
         else:
-            self.lang = Language.get(data.get("Language")).display_name()
+            self.lang = Language.get(lang).display_name()
         self.track_name = data.get("Title") or None
 
-    def greturn(self, lang: str, track_name: str = None) -> str:
+    def get_return(self, lang: str, track_name: Optional[str] = None) -> str:
         if track_name:
             if track_name in {"SDH", "Forced"}:
                 return f"**{lang}** [{track_name}]"
-            try:
-                r = re.search(r"(.*) \((SDH|Forced)\)", track_name)
+            if r := re.search(r"(.*) \((SDH|Forced)\)", track_name):
                 return f"**{lang}** ({r[1]}) [{r[2]}]"
-            except:
+            else:
                 return f"**{lang}** ({track_name})"
         else:
             return f"**{lang}**"
@@ -238,14 +250,14 @@ class GetTracksInfo():
     def get_info(self) -> str:
         if self.track_name and "(" in self.lang:
             self.lang = self.lang.split(" (")[0]
-            return self.greturn(self.lang, self.track_name)
+            return self.get_return(self.lang, self.track_name)
         elif "(" in self.lang:
             self.lang = self.lang.split(" (")[0]
-            return self.greturn(self.lang)
+            return self.get_return(self.lang)
         elif self.track_name:
-            return self.greturn(self.lang, self.track_name)
+            return self.get_return(self.lang, self.track_name)
         else:
-            return self.greturn(self.lang)
+            return self.get_return(self.lang)
 
 
 def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
@@ -268,7 +280,7 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
             "-v", "error",
             "-ss", str(
                 random.randint(
-                    round(interval * 10), round(interval * 10 * num_snapshots)) / 10
+                    round(interval * 10), round(interval * 10 * num_snapshots)) / 10  # noqa: E501
             ),
             "-i", input,
             "-vf", "scale='max(sar,1)*iw':'max(1/sar,1)*ih'",
@@ -320,12 +332,12 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
 
                 if file_size > 5 * 1024 * 1024:  # 5MB in bytes
                     wprint(
-                        f"Skipping snapshot {snap} as its size is more than 5MB")
+                        f"Skipping snapshot {snap} as its size is more than 5MB")  # noqa: E501
                 else:
                     link = up(snapshots[x - 1])
                     self.description += f'![]({link})\n'
                     images.add(
-                        f"[not bold cornflower_blue][link={link}]{link}[/link][white /not bold]")
+                        f"[not bold cornflower_blue][link={link}]{link}[/link][white /not bold]")  # noqa: E501
 
                 progress.update(upload, advance=1)
 
@@ -364,14 +376,19 @@ def create_torrent(self, name: str, filename: Path, overwrite: bool) -> bool:
     ) as progress:
         files = []
 
-        def update_progress(torrent: Torrent, filepath: str, pieces_done: int, pieces_total: int) -> None:
+        def update_progress(
+            torrent: Torrent,
+            filepath: str,
+            pieces_done: int,
+            pieces_total: int
+        ) -> None:
             if filepath not in files:
                 progress.console.print(
-                    f'[bold white]Hashing [not bold white]{Path(filepath).name}...')
+                    f'[bold white]Hashing [not bold white]{Path(filepath).name}...')  # noqa: E501
                 files.append(filepath)
 
             progress.update(
-                create, completed=pieces_done * torrent.piece_size, total=pieces_total * torrent.piece_size
+                create, completed=pieces_done * torrent.piece_size, total=pieces_total * torrent.piece_size  # noqa: E501
             )
         create = progress.add_task(
             description="[bold magenta]Torrent creating[not bold white]")
@@ -407,7 +424,7 @@ def rentry_upload(self) -> dict:
         return res
 
 
-def get_description(mediainfo: list) -> list[str] and str:
+def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
 
     video_info = ""
     audio_info: list[str] = []
@@ -427,7 +444,7 @@ def get_description(mediainfo: list) -> list[str] and str:
 
             video_info += ", ".join([
                 x for x in [
-                    f'**{info.get("InternetMediaType").split("/")[1]} {info.get("Format_Profile")}@L{info.get("Format_Level")}**',
+                    f'**{info.get("InternetMediaType").split("/")[1]} {info.get("Format_Profile")}@L{info.get("Format_Level")}**',  # noqa: E501
                     f'**{info.get("Width")}x{info.get("Height")}**' +
                     v_bitrate,
                     f'**{info.get("FrameRate_String")}**',
@@ -448,7 +465,7 @@ def get_description(mediainfo: list) -> list[str] and str:
             audio_info += [", ".join([
                 x for x in [
                     GetTracksInfo(info).get_info(),
-                    f'{info.get("Format")}{" Atmos" if atmos and "JOC" in atmos else ""}',
+                    f'{info.get("Format")}{" Atmos" if atmos and "JOC" in atmos else ""}',  # noqa: E501
                     f'{MAP.get(info["Channels"])}' + a_bitrate,
                 ] if x
             ])]
@@ -475,7 +492,7 @@ def get_description(mediainfo: list) -> list[str] and str:
     return video_info, audio_info, subtitles_info
 
 
-def get_mal_link(anime, myanimelist, name) -> str and Anime:
+def get_mal_link(anime, myanimelist, name) -> Optional[tuple[Anime, str]]:
     if anime:
         mal_data: Optional[Anime] = None
         name_to_mal = re.sub(r"\.S\d+.*", "", name)
@@ -483,19 +500,19 @@ def get_mal_link(anime, myanimelist, name) -> str and Anime:
             name_to_mal = re.sub(r"\.\d\d\d\d\..*", "", name)
         name_to_mal = name_to_mal.replace(".", " ")
         if myanimelist:
-            with console.status("[bold magenta]Getting MyAnimeList info form input link...") as status:
+            with console.status("[bold magenta]Getting MyAnimeList info form input link...") as _:  # noqa: E501
                 malid: str = str(myanimelist).split("/")[4]
                 while not mal_data:
                     mal_data = Anime(malid)
         else:
-            with console.status("[bold magenta]Searching MyAnimeList link form input name...") as status:
+            with console.status("[bold magenta]Searching MyAnimeList link form input name...") as _:  # noqa: E501
                 while not mal_data:
                     mal_data = Anime(AnimeSearch(
                         name_to_mal).results[0].mal_id)
         iprint(
-            "[bold magenta]Myanimelist page successfuly found![not bold white]", up=0, down=0)
+            "[bold magenta]Myanimelist page successfuly found![not bold white]", up=0, down=0)  # noqa: E501
 
-    return mal_data, name_to_mal
+        return mal_data, name_to_mal
 
 
 def get_public_trackers(self) -> list[str]:

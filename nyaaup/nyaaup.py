@@ -116,7 +116,7 @@ class Nyaasi():
 
         return response.json()
 
-    def get_category(self, category: str) -> str:
+    def get_category(self, category: str) -> Optional[str]:
         match category:
             case "Anime - English-translated" | "1": return "1_2"
             case "Anime - Non-English-translated" | "2": return "1_3"
@@ -137,7 +137,7 @@ class Nyaasi():
         self.config = Config().load()
 
         self.edit_code: Optional[str] = self.config["preferences"].get("edit_code") if not self.args.edit_code else self.args.edit_code
-        self.credentials: Optional[dict] = Config.get_cred(self.config["credentials"])
+        self.credentials: dict = Config.get_cred(self.config["credentials"])
 
         try:
             info_form_config: bool = False if self.config["preferences"]["info"].lower() == "mal" else True
@@ -176,15 +176,14 @@ class Nyaasi():
             create_torrent(self, name, in_file, self.args.overwrite)
             torrent_fd = open(f'{self.cache_dir}/{name}.torrent', "rb")
 
-            with console.status("[bold magenta]MediaInfo parsing...") as status:
-                mediainfo = json.loads(subprocess.run(
-                    ["mediainfo",  "--ParseSpeed=1.0", "-f", "--output=JSON", file], capture_output=True, encoding="utf-8").stdout)["media"]["track"]
-
-                self.text = MediaInfo.parse(file, output="", full=False).replace(str(file), str(file.name))
+            with console.status("[bold magenta]MediaInfo parsing...") as _:
+                mediainfo: dict = json.loads(MediaInfo.parse(file, output="JSON", parse_speed=1, full=True))["media"]["track"]
+                self.text = MediaInfo.parse(file, output="", parse_speed=1, full=Faslse).replace(str(file), str(file.name))
 
             if self.cat in {"1_2", "1_3", "1_4"}:
                 anime = True
-            else: anime = False
+            else:
+                anime = False
 
             if anime and add_mal and not info_form_config and not self.args.skip_myanimelist:
                 mal_data, name_to_mal = get_mal_link(anime, self.args.myanimelist, name)
