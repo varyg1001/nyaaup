@@ -3,11 +3,10 @@ from __future__ import annotations
 import sys
 import glob
 import json
-import httpx
 from pathlib import Path
 from typing import Optional
 
-import subprocess
+import httpx
 from rich.console import Console
 from rich.panel import Panel
 from pymediainfo import MediaInfo
@@ -81,40 +80,37 @@ class Nyaasi():
         self.main()
 
     def upload(self, torrent_byte, name: str, display_name: str, info: str, infos: Tree) -> dict:
-        iprint("Uploading to Nyaa.si...", down=0)
-        transport = httpx.HTTPTransport(retries=1)
-        client = httpx.Client(transport=transport)
+        iprint("Uploading to Nyaa...", down=0)
 
-        payload = {
-            "torrent_data": json.dumps(
-                {
-                    "name": display_name,
-                    "category": self.cat,
-                    "information": info,
-                    "description": self.description,
-                    "anonymous": self.anonymous,
-                    "hidden": self.hidden,
-                    "complete": self.complete,
-                    "trusted": None,
-                }
+        with httpx.Client(transport=httpx.HTTPTransport(retries=2)) as client:
+            res = client.post(
+                url=self.up_api,
+                files={
+                    "torrent": (f'{name}.torrent', torrent_byte, "application/x-bittorrent")   # noqa: E501
+                },
+                data={
+                    "torrent_data": json.dumps(
+                        {
+                            "name": display_name,
+                            "category": self.cat,
+                            "information": info,
+                            "description": self.description,
+                            "anonymous": self.anonymous,
+                            "hidden": self.hidden,
+                            "complete": self.complete,
+                            "trusted": self.trusted,
+                        }
+                    )
+                },
+                auth=(self.credentials[0], self.credentials[1]),
             )
-        }
 
-        response = client.post(
-            "https://nyaa.si/api/v2/upload",
-            files={
-                "torrent": (f'{name}.torrent', torrent_byte, "application/x-bittorrent")
-            },
-            data=payload,
-            auth=(self.credentials[0], self.credentials[1]),
-        )
-        client.close()
-        if response.json().get("errors") and "This torrent already exists" in response.json().get("errors").get("torrent")[0]:
+        if res.json().get("errors") and "This torrent already exists" in res.json().get("errors").get("torrent")[0]:   # noqa: E501
             eprint('\nThe torrent once uploaded in the past!\n')
             print(Panel.fit(infos, border_style="red"))
             sys.exit(1)
 
-        return response.json()
+        return res.json()
 
     def get_category(self, category: str) -> Optional[str]:
         match category:
@@ -136,17 +132,19 @@ class Nyaasi():
         Path(dirs.user_config_path).mkdir(parents=True, exist_ok=True)
         self.config = Config().load()
 
-        self.edit_code: Optional[str] = self.config["preferences"].get("edit_code") if not self.args.edit_code else self.args.edit_code
+        self.edit_code: Optional[str] = self.config["preferences"].get("edit_code") if not self.args.edit_code else self.args.edit_code  # noqa: E501
+        self.up_api: str = self.config.get("up_api", "https://nyaa.si/api/v2/upload")
+        self.trusted: str = self.config.get("trusted", False)
         self.credentials: dict = Config.get_cred(self.config["credentials"])
 
         try:
-            info_form_config: bool = False if self.config["preferences"]["info"].lower() == "mal" else True
+            info_form_config: bool = False if self.config["preferences"]["info"].lower() == "mal" else True  # noqa: E501
         except AttributeError:
             info_form_config: bool = False
 
-        add_mal: bool = self.config["preferences"].get("mal", True)
-        mediainfo_to_torrent: bool = self.config["preferences"].get("mediainfo", True) if not self.args.no_mediainfo else False
-        self.add_pub_trackers: bool = self.config["preferences"].get("add_pub_trackers", False)
+        add_mal: bool = self.config.get("preferences", {}).get("mal", True)
+        mediainfo_to_torrent: bool = self.config.get("preferences", {}).get("mediainfo", True) if not self.args.no_mediainfo else False  # noqa: E501
+        self.add_pub_trackers: bool = self.config.get("preferences", {}).get("add_pub_trackers", False)  # noqa: E501
 
         multi_sub: bool = self.args.multi_subs
         multi_audio: bool = self.args.multi_audios
@@ -164,10 +162,10 @@ class Nyaasi():
 
             if in_file.is_file():
                 file = in_file
-                name = str(in_file.name).removesuffix('.mkv').removesuffix('.mp4')
+                name = str(in_file.name).removesuffix('.mkv').removesuffix('.mp4')  # noqa: E501
             else:
                 file = Path(
-                    sorted([*in_file.glob("*.mkv"), *in_file.glob("*.mp4")])[0])
+                    sorted([*in_file.glob("*.mkv"), *in_file.glob("*.mp4")])[0])  # noqa: E501
                 name = in_file.name
 
             self.cache_dir = dirs.user_cache_path / f"{name}_files"
@@ -177,16 +175,17 @@ class Nyaasi():
             torrent_fd = open(f'{self.cache_dir}/{name}.torrent', "rb")
 
             with console.status("[bold magenta]MediaInfo parsing...") as _:
-                mediainfo: dict = json.loads(MediaInfo.parse(file, output="JSON", parse_speed=1, full=True))["media"]["track"]
+                mediainfo: dict = json.loads(MediaInfo.parse(file, output="JSON", parse_speed=1, full=True))["media"]["track"]  # noqa: E501
                 self.text = MediaInfo.parse(file, output="", parse_speed=1, full=Faslse).replace(str(file), str(file.name))
 
             if self.cat in {"1_2", "1_3", "1_4"}:
                 anime = True
             else:
                 anime = False
-
-            if anime and add_mal and not info_form_config and not self.args.skip_myanimelist:
-                mal_data, name_to_mal = get_mal_link(anime, self.args.myanimelist, name)
+            name_to_mal: Optional[str] = None
+            mal_data = None
+            if anime and add_mal and not info_form_config and not self.args.skip_myanimelist:  # noqa: E501
+                mal_data, name_to_mal = get_mal_link(anime, self.args.myanimelist, name)  # noqa: E501
 
             information: Optional[str] = None
 
@@ -195,12 +194,12 @@ class Nyaasi():
                     if self.args.myanimelist:
                         information = self.args.myanimelist
                     else:
-                        information = f"{'/'.join(mal_data.url.split('/')[:-1])}/"
+                        information = f"{'/'.join(mal_data.url.split('/')[:-1])}/"  # noqa: E501
                 elif info_form_config:
                     information = self.config["preferences"]["info"]
 
             videode, audiode, subde = get_description(mediainfo)
-            self.description += f'Information:\n* Video: {videode}\n* Audio(s): {" │ ".join(audiode)}\n* Subtitle(s): {" │ ".join(subde)}\n* Duration: **~{mediainfo[0].get("Duration_String3")}**'
+            self.description += f'Information:\n* Video: {videode}\n* Audio(s): {" │ ".join(audiode)}\n* Subtitle(s): {" │ ".join(subde)}\n* Duration: **~{mediainfo[0].get("Duration_String3")}**'  # noqa: E501
 
             if not self.args.skip_upload and mediainfo_to_torrent:
                 try:
@@ -209,11 +208,11 @@ class Nyaasi():
                     edit_code = rentry_response['edit_code']
                     self.description += f"\n\n[MediaInfo]({mediainfo_url}/raw)"
                 except httpx.HTTPError as e:
-                    wprint(f"Failed to upload mediainfo to rentry.co! ({e.response})")
+                    wprint(f"Failed to upload mediainfo to rentry.co! ({e.response})")  # noqa: E501
             self.description += "\n\n---\n\n"
 
-            sublen: int = len(set([x.split("**")[1] for x in subde])) if len(subde) > 1 else len(subde)
-            audiodelen: int = len(set([x.split("**")[1] for x in audiode])) if len(audiode) > 1 else len(audiode)
+            sublen: int = len(set([x.split("**")[1] for x in subde])) if len(subde) > 1 else len(subde)  # noqa: E501
+            audiodelen: int = len(set([x.split("**")[1] for x in audiode])) if len(audiode) > 1 else len(audiode)  # noqa: E501
 
             if self.args.auto:
                 if audiodelen == 2:
@@ -223,7 +222,7 @@ class Nyaasi():
                 if sublen > 1:
                     multi_sub = True
 
-            name = name.replace(".", " ").replace("2 0", "2.0").replace("5 1", "5.1").replace("7 1", "7.1")
+            name = name.replace(".", " ").replace("2 0", "2.0").replace("5 1", "5.1").replace("7 1", "7.1")  # noqa: E501
 
             if add_mal and anime and not self.args.skip_myanimelist:
                 if self.cat in {"1_3", "1_4"}:
@@ -240,15 +239,15 @@ class Nyaasi():
             if multi_sub:
                 name_plus.append('Multi-Subs')
 
-            display_name = f'{name} ({", ".join(name_plus)})' if name_plus else name
+            display_name = f'{name} ({", ".join(name_plus)})' if name_plus else name  # noqa: E501
 
             if self.pic_num != 0:
                 images: Tree = snapshot(self, file, name, mediainfo)
 
             infos = Tree("[bold white]Information[not bold]")
-            if add_mal and anime and info_form_config:
-                infos.add(f"[bold white]MAL link ({name_to_mal}): [cornflower_blue not bold]{information}[white]")
-            infos.add(f"[bold white]Selected category: [cornflower_blue not bold]{self.get_category(self.cat)}[white]")
+            if add_mal and anime and info_form_config and name_to_mal:
+                infos.add(f"[bold white]MAL link ({name_to_mal}): [cornflower_blue not bold]{information}[white]")  # noqa: E501
+            infos.add(f"[bold white]Selected category: [cornflower_blue not bold]{self.get_category(self.cat)}[white]")  # noqa: E501
 
             title: str = ""
             style: str = "yellow"
@@ -256,16 +255,16 @@ class Nyaasi():
             if not self.args.skip_upload:
                 if mediainfo_to_torrent:
                     medlink = Tree(f"[bold white]MediaInfo link: [cornflower_blue not bold][link={mediainfo_url}]{mediainfo_url}[/link][white]")
-                    medlink.add(f"[bold white]Edit code: [cornflower_blue not bold]{edit_code}[white]")
+                    medlink.add(f"[bold white]Edit code: [cornflower_blue not bold]{edit_code}[white]")  # noqa: E501
                     infos.add(medlink)
                 if self.pic_num != 0:
                     infos.add(images)
-                link = self.upload(torrent_fd, name, display_name, information, infos)
+                link = self.upload(torrent_fd, name, display_name, information, infos)  # noqa: E501
                 if not link:
-                    wprint("Something happened during the uploading!", True)
+                    wprint("Something happened during the uploading!")
                 else:
-                    infos.add(f'[bold white]Page link: [cornflower_blue not bold][link={link["url"]}]{link["url"]}[/link][white]')
-                    infos.add(f'[bold white]Download link: [cornflower_blue not bold][link=https://nyaa.si/download/{link["id"]}.torrent]https://nyaa.si/download/{link["id"]}.torrent[/link][white]')
+                    infos.add(f'[bold white]Page link: [cornflower_blue not bold][link={link["url"]}]{link["url"]}[/link][white]')  # noqa: E501
+                    infos.add(f'[bold white]Download link: [cornflower_blue not bold][link=https://nyaa.si/download/{link["id"]}.torrent]https://nyaa.si/download/{link["id"]}.torrent[/link][white]')  # noqa: E501
                     style = "bold green"
                     title = "Torrent successfully uploaded!"
             else:
