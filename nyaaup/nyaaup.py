@@ -176,7 +176,7 @@ class Nyaasi():
 
             with console.status("[bold magenta]MediaInfo parsing...") as _:
                 mediainfo: dict = json.loads(MediaInfo.parse(file, output="JSON", parse_speed=1, full=True))["media"]["track"]  # noqa: E501
-                self.text = MediaInfo.parse(file, output="", parse_speed=1, full=Faslse).replace(str(file), str(file.name))
+                self.text = MediaInfo.parse(file, output="", parse_speed=1, full=False).replace(str(file), str(file.name))
 
             if self.cat in {"1_2", "1_3", "1_4"}:
                 anime = True
