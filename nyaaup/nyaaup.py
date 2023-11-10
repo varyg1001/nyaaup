@@ -98,7 +98,7 @@ class Nyaasi():
                             "anonymous": self.anonymous,
                             "hidden": self.hidden,
                             "complete": self.complete,
-                            "trusted": self.trusted,
+                            "trusted": ["", "trusted"][self.trusted],
                         }
                     )
                 },
@@ -140,7 +140,7 @@ class Nyaasi():
 
         self.edit_code: Optional[str] = self.config["preferences"].get("edit_code") if not self.args.edit_code else self.args.edit_code  # noqa: E501
         self.up_api: str = self.config.get("up_api", "https://nyaa.si/api/v2/upload")
-        self.trusted: str = self.config.get("trusted", False)
+        self.trusted: bool = self.config.get("trusted", False)
         self.credentials: dict = Config.get_cred(self.config["credentials"])
 
         try:
@@ -270,7 +270,7 @@ class Nyaasi():
                     wprint("Something happened during the uploading!")
                 else:
                     infos.add(f'[bold white]Page link: [cornflower_blue not bold][link={link["url"]}]{link["url"]}[/link][white]')  # noqa: E501
-                    infos.add(f'[bold white]Download link: [cornflower_blue not bold][link=https://nyaa.si/download/{link["id"]}.torrent]https://nyaa.si/download/{link["id"]}.torrent[/link][white]')  # noqa: E501
+                    infos.add(f"""[bold white]Download link: [cornflower_blue not bold]https://nyaa.si/download/{link["url"].replace(link["id"], f"download/{link['id']}.torrent")}.torrent[white]""")  # noqa: E501
                     style = "bold green"
                     title = "Torrent successfully uploaded!"
             else:
