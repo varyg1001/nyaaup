@@ -15,7 +15,6 @@ Works both on Linux and windows.
 ### Dependencies
 
 - [FFmpeg](https://ffmpeg.org/) for image generating.
-- [MediaInfo](https://mediaarea.net/en/MediaInfo/Download) to get info from video.
 - [ImageMagick](https://imagemagick.org/script/download.php) for pyoxipng
 
 ### Installation
