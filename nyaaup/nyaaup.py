@@ -98,7 +98,7 @@ class Nyaasi():
                             "anonymous": self.anonymous,
                             "hidden": self.hidden,
                             "complete": self.complete,
-                            "trusted": ["", "trusted"][self.trusted],
+                            "trusted": [False, True][self.trusted],
                         }
                     )
                 },
