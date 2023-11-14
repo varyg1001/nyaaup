@@ -30,7 +30,7 @@ class Torrent:
         self.name = name
         self.mediainfo: MediaInfo = None
         self.mediainfo_json: dict = dict()
-        
+
         self.get_mediainfo(self)
 
     def get_mediainfo(self):
@@ -40,4 +40,3 @@ class Torrent:
 
             self.mediainfo = MediaInfo.parse(self.path, output="", full=False).replace(
                 str(self.path), str(self.path.name))
-

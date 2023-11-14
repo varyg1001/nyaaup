@@ -76,6 +76,7 @@ class Nyaasi():
         self.hidden = 'hidden' if self.args.hidden else None
         self.anonymous = 'anonymous' if self.args.anonymous else None
         self.complete = 'complete' if self.args.complete else None
+        self.trusted = 'trusted' if self.config.get("trusted", False) else None
 
         self.main()
 
@@ -140,7 +141,6 @@ class Nyaasi():
 
         self.edit_code: Optional[str] = self.config["preferences"].get("edit_code") if not self.args.edit_code else self.args.edit_code  # noqa: E501
         self.up_api: str = self.config.get("up_api", "https://nyaa.si/api/v2/upload")
-        self.trusted: bool = self.config.get("trusted", False)
         self.credentials: dict = Config.get_cred(self.config["credentials"])
 
         try:
