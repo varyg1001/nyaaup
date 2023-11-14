@@ -76,7 +76,6 @@ class Nyaasi():
         self.hidden = 'hidden' if self.args.hidden else None
         self.anonymous = 'anonymous' if self.args.anonymous else None
         self.complete = 'complete' if self.args.complete else None
-        self.trusted = 'trusted' if self.config.get("trusted", False) else None
 
         self.main()
 
@@ -99,7 +98,7 @@ class Nyaasi():
                             "anonymous": self.anonymous,
                             "hidden": self.hidden,
                             "complete": self.complete,
-                            "trusted": [False, True][self.trusted],
+                            "trusted": self.trusted,
                         }
                     )
                 },
@@ -142,7 +141,7 @@ class Nyaasi():
         self.edit_code: Optional[str] = self.config["preferences"].get("edit_code") if not self.args.edit_code else self.args.edit_code  # noqa: E501
         self.up_api: str = self.config.get("up_api", "https://nyaa.si/api/v2/upload")
         self.credentials: dict = Config.get_cred(self.config["credentials"])
-
+        self.trusted = 'trusted' if self.config.get("trusted", False) else None
         try:
             info_form_config: bool = False if self.config["preferences"]["info"].lower() == "mal" else True  # noqa: E501
         except AttributeError:
