@@ -269,7 +269,7 @@ class Nyaasi():
                     wprint("Something happened during the uploading!")
                 else:
                     infos.add(f'[bold white]Page link: [cornflower_blue not bold][link={link["url"]}]{link["url"]}[/link][white]')  # noqa: E501
-                    infos.add(f"""[bold white]Download link: [cornflower_blue not bold]{link["url"].replace(f"view/{link['id']}", f"download/{link['id']}.torrent")}.torrent[white]""")  # noqa: E501
+                    infos.add(f"""[bold white]Download link: [cornflower_blue not bold]{link["url"].replace(f"view/{link['id']}", f"download/{link['id']}.torrent")}[white]""")  # noqa: E501
                     style = "bold green"
                     title = "Torrent successfully uploaded!"
             else:
