@@ -54,47 +54,51 @@ MAP: dict = {
 
 class RParse(argparse.ArgumentParser):
     def __init__(self, *args: Any, **kwargs: Any):
-        kwargs.setdefault("formatter_class",
-                          lambda prog: CustomHelpFormatter(prog))
+        kwargs.setdefault("formatter_class", lambda prog: CustomHelpFormatter(prog))
         super().__init__(*args, **kwargs)
 
     def _print_message(self, message: str, file: IO[str] | None = None) -> None:  # noqa: E501
         if "error" in message:
-            lprint(f'[white not bold]{message}')
+            lprint(f"[white not bold]{message}")
         if message:
             if message.startswith("usage"):
                 message = re.sub(
-                    r"(-[a-z-A-Z]+\s*|\[)([A-Z-_:]+)(?=]|,|\s\s|\s\.)", r"\1[bold color(231)]\2[/]", message)  # noqa: E501
-                message = re.sub(
-                    r"((-|--)[a-z-A-Z]+)", r"[green]\1[/]", message)
+                    r"(-[a-z-A-Z]+\s*|\[)([A-Z-_:]+)(?=]|,|\s\s|\s\.)",
+                    r"\1[bold color(231)]\2[/]",
+                    message,
+                )  # noqa: E501
+                message = re.sub(r"((-|--)[a-z-A-Z]+)", r"[green]\1[/]", message)
                 message = message.replace("usage", "[yellow]USAGE[/]")
-                message = message.replace(
-                    " file ", "[bold magenta] file [/]", 2)
-                message = message.replace(
-                    self.prog, f"[bold cyan]{self.prog}[/]")
+                message = message.replace(" file ", "[bold magenta] file [/]", 2)
+                message = message.replace(self.prog, f"[bold cyan]{self.prog}[/]")
             message = f"{message.strip()}"
             if "options:" in message:
                 m = message.split("options:")
                 if "positional arguments:" in m[0]:
                     op = m[0].split("positional arguments:")
-                    pa = op[1].strip().replace(
-                        "}", "").replace("{", "").split(",")
+                    pa = op[1].strip().replace("}", "").replace("{", "").split(",")
                     pa = f'[green]{"[/], [green]".join(pa)}[/]'
                     lprint(op[0].strip().replace(op[1].strip(), pa))
-                    lprint('')
+                    lprint("")
                     console.print(
                         Panel.fit(
-                            f"  {pa}", border_style="dim", title="Positional arguments", title_align="left"  # noqa: E501
+                            f"  {pa}",
+                            border_style="dim",
+                            title="Positional arguments",
+                            title_align="left",  # noqa: E501
                         )
                     )
-                    lprint('')
+                    lprint("")
                 else:
                     lprint(m[0].strip())
-                    lprint('')
+                    lprint("")
 
                 console.print(
                     Panel.fit(
-                        f"  {m[1].strip()}", border_style="dim", title="Options", title_align="left"  # noqa: E501
+                        f"  {m[1].strip()}",
+                        border_style="dim",
+                        title="Options",
+                        title_align="left",  # noqa: E501
                     )
                 )
 
@@ -122,11 +126,11 @@ class CustomTransferSpeedColumn(ProgressColumn):
 
 
 def lprint(
-        text: Any = "",
-        highlight: bool = False,
-        file: IO[str] = sys.stdout,
-        flush: bool = False,
-        **kwargs: Any
+    text: Any = "",
+    highlight: bool = False,
+    file: IO[str] = sys.stdout,
+    flush: bool = False,
+    **kwargs: Any,
 ) -> None:
     with Console(highlight=highlight) as cons:
         cons.print(text, **kwargs)
@@ -135,11 +139,7 @@ def lprint(
 
 
 @overload
-def eprint(
-    text: str,
-    fatal: Literal[False] = False,
-    exit_code: int = 1
-) -> None:
+def eprint(text: str, fatal: Literal[False] = False, exit_code: int = 1) -> None:
     ...
 
 
@@ -148,11 +148,7 @@ def eprint(text: str, fatal: Literal[True], exit_code: int = 1) -> NoReturn:
     ...
 
 
-def eprint(
-    text: str,
-    fatal: bool = False,
-    exit_code: int = 1
-) -> None | NoReturn:
+def eprint(text: str, fatal: bool = False, exit_code: int = 1) -> None | NoReturn:
     if text.startswith("\n"):
         text = text.lstrip("\n")
         lprint()
@@ -162,13 +158,8 @@ def eprint(
     return None
 
 
-def iprint(
-    text: str,
-    up: int = 1,
-    down: int = 1
-) -> None:
-    lprint(Padding(f"[bold green]{text}[white]",
-                   (up, 0, down, 0), expand=False))
+def iprint(text: str, up: int = 1, down: int = 1) -> None:
+    lprint(Padding(f"[bold green]{text}[white]", (up, 0, down, 0), expand=False))
 
 
 def wprint(text: str) -> None:
@@ -178,7 +169,7 @@ def wprint(text: str) -> None:
     lprint(f"[bold color(231) on yellow]WARNING:[/] [yellow]{text}[/]")
 
 
-class Config():
+class Config:
     def __init__(self):
         self.dirs = dirs
         self.config_path = Path(dirs.user_config_path / "nyaaup.ymal")
@@ -188,10 +179,11 @@ class Config():
         return self.dirs
 
     def create(self, exit: Optional[bool] = False):
-        shutil.copy(Path(__file__).resolve().parent.with_name(
-            'nyaaup.yaml.example'), self.config_path)
-        eprint(
-            f"Config file doesn't exist, created to: {self.config_path}", fatal=exit)  # noqa: E501
+        shutil.copy(
+            Path(__file__).resolve().parent.with_name("nyaaup.yaml.example"),
+            self.config_path,
+        )
+        eprint(f"Config file doesn't exist, created to: {self.config_path}", fatal=exit)  # noqa: E501
 
     def load(self):
         try:
@@ -225,7 +217,7 @@ class Config():
         sys.exit(1)
 
 
-class GetTracksInfo():
+class GetTracksInfo:
     def __init__(self, data: dict):
         self.track_info = []
         lang = data.get("Language")
@@ -261,38 +253,46 @@ class GetTracksInfo():
 
 
 def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
-
     def up(image_path: Path) -> str:
-        with open(image_path, 'rb') as file:
-            res = httpx.post('https://kek.sh/api/v1/posts',
-                             files={'file': file})
+        with open(image_path, "rb") as file:
+            res = httpx.post("https://kek.sh/api/v1/posts", files={"file": file})
 
             return f'https://i.kek.sh/{res.json()["filename"]}'
 
     def gen(idx: int) -> None:
-        snap = f'{self.cache_dir}/{name}_{idx}.{self.pic_ext}'
+        snap = f"{self.cache_dir}/{name}_{idx}.{self.pic_ext}"
         duration = float(mediainfo[0].get("Duration"))
         interval = duration / (num_snapshots + 1)
 
-        subprocess.run([
-            "ffmpeg",
-            "-y",
-            "-v", "error",
-            "-ss", str(
-                random.randint(
-                    round(interval * 10), round(interval * 10 * num_snapshots)) / 10  # noqa: E501
-            ),
-            "-i", input,
-            "-vf", "scale='max(sar,1)*iw':'max(1/sar,1)*ih'",
-            "-frames:v", "1",
-            snap,
-        ], check=True)
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-v",
+                "error",
+                "-ss",
+                str(
+                    random.randint(
+                        round(interval * 10), round(interval * 10 * num_snapshots)
+                    )
+                    / 10  # noqa: E501
+                ),
+                "-i",
+                input,
+                "-vf",
+                "scale='max(sar,1)*iw':'max(1/sar,1)*ih'",
+                "-frames:v",
+                "1",
+                snap,
+            ],
+            check=True,
+        )
 
         with Image(filename=snap) as img:
             img.depth = 8
             img.save(filename=snap)
 
-        if self.pic_ext == 'png':
+        if self.pic_ext == "png":
             oxipng.optimize(snap, level=6)
 
         snapshots.append(snap)
@@ -312,8 +312,7 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
         num_snapshots = self.pic_num + 1
 
         generate = progress.add_task(
-            "[bold magenta]Generating snapshots[not bold white]",
-            total=self.pic_num
+            "[bold magenta]Generating snapshots[not bold white]", total=self.pic_num
         )
 
         for x in range(1, num_snapshots):
@@ -322,8 +321,7 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
 
         if not self.args.skip_upload:
             upload = progress.add_task(
-                "[bold magenta]Uploading snapshots[white]",
-                total=self.pic_num
+                "[bold magenta]Uploading snapshots[white]", total=self.pic_num
             )
 
             for x in range(1, num_snapshots):
@@ -331,13 +329,13 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
                 file_size = os.path.getsize(snap)
 
                 if file_size > 5 * 1024 * 1024:  # 5MB in bytes
-                    wprint(
-                        f"Skipping snapshot {snap} as its size is more than 5MB")  # noqa: E501
+                    wprint(f"Skipping snapshot {snap} as its size is more than 5MB")  # noqa: E501
                 else:
                     link = up(snapshots[x - 1])
-                    self.description += f'![]({link})\n'
+                    self.description += f"![]({link})\n"
                     images.add(
-                        f"[not bold cornflower_blue][link={link}]{link}[/link][white /not bold]")  # noqa: E501
+                        f"[not bold cornflower_blue][link={link}]{link}[/link][white /not bold]"
+                    )  # noqa: E501
 
                 progress.update(upload, advance=1)
 
@@ -345,7 +343,7 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
 
 
 def create_torrent(self, name: str, filename: Path, overwrite: bool) -> bool:
-    torrent_file = Path(f'{self.cache_dir}/{name}.torrent')
+    torrent_file = Path(f"{self.cache_dir}/{name}.torrent")
     if torrent_file.is_file():
         if overwrite:
             wprint("Torrent file already exists, removing...")
@@ -359,7 +357,7 @@ def create_torrent(self, name: str, filename: Path, overwrite: bool) -> bool:
     torrent = Torrent(
         filename,
         trackers=get_public_trackers(self),
-        source='nyaa.si',
+        source="nyaa.si",
         creation_date=None,
         created_by="",
         exclude_regexs=[r".*\.(ffindex|jpg|nfo|png|srt|torrent|txt|json)$"],
@@ -377,21 +375,23 @@ def create_torrent(self, name: str, filename: Path, overwrite: bool) -> bool:
         files = []
 
         def update_progress(
-            torrent: Torrent,
-            filepath: str,
-            pieces_done: int,
-            pieces_total: int
+            torrent: Torrent, filepath: str, pieces_done: int, pieces_total: int
         ) -> None:
             if filepath not in files:
                 progress.console.print(
-                    f'[bold white]Hashing [not bold white]{Path(filepath).name}...')  # noqa: E501
+                    f"[bold white]Hashing [not bold white]{Path(filepath).name}..."
+                )  # noqa: E501
                 files.append(filepath)
 
             progress.update(
-                create, completed=pieces_done * torrent.piece_size, total=pieces_total * torrent.piece_size  # noqa: E501
+                create,
+                completed=pieces_done * torrent.piece_size,
+                total=pieces_total * torrent.piece_size,  # noqa: E501
             )
+
         create = progress.add_task(
-            description="[bold magenta]Torrent creating[not bold white]")
+            description="[bold magenta]Torrent creating[not bold white]"
+        )
         #  torrent.randomize_infohash = True
         torrent.generate(callback=update_progress, interval=1)
         torrent.write(torrent_file)
@@ -406,14 +406,12 @@ def rentry_upload(self) -> dict:
 
         try:
             res = client.post(
-                'https://rentry.co/api/new',
-                headers={
-                    "Referer": "https://rentry.co"
-                },
+                "https://rentry.co/api/new",
+                headers={"Referer": "https://rentry.co"},
                 data={
-                    'csrfmiddlewaretoken': client.cookies['csrftoken'],
-                    'edit_code': self.edit_code,
-                    'text': self.text
+                    "csrfmiddlewaretoken": client.cookies["csrftoken"],
+                    "edit_code": self.edit_code,
+                    "text": self.text,
                 },
             ).json()
         except httpx.HTTPError as e:
@@ -425,7 +423,6 @@ def rentry_upload(self) -> dict:
 
 
 def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
-
     video_info = ""
     audio_info: list[str] = []
     subtitles_info: list[str] = []
@@ -433,28 +430,28 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
     video_t_num = 0
 
     for info in mediainfo:
-
         if info["@type"] == "Video":
-
             v_bitrate = ""
             try:
                 v_bitrate = f' @ **{round(float(info["BitRate"])/1000)} kbps**'
             except KeyError:
                 wprint("Couldn't get video bitrate!")
 
-            video_info += ", ".join([
-                x for x in [
-                    f'**{info.get("InternetMediaType").split("/")[1]} {info.get("Format_Profile")}@L{info.get("Format_Level")}**',  # noqa: E501
-                    f'**{info.get("Width")}x{info.get("Height")}**' +
-                    v_bitrate,
-                    f'**{info.get("FrameRate_String")}**',
-                ] if x
-            ])
+            video_info += ", ".join(
+                [
+                    x
+                    for x in [
+                        f'**{info.get("InternetMediaType").split("/")[1]} {info.get("Format_Profile")}@L{info.get("Format_Level")}**',
+                        f'**{info.get("Width")}x{info.get("Height")}**' + v_bitrate,
+                        f'**{info.get("FrameRate_String")}**',
+                    ]
+                    if x
+                ]
+            )
 
-            video_t_num = + 1
+            video_t_num = +1
 
         if info["@type"] == "Audio":
-
             a_bitrate = ""
             try:
                 a_bitrate = f" @ {round(float(info['BitRate'])/1000)} kbps"
@@ -462,22 +459,33 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
                 wprint("Couldn't get audio bitrate!")
             atmos = info.get("Format_AdditionalFeatures")
 
-            audio_info += [", ".join([
-                x for x in [
-                    GetTracksInfo(info).get_info(),
-                    f'{info.get("Format")}{" Atmos" if atmos and "JOC" in atmos else ""}',  # noqa: E501
-                    f'{MAP.get(info["Channels"])}' + a_bitrate,
-                ] if x
-            ])]
+            audio_info += [
+                ", ".join(
+                    [
+                        x
+                        for x in [
+                            GetTracksInfo(info).get_info(),
+                            f'{info.get("Format")}{" Atmos" if atmos and "JOC" in atmos else ""}',
+                            f'{MAP.get(info["Channels"])}' + a_bitrate,
+                        ]
+                        if x
+                    ]
+                )
+            ]
 
         if info["@type"] == "Text":
-
-            subtitles_info += [", ".join([
-                x for x in [
-                    GetTracksInfo(info).get_info(),
-                    f'{MAP.get(info["Format"])}',
-                ] if x
-            ])]
+            subtitles_info += [
+                ", ".join(
+                    [
+                        x
+                        for x in [
+                            GetTracksInfo(info).get_info(),
+                            f'{MAP.get(info["Format"])}',
+                        ]
+                        if x
+                    ]
+                )
+            ]
 
     if video_t_num != 1:
         eprint(f"Not only 1 video found in the file! ({video_t_num})", True)
@@ -486,7 +494,7 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
         eprint("Unable to determine audio language!", True)
 
     if not subtitles_info:
-        subtitles_info.append('N/A')
+        subtitles_info.append("N/A")
         wprint("Unable to determine subtitle language!")
 
     return video_info, audio_info, subtitles_info
@@ -500,17 +508,23 @@ def get_mal_link(anime, myanimelist, name) -> Optional[tuple[Anime, str]]:
             name_to_mal = re.sub(r"\.\d\d\d\d\..*", "", name)
         name_to_mal = name_to_mal.replace(".", " ")
         if myanimelist:
-            with console.status("[bold magenta]Getting MyAnimeList info form input link...") as _:  # noqa: E501
+            with console.status(
+                "[bold magenta]Getting MyAnimeList info form input link..."
+            ) as _:  # noqa: E501
                 malid: str = str(myanimelist).split("/")[4]
                 while not mal_data:
                     mal_data = Anime(malid)
         else:
-            with console.status("[bold magenta]Searching MyAnimeList link form input name...") as _:  # noqa: E501
+            with console.status(
+                "[bold magenta]Searching MyAnimeList link form input name..."
+            ) as _:  # noqa: E501
                 while not mal_data:
-                    mal_data = Anime(AnimeSearch(
-                        name_to_mal).results[0].mal_id)
+                    mal_data = Anime(AnimeSearch(name_to_mal).results[0].mal_id)
         iprint(
-            "[bold magenta]Myanimelist page successfuly found![not bold white]", up=0, down=0)  # noqa: E501
+            "[bold magenta]Myanimelist page successfuly found![not bold white]",
+            up=0,
+            down=0,
+        )  # noqa: E501
 
         return mal_data, name_to_mal
 
@@ -522,7 +536,8 @@ def get_public_trackers(self) -> list[str]:
         with httpx.Client(transport=transport) as client:
             try:
                 response = client.get(
-                    "https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt")
+                    "https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt"
+                )
                 trackers += [x for x in response.text.splitlines() if x]
             except httpx.HTTPError as e:
                 eprint(e.response)

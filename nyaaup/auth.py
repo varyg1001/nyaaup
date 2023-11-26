@@ -1,8 +1,8 @@
 from .utils import Config
 
-class Auth():
-    def __init__(self, args, parser):
 
+class Auth:
+    def __init__(self, args, parser):
         self.args = args
         self.parser = parser
 
