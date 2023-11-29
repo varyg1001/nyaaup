@@ -449,7 +449,7 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
                 ]
             )
 
-            video_t_num = +1
+            video_t_num += 1
 
         if info["@type"] == "Audio":
             a_bitrate = ""
@@ -488,7 +488,7 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
             ]
 
     if video_t_num != 1:
-        eprint(f"Not only 1 video found in the file! ({video_t_num})", True)
+        eprint(f"There is multiple videos in the file ({video_t_num})!", True)
 
     if not audio_info:
         eprint("Unable to determine audio language!", True)
