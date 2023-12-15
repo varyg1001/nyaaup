@@ -13,7 +13,7 @@ import httpx
 
 from rich.padding import Padding
 from rich.console import Console
-from typing import Any, IO, Literal, NoReturn, overload, Optional
+from typing import Any, IO, Literal, NoReturn, overload, Optional, Iterable
 from ruamel.yaml import YAML
 import oxipng
 from torf import Torrent
@@ -259,46 +259,24 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
 
             return f'https://i.kek.sh/{res.json()["filename"]}'
 
-    def gen(idx: int) -> None:
-        snap = f"{self.cache_dir}/{name}_{idx}.{self.pic_ext}"
-        duration = float(mediainfo[0].get("Duration"))
-        interval = duration / (num_snapshots + 1)
-
-        subprocess.run(
-            [
-                "ffmpeg",
-                "-y",
-                "-v",
-                "error",
-                "-ss",
-                str(
-                    random.randint(
-                        round(interval * 10), round(interval * 10 * num_snapshots)
-                    )
-                    / 10  # noqa: E501
-                ),
-                "-i",
-                input,
-                "-vf",
-                "scale='max(sar,1)*iw':'max(1/sar,1)*ih'",
-                "-frames:v",
-                "1",
-                snap,
-            ],
-            check=True,
-        )
-
-        with Image(filename=snap) as img:
-            img.depth = 8
-            img.save(filename=snap)
-
-        if self.pic_ext == "png":
-            oxipng.optimize(snap, level=6)
-
-        snapshots.append(snap)
-
     images = Tree("[bold white]Images[not bold]")
+    
+    if self.in_f.is_dir():
+        files = sorted([*self.in_f.glob("*.mkv"), *self.in_f.glob("*.mp4")])
+    elif self.in_f.is_file():
+        files = [self.in_f]
 
+    num_snapshots = self.pic_num
+    if self.in_f.is_dir():
+        num_snapshots = len(files)
+
+    orig_files = files[:]
+    i = 2
+    while len(files) < num_snapshots:
+        files = flatten(zip(*([orig_files] * i)))
+        i += 1
+
+    last_file = None
     with Progress(
         TextColumn("[progress.description]{task.description}[/]"),
         "•",
@@ -316,7 +294,43 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
         )
 
         for x in range(1, num_snapshots):
-            gen(idx=x)
+            snap = f"{self.cache_dir}/{name}_{x}.{self.pic_ext}"
+            if not Path(snap).is_file():
+                duration = float(mediainfo[0].get("Duration"))
+                interval = duration / (num_snapshots + 1)
+                j = x
+                if last_file != files[i]:
+                    j = 0
+                subprocess.run(
+                    [
+                        "ffmpeg",
+                        "-y",
+                        "-v",
+                        "error",
+                        "-ss", str(
+                            random.randint(round(interval * 10), round(interval * 10 * num_snapshots)) / 10
+                            if self.random_snapshots
+                            else str(interval * (j + 1))  # noqa: E501
+                        ),
+                        "-i",
+                        input,
+                        "-vf",
+                        "scale='max(sar,1)*iw':'max(1/sar,1)*ih'",
+                        "-frames:v",
+                        "1",
+                        snap,
+                    ],
+                    check=True,
+                )
+
+                with Image(filename=snap) as img:
+                    img.depth = 8
+                    img.save(filename=snap)
+
+                if self.pic_ext == "png":
+                    oxipng.optimize(snap, level=6)
+
+            snapshots.append(snap)
             progress.update(generate, advance=1)
 
         if not self.args.skip_upload:
@@ -527,6 +541,11 @@ def get_mal_link(anime, myanimelist, name) -> Optional[tuple[Anime, str]]:
         )  # noqa: E501
 
         return mal_data, name_to_mal
+
+
+def flatten(L: Iterable[Any]) -> list[Any]:
+    # https://stackoverflow.com/a/952952/492203
+    return [item for sublist in L for item in sublist]
 
 
 def get_public_trackers(self) -> list[str]:

@@ -162,37 +162,36 @@ class Nyaasi:
         dirs = Config().get_dirs()
         Path(dirs.user_config_path).mkdir(parents=True, exist_ok=True)
         self.config = Config().load()
-
-        self.edit_code: Optional[str] = (
-            self.config["preferences"].get("edit_code")
-            if not self.args.edit_code
-            else self.args.edit_code
-        )
-        self.up_api: str = self.config.get("up_api", "https://nyaa.si/api/v2/upload")
-        self.credentials: dict = Config.get_cred(self.config["credentials"])
-        self.trusted = "trusted" if self.config.get("trusted", False) else None
-        try:
-            info_form_config: bool = (
-                False if self.config["preferences"]["info"].lower() == "mal" else True
+        if pref := self.config.get("preferences"):
+            self.edit_code: Optional[str] = (
+                pref.get("edit_code")
+                if not self.args.edit_code
+                else self.args.edit_code
             )
-        except AttributeError:
-            info_form_config: bool = False
+            self.up_api: str = self.config.get(
+                "up_api", "https://nyaa.si/api/v2/upload"
+            )
+            self.random_snapshots: str = pref.get("random_snapshots", False)
+            self.credentials: dict = Config.get_cred(self.config["credentials"])
+            self.trusted = "trusted" if self.config.get("trusted", False) else None
+            info_form_config: bool = (
+                False
+                if (pref.get("info", "").lower() == "mal") or not pref.get("info")
+                else True
+            )
 
-        add_mal: bool = self.config.get("preferences", {}).get("mal", True)
-        mediainfo_to_torrent: bool = (
-            self.config.get("preferences", {}).get("mediainfo", True)
-            if not self.args.no_mediainfo
-            else False
-        )
-        self.add_pub_trackers: bool = self.config.get("preferences", {}).get(
-            "add_pub_trackers", False
-        )
+            add_mal: bool = pref.get("mal", True)
+            mediainfo_to_torrent: bool = (
+                pref.get("mediainfo", True) if not self.args.no_mediainfo else False
+            )
+            self.add_pub_trackers: bool = pref.get("add_pub_trackers", False)
 
         multi_sub: bool = self.args.multi_subs
         multi_audio: bool = self.args.multi_audios
         dual_audio: bool = self.args.dual_audios
 
         for in_file in self.args.path:
+            self.in_f = in_file
             self.description: str = ""
             if note := self.args.note:
                 self.description += f"{note}\n\n---\n\n"
