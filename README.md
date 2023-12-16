@@ -4,7 +4,7 @@
 
 # Nyaaup
 
-Nyaaup is an auto torrent uploader to [Nyaa.si](https://nyaa.si/), for video.
+Nyaaup is an auto torrent uploader to [Nyaa sites](https://github.com/nyaadevs/nyaa), mainly for videos.
 Works both on Linux and windows.
 
 ## Requirements
@@ -42,38 +42,39 @@ $ ./install.sh
 ### Usage
 
 ```
-                                                   nyaaup v2.2.1
+                                                   nyaaup v2.2.2
 
                                           Auto torrent uploader to Nyaa.si
 
 USAGE: nyaaup up [-h] [-ch] [-ms] [-da] [-ma] [-a] [-A] [-H] [-C] [-s] [-e EDIT_CODE] [-p PICTURES_NUMBER]
-                 [-n NOTE] [-M] [-m MYANIMELIST] [--skip-myanimelist] [-c CATEGORY] [-o]
+                 [-pe PICTURE_EXTENSION] [-n NOTE] [-M] [-m MYANIMELIST] [--skip-myanimelist] [-c CATEGORY] [-o]
 
 
-╭─ Positional arguments ────────────────────────────────────────────────────────────────────────────────────────────╮
-│   path                                   File or directory to upload.                                             │
-╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Positional arguments ─────────────────────────────────────────────────────╮
+│   path                                        File or directory to upload. │
+╰────────────────────────────────────────────────────────────────────────────╯
 
-╭─ Options ─────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│   -h, --help                             show this help message and exit                                          │
-│   -ch, --category-help                   Print available categories.                                              │
-│   -ms, --multi-subs                      Add Multi Subs tag to title.                                             │
-│   -da, --dual-audios                     Add Dual audios tag to title.                                            │
-│   -ma, --multi-audios                    Add Multi audios tag to title.                                           │
-│   -a, --auto                             Detect multi subs, multi audios and dual audios.                         │
-│   -A, --anonymous                        Upload torrent as anonymous.                                             │
-│   -H, --hidden                           Upload the torrent as hidden.                                            │
-│   -C, --complete                         If the torrnet is a complete batch.                                      │
-│   -s, --skip-upload                      Skip torrent upload.                                                     │
-│   -e, --edit-code EDIT_CODE              Use uniq edit code for mediainfo on rentry.co                            │
-│   -p, --pictures-number PICTURES_NUMBER  Number of picture to upload to the torrent (default: 3).                 │
-│   -n, --note NOTE                        Put a note in to the description.                                        │
-│   -M, --no-mediainfo                     Do not attach mediainfo to the torrent (provider rentry.co).             │
-│   -m, --myanimelist MYANIMELIST          MyAnimeList link.                                                        │
-│   --skip-myanimelist                     Skip anything that connect to MyAnimeList (in case of downtime).         │
-│   -c, --category CATEGORY                Select a category, for help use: --category-help (1-6).                  │
-│   -o, --overwrite                        Recreate the .torrent if it already exists.                              │
-╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ──────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│   -h, --help                                  show this help message and exit                                  │
+│   -ch, --category-help                        Print available categories.                                      │
+│   -ms, --multi-subs                           Add Multi Subs tag to title.                                     │
+│   -da, --dual-audios                          Add Dual audios tag to title.                                    │
+│   -ma, --multi-audios                         Add Multi audios tag to title.                                   │
+│   -a, --auto                                  Detect multi subs, multi audios and dual audios.                 │
+│   -A, --anonymous                             Upload torrent as anonymous.                                     │
+│   -H, --hidden                                Upload the torrent as hidden.                                    │
+│   -C, --complete                              If the torrnet is a complete batch.                              │
+│   -s, --skip-upload                           Skip torrent upload.                                             │
+│   -e, --edit-code EDIT_CODE                   Use uniq edit code for mediainfo on rentry.co                    │
+│   -p, --pictures-number PICTURES_NUMBER       Number of picture to upload to the torrent (default: 3).         │
+│   -pe, --picture-extension PICTURE_EXTENSION  Extension of the snapshot to upload (default: png).              │
+│   -n, --note NOTE                             Put a note in to the description.                                │
+│   -M, --no-mediainfo                          Do not attach mediainfo to the torrent (provider rentry.co).     │
+│   -m, --myanimelist MYANIMELIST               MyAnimeList link.                                                │
+│   --skip-myanimelist                          Skip anything that connect to MyAnimeList (in case of downtime). │
+│   -c, --category CATEGORY                     Select a category, for help use: --category-help (1-6).          │
+│   -o, --overwrite                             Recreate the .torrent if it already exists.                      │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
 ![img](https://i.kek.sh/6ggTz484hs7.png)
