@@ -260,23 +260,8 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
             return f'https://i.kek.sh/{res.json()["filename"]}'
 
     images = Tree("[bold white]Images[not bold]")
-    
-    if self.in_f.is_dir():
-        files = sorted([*self.in_f.glob("*.mkv"), *self.in_f.glob("*.mp4")])
-    elif self.in_f.is_file():
-        files = [self.in_f]
-
-    num_snapshots = self.pic_num
-    if self.in_f.is_dir():
-        num_snapshots = len(files)
-
-    orig_files = files[:]
-    i = 2
-    while len(files) < num_snapshots:
-        files = flatten(zip(*([orig_files] * i)))
-        i += 1
-
-    last_file = None
+    num_snapshots = self.pic_num + 1
+    snapshots = []
     with Progress(
         TextColumn("[progress.description]{task.description}[/]"),
         "•",
@@ -286,8 +271,6 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
         TextColumn("Time:"),
         TimeRemainingColumn(elapsed_when_finished=True, compact=True),
     ) as progress:
-        snapshots = []
-        num_snapshots = self.pic_num + 1
 
         generate = progress.add_task(
             "[bold magenta]Generating snapshots[not bold white]", total=self.pic_num
@@ -295,12 +278,9 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
 
         for x in range(1, num_snapshots):
             snap = f"{self.cache_dir}/{name}_{x}.{self.pic_ext}"
-            if not Path(snap).is_file():
+            if not Path(snap).exists():
                 duration = float(mediainfo[0].get("Duration"))
                 interval = duration / (num_snapshots + 1)
-                j = x
-                if last_file != files[i]:
-                    j = 0
                 subprocess.run(
                     [
                         "ffmpeg",
@@ -310,7 +290,7 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
                         "-ss", str(
                             random.randint(round(interval * 10), round(interval * 10 * num_snapshots)) / 10
                             if self.random_snapshots
-                            else str(interval * (j + 1))  # noqa: E501
+                            else str(interval * (x + 1))  # noqa: E501
                         ),
                         "-i",
                         input,
@@ -541,11 +521,6 @@ def get_mal_link(anime, myanimelist, name) -> Optional[tuple[Anime, str]]:
         )  # noqa: E501
 
         return mal_data, name_to_mal
-
-
-def flatten(L: Iterable[Any]) -> list[Any]:
-    # https://stackoverflow.com/a/952952/492203
-    return [item for sublist in L for item in sublist]
 
 
 def get_public_trackers(self) -> list[str]:
