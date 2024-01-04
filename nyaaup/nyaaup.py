@@ -171,8 +171,8 @@ class Nyaasi:
             self.up_api: str = self.config.get(
                 "up_api", "https://nyaa.si/api/v2/upload"
             )
-            self.random_snapshots: str = not pref.get("random_snapshots", False)
-            self.real_lenght: str = pref.get("real_lenght", False)
+            self.random_snapshots: str = pref.get("random_snapshots", False)
+            self.real_lenght: str = not pref.get("real_lenght", False)
             self.credentials: dict = Config.get_cred(self.config["credentials"])
             self.trusted = "trusted" if self.config.get("trusted", False) else None
             info_form_config: bool = (
