@@ -3,6 +3,7 @@ up_api: https://nyaa.si/api/v2/upload
 announces: ["http://nyaa.tracker.wf:7777/announce"]
 
 preferences:
+    real_lenght: false # if true in description audio and subs len will be the real lenght and not languages count
     random_snapshots: false # If you want to take random snapshots from the video.
     trusted: false
     edit_code:  # If you keep it blank, it will be random.

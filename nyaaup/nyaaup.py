@@ -171,7 +171,8 @@ class Nyaasi:
             self.up_api: str = self.config.get(
                 "up_api", "https://nyaa.si/api/v2/upload"
             )
-            self.random_snapshots: str = pref.get("random_snapshots", False)
+            self.random_snapshots: str = not pref.get("random_snapshots", False)
+            self.real_lenght: str = pref.get("real_lenght", False)
             self.credentials: dict = Config.get_cred(self.config["credentials"])
             self.trusted = "trusted" if self.config.get("trusted", False) else None
             info_form_config: bool = (
@@ -247,7 +248,19 @@ class Nyaasi:
                     information = self.config["preferences"]["info"]
 
             videode, audiode, subde = get_description(mediainfo)
-            self.description += f'Information:\n* Video: {videode}\n* Audio(s): {" │ ".join(audiode)}\n* Subtitle(s): {" │ ".join(subde)}\n* Duration: **~{mediainfo[0].get("Duration_String3")}**'
+
+            sublen: int = (
+                len(set([x.split("**")[1] for x in subde]))
+                if len(subde) > 1
+                else len(subde)
+            )
+            audiodelen: int = (
+                len(set([x.split("**")[1] for x in audiode]))
+                if len(audiode) > 1
+                else len(audiode)
+            )
+
+            self.description += f'Information:\n* Video: {videode}\n* Audios ({audiodelen if self.real_lenght else len(audiode)}): {" │ ".join(audiode)}\n* Subtitles ({sublen if self.real_lenght else len(subde)}): {" │ ".join(subde)}\n* Duration: **~{mediainfo[0].get("Duration_String3")}**'
 
             if not self.args.skip_upload and mediainfo_to_torrent:
                 try:
@@ -258,17 +271,6 @@ class Nyaasi:
                 except httpx.HTTPError as e:
                     wprint(f"Failed to upload mediainfo to rentry.co! ({e.response})")
             self.description += "\n\n---\n\n"
-
-            sublen: int = (
-                len(set([x.split("**")[1] for x in subde]))
-                if len(subde) > 1
-                else len(subde)
-            )  # noqa: E501
-            audiodelen: int = (
-                len(set([x.split("**")[1] for x in audiode]))
-                if len(audiode) > 1
-                else len(audiode)
-            )  # noqa: E501
 
             if self.args.auto:
                 if audiodelen == 2:
