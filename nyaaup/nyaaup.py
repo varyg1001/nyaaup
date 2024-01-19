@@ -215,11 +215,29 @@ class Nyaasi:
             torrent_fd = open(f"{self.cache_dir}/{name}.torrent", "rb")
 
             with console.status("[bold magenta]MediaInfo parsing...") as _:
-                mediainfo: dict = json.loads(
-                    MediaInfo.parse(file, output="JSON", parse_speed=1, full=True)
-                )["media"]["track"]
+                mediainfo = json.loads(MediaInfo.parse(file, output="JSON", full=True))[
+                    "media"
+                ]["track"]
+
+                reparse_main = False
+                if not mediainfo[0]["Duration"]:
+                    reparse_main = True
+                else:
+                    for m in mediainfo:
+                        if m.get("@type", "") in ["Video", "Audio"] and not m.get(
+                            "BitRate"
+                        ):
+                            reparse_main = True
+                        if m.get("@type", "") == "General" and not m.get("Duration"):
+                            reparse_main = True
+
+                if reparse_main:
+                    mediainfo: dict = json.loads(
+                        MediaInfo.parse(file, output="JSON", parse_speed=1, full=True)
+                    )["media"]["track"]
+
                 self.text = MediaInfo.parse(
-                    file, output="", parse_speed=1, full=False
+                    file, output="", parse_speed=1 if reparse_main else 0.5, full=False
                 ).replace(str(file), str(file.name))
 
             if self.cat in {"1_2", "1_3", "1_4"}:
