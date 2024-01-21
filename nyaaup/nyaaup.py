@@ -278,7 +278,7 @@ class Nyaasi:
                 else len(audiode)
             )
 
-            self.description += f'Information:\n* Video: {videode}\n* Audios ({audiodelen if self.real_lenght else len(audiode)}): {" │ ".join(audiode)}\n* Subtitles ({sublen if self.real_lenght else len(subde)}): {" │ ".join(subde)}\n* Duration: **~{mediainfo[0].get("Duration_String3")}**'
+            self.description += f'`Tech Specs:`\n* `Video:` {videode}\n* `Audios ({audiodelen if self.real_lenght else len(audiode)}):` {" │ ".join(audiode)}\n* `Subtitles ({sublen if self.real_lenght else len(subde)}):` {" │ ".join(subde)}\n* `Chapters:` **{"Yes" if mediainfo[0].get("MenuCount") else "No"}**\n* `Duration:` **~{mediainfo[0].get("Duration_String3")}**'
 
             if not self.args.skip_upload and mediainfo_to_torrent:
                 try:

@@ -84,14 +84,12 @@ def main():
         default=None,
         help="Use uniq edit code for mediainfo on rentry.co",
     )
-    (
-        parser_up.add_argument(
-            "-p",
-            "--pictures-number",
-            type=int,
-            default=3,
-            help="Number of picture to upload to the torrent (default: 3).",
-        ),
+    parser_up.add_argument(
+        "-p",
+        "--pictures-number",
+        type=int,
+        default=3,
+        help="Number of picture to upload to the torrent (default: 3).",
     )
     parser_up.add_argument(
         "-pe",
@@ -100,14 +98,12 @@ def main():
         default="png",
         help="Extension of the snapshot to upload (default: png).",
     )
-    (
-        parser_up.add_argument(
+    parser_up.add_argument(
             "-n",
             "--note",
             type=str,
             default=None,
             help="Put a note in to the description.",
-        ),
     )
     parser_up.add_argument(
         "-M",
