@@ -13,7 +13,7 @@ import httpx
 
 from rich.padding import Padding
 from rich.console import Console
-from typing import Any, IO, Literal, NoReturn, overload, Optional, Iterable
+from typing import Any, IO, Literal, NoReturn, overload, Optional
 from ruamel.yaml import YAML
 import oxipng
 from torf import Torrent
@@ -43,7 +43,6 @@ transport = httpx.HTTPTransport(retries=5)
 MAP: dict = {
     # subtitle codecs
     "UTF-8": "SRT",
-    "ASS": "ASS",
     # channels
     "1": "1.0",
     "2": "2.0",
@@ -178,7 +177,7 @@ class Config:
     def get_dirs(self):
         return self.dirs
 
-    def create(self, exit: Optional[bool] = False):
+    def create(self, exit: bool = False):
         shutil.copy(
             Path(__file__).resolve().parent.with_name("nyaaup.yaml.example"),
             self.config_path,
@@ -409,7 +408,7 @@ def rentry_upload(self) -> dict:
                 },
             ).json()
         except httpx.HTTPError as e:
-            eprint(e.response, True)
+            eprint(str(e), True)
         finally:
             client.close()
 
@@ -474,7 +473,7 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
                         x
                         for x in [
                             GetTracksInfo(info).get_info(),
-                            f'{MAP.get(info["Format"])}',
+                            f'{MAP.get(info["Format"], info["Format"])}',
                         ]
                         if x
                     ]
@@ -505,7 +504,7 @@ def get_mal_link(anime, myanimelist, name) -> Optional[tuple[Anime, str]]:
             with console.status(
                 "[bold magenta]Getting MyAnimeList info form input link..."
             ) as _:  # noqa: E501
-                malid: str = str(myanimelist).split("/")[4]
+                malid = int(str(myanimelist).split("/")[4])
                 while not mal_data:
                     mal_data = Anime(malid)
         else:
@@ -532,8 +531,9 @@ def get_public_trackers(self) -> list[str]:
                 response = client.get(
                     "https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt"
                 )
+                response.raise_for_status()  # Raise an exception if the response status is not successful
                 trackers += [x for x in response.text.splitlines() if x]
             except httpx.HTTPError as e:
-                eprint(e.response)
+                eprint(str(e))  # Convert HTTPError object to string
 
     return trackers
