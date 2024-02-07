@@ -1,21 +1,19 @@
-from __future__ import annotations
-
+import argparse
 import humanize
 import random
 import subprocess
 import sys
 import re
-import os
 import shutil
-import argparse
-from pathlib import Path
-import httpx
+import os
 
+import httpx
+import oxipng
+from pathlib import Path
+from typing import Any, IO, Literal, NoReturn, overload, Optional
 from rich.padding import Padding
 from rich.console import Console
-from typing import Any, IO, Literal, NoReturn, overload, Optional
 from ruamel.yaml import YAML
-import oxipng
 from torf import Torrent
 from wand.image import Image
 from langcodes import Language
@@ -40,10 +38,11 @@ dirs = PlatformDirs(appname="nyaaup", appauthor=False)
 console = Console()
 transport = httpx.HTTPTransport(retries=5)
 
-MAP: dict = {
-    # subtitle codecs
-    "UTF-8": "SRT",
-    # channels
+
+CODECS = {"UTF-8": "SRT"}
+
+
+CHANNELS = {
     "1": "1.0",
     "2": "2.0",
     "6": "5.1",
@@ -56,7 +55,7 @@ class RParse(argparse.ArgumentParser):
         kwargs.setdefault("formatter_class", lambda prog: CustomHelpFormatter(prog))
         super().__init__(*args, **kwargs)
 
-    def _print_message(self, message: str, file: IO[str] | None = None) -> None:  # noqa: E501
+    def _print_message(self, message: str, file: IO[str] | None = None) -> None:
         if "error" in message:
             lprint(f"[white not bold]{message}")
         if message:
@@ -65,7 +64,7 @@ class RParse(argparse.ArgumentParser):
                     r"(-[a-z-A-Z]+\s*|\[)([A-Z-_:]+)(?=]|,|\s\s|\s\.)",
                     r"\1[bold color(231)]\2[/]",
                     message,
-                )  # noqa: E501
+                )
                 message = re.sub(r"((-|--)[a-z-A-Z]+)", r"[green]\1[/]", message)
                 message = message.replace("usage", "[yellow]USAGE[/]")
                 message = message.replace(" file ", "[bold magenta] file [/]", 2)
@@ -84,7 +83,7 @@ class RParse(argparse.ArgumentParser):
                             f"  {pa}",
                             border_style="dim",
                             title="Positional arguments",
-                            title_align="left",  # noqa: E501
+                            title_align="left",
                         )
                     )
                     lprint("")
@@ -97,7 +96,7 @@ class RParse(argparse.ArgumentParser):
                         f"  {m[1].strip()}",
                         border_style="dim",
                         title="Options",
-                        title_align="left",  # noqa: E501
+                        title_align="left",
                     )
                 )
 
@@ -182,7 +181,7 @@ class Config:
             Path(__file__).resolve().parent.with_name("nyaaup.yaml.example"),
             self.config_path,
         )
-        eprint(f"Config file doesn't exist, created to: {self.config_path}", fatal=exit)  # noqa: E501
+        eprint(f"Config file doesn't exist, created to: {self.config_path}", fatal=exit)
 
     def load(self):
         try:
@@ -218,7 +217,7 @@ class Config:
 
 class GetTracksInfo:
     def __init__(self, data: dict):
-        self.track_info = []
+        self.track_info: list = []
         lang = data.get("Language")
         if not lang:
             self.lang = "Und"
@@ -254,13 +253,17 @@ class GetTracksInfo:
 def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
     def up(image_path: Path) -> str:
         with open(image_path, "rb") as file:
-            res = httpx.post("https://kek.sh/api/v1/posts", files={"file": file})
+            res = httpx.post(
+                url="https://kek.sh/api/v1/posts",
+                headers=self.kek_headers,
+                files={"file": file},
+            )
 
             return f'https://i.kek.sh/{res.json()["filename"]}'
 
     images = Tree("[bold white]Images[not bold]")
     num_snapshots = self.pic_num + 1
-    snapshots = []
+    snapshots: list[Path] = []
     with Progress(
         TextColumn("[progress.description]{task.description}[/]"),
         "•",
@@ -270,14 +273,13 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
         TextColumn("Time:"),
         TimeRemainingColumn(elapsed_when_finished=True, compact=True),
     ) as progress:
-
         generate = progress.add_task(
             "[bold magenta]Generating snapshots[not bold white]", total=self.pic_num
         )
 
         for x in range(1, num_snapshots):
-            snap = f"{self.cache_dir}/{name}_{x}.{self.pic_ext}"
-            if not Path(snap).exists():
+            snap = Path(f"{self.cache_dir}/{name}_{x}.{self.pic_ext}")
+            if not snap.exists():
                 duration = float(mediainfo[0].get("Duration"))
                 interval = duration / (num_snapshots + 1)
                 subprocess.run(
@@ -286,10 +288,15 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
                         "-y",
                         "-v",
                         "error",
-                        "-ss", str(
-                            random.randint(round(interval * 10), round(interval * 10 * num_snapshots)) / 10
+                        "-ss",
+                        str(
+                            random.randint(
+                                round(interval * 10),
+                                round(interval * 10 * num_snapshots),
+                            )
+                            / 10
                             if self.random_snapshots
-                            else str(interval * (x + 1))  # noqa: E501
+                            else str(interval * (x + 1))
                         ),
                         "-i",
                         input,
@@ -297,7 +304,7 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
                         "scale='max(sar,1)*iw':'max(1/sar,1)*ih'",
                         "-frames:v",
                         "1",
-                        snap,
+                        str(snap),
                     ],
                     check=True,
                 )
@@ -322,13 +329,13 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
                 file_size = os.path.getsize(snap)
 
                 if file_size > 5 * 1024 * 1024:  # 5MB in bytes
-                    wprint(f"Skipping snapshot {snap} as its size is more than 5MB")  # noqa: E501
-                else:
-                    link = up(snapshots[x - 1])
-                    self.description += f"![]({link})\n"
-                    images.add(
-                        f"[not bold cornflower_blue][link={link}]{link}[/link][white /not bold]"
-                    )  # noqa: E501
+                    wprint(f"Skipping snapshot {snap} as its size is more than 5MB")
+
+                link = up(snapshots[x - 1])
+                self.description += f"![]({link})\n"
+                images.add(
+                    f"[not bold cornflower_blue][link={link}]{link}[/link][white /not bold]"
+                )
 
                 progress.update(upload, advance=1)
 
@@ -373,13 +380,13 @@ def create_torrent(self, name: str, filename: Path, overwrite: bool) -> bool:
             if filepath not in files:
                 progress.console.print(
                     f"[bold white]Hashing [not bold white]{Path(filepath).name}..."
-                )  # noqa: E501
+                )
                 files.append(filepath)
 
             progress.update(
                 create,
                 completed=pieces_done * torrent.piece_size,
-                total=pieces_total * torrent.piece_size,  # noqa: E501
+                total=pieces_total * torrent.piece_size,
             )
 
         create = progress.add_task(
@@ -459,7 +466,7 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
                         for x in [
                             GetTracksInfo(info).get_info(),
                             f'{info.get("Format")}{" Atmos" if atmos and "JOC" in atmos else ""}',
-                            f'{MAP.get(info["Channels"])}' + a_bitrate,
+                            f'{CHANNELS.get(info["Channels"])}' + a_bitrate,
                         ]
                         if x
                     ]
@@ -473,7 +480,7 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
                         x
                         for x in [
                             GetTracksInfo(info).get_info(),
-                            f'{MAP.get(info["Format"], info["Format"])}',
+                            f'{CODECS.get(info["Format"], info["Format"])}',
                         ]
                         if x
                     ]
@@ -503,21 +510,21 @@ def get_mal_link(anime, myanimelist, name) -> Optional[tuple[Anime, str]]:
         if myanimelist:
             with console.status(
                 "[bold magenta]Getting MyAnimeList info form input link..."
-            ) as _:  # noqa: E501
+            ) as _:
                 malid = int(str(myanimelist).split("/")[4])
                 while not mal_data:
                     mal_data = Anime(malid)
         else:
             with console.status(
                 "[bold magenta]Searching MyAnimeList link form input name..."
-            ) as _:  # noqa: E501
+            ) as _:
                 while not mal_data:
                     mal_data = Anime(AnimeSearch(name_to_mal).results[0].mal_id)
         iprint(
             "[bold magenta]Myanimelist page successfuly found![not bold white]",
             up=0,
             down=0,
-        )  # noqa: E501
+        )
 
         return mal_data, name_to_mal
 
@@ -531,9 +538,9 @@ def get_public_trackers(self) -> list[str]:
                 response = client.get(
                     "https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt"
                 )
-                response.raise_for_status()  # Raise an exception if the response status is not successful
+                response.raise_for_status()
                 trackers += [x for x in response.text.splitlines() if x]
             except httpx.HTTPError as e:
-                eprint(str(e))  # Convert HTTPError object to string
+                eprint(str(e))
 
     return trackers

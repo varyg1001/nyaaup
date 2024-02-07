@@ -11,3 +11,4 @@ preferences:
     mal: true # Use MyAnimeList.net to add anime original name to display name.
     mediainfo: true # If attach mediainfo to the torrent (provider rentry.co)
     add_pub_trackers: false # true if you want to add https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt trackers to your torrent
+    keks_key: "" # api key for bigger images and for easier manage
