@@ -42,9 +42,9 @@ $ ./install.sh
 ### Usage
 
 ```
-                                                   nyaaup v2.2.2
+                                                        nyaaup v2.5.0
 
-                                          Auto torrent uploader to Nyaa.si
+                                               Auto torrent uploader to Nyaa.si
 
 USAGE: nyaaup up [-h] [-ch] [-ms] [-da] [-ma] [-a] [-A] [-H] [-C] [-s] [-e EDIT_CODE] [-p PICTURES_NUMBER]
                  [-pe PICTURE_EXTENSION] [-n NOTE] [-M] [-m MYANIMELIST] [--skip-myanimelist] [-c CATEGORY] [-o]
@@ -77,5 +77,5 @@ USAGE: nyaaup up [-h] [-ch] [-ms] [-da] [-ma] [-a] [-A] [-H] [-C] [-s] [-e EDIT_
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
-![img](https://i.kek.sh/6ggTz484hs7.png)
-<!---https://i.kek.sh/6ggTz484hs7.png--->
+![img](https://i.kek.sh/crb0nguklZk.png)
+<!---https://i.kek.sh/crb0nguklZk.png--->
