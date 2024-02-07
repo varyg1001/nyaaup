@@ -16,7 +16,7 @@ install(show_locals=True)
 
 def main():
     console.print(
-        f"[b]nyaaup[/b] [magenta bold]v{__version__}[/]\n\n[dim]Auto torrent uploader to Nyaa.si\n",  # noqa: E501
+        f"[b]nyaaup[/b] [magenta bold]v{__version__}[/]\n\n[dim]Auto torrent uploader to Nyaa.si\n",
         justify="center",
     )
 

@@ -1,11 +1,10 @@
-from __future__ import annotations
-
 import sys
 import json
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import httpx
+from mal import Anime
 from rich.console import Console
 from rich.panel import Panel
 from pymediainfo import MediaInfo
@@ -38,7 +37,7 @@ class Nyaasi:
             parser.print_help(sys.stderr)
             sys.exit(1)
 
-        self.cat = self.get_category(self.args.category)
+        self.category = self.get_category(self.args.category)
         categories_help = Tree("[chartreuse2]Available categories:[white /not bold]")
         categories_help.add(
             "[1] [cornflower_blue not bold]Anime - English-translated[white /not bold]"
@@ -83,7 +82,7 @@ class Nyaasi:
         self.main()
 
     def upload(
-        self, torrent_byte: bytes, name: str, display_name: str, info: str, infos: Tree
+        self, torrent_byte: Any, name: str, display_name: str, info: str, infos: Tree
     ) -> dict:
         iprint("Uploading to Nyaa...", down=0)
 
@@ -101,7 +100,7 @@ class Nyaasi:
                     "torrent_data": json.dumps(
                         {
                             "name": display_name,
-                            "category": self.cat,
+                            "category": self.category,
                             "information": info,
                             "description": self.description,
                             "anonymous": self.anonymous,
@@ -112,19 +111,14 @@ class Nyaasi:
                     )
                 },
                 auth=(self.credentials[0], self.credentials[1]),
-                headers={
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.2088.46",
-                    "sec-ch-ua": '"Chromium";v="118", "Microsoft Edge";v="118", "Not=A?Brand";v="99"',
-                    "sec-ch-ua-mobile": "?0",
-                    "sec-ch-ua-platform": '"Windows"',
-                },
+                headers=self.headers,
             )
 
         if (
             res.json().get("errors")
             and "This torrent already exists"
             in res.json().get("errors").get("torrent")[0]
-        ):  # noqa: E501
+        ):
             eprint("\nThe torrent once uploaded in the past!\n")
             print(Panel.fit(infos, border_style="red"))
             sys.exit(1)
@@ -159,9 +153,10 @@ class Nyaasi:
                 return "Live Action - Raw"
 
     def main(self) -> None:
-        dirs = Config().get_dirs()
+        config = Config()
+        dirs = config.get_dirs()
         Path(dirs.user_config_path).mkdir(parents=True, exist_ok=True)
-        self.config = Config().load()
+        self.config = config.load() or {}
         if pref := self.config.get("preferences"):
             self.edit_code: Optional[str] = (
                 pref.get("edit_code")
@@ -172,20 +167,35 @@ class Nyaasi:
                 "up_api", "https://nyaa.si/api/v2/upload"
             )
             self.random_snapshots: str = pref.get("random_snapshots", False)
-            self.real_lenght: str = not pref.get("real_lenght", False)
-            self.credentials: dict = Config.get_cred(self.config["credentials"])
+            self.real_lenght: bool = not pref.get("real_lenght", False)
+            if cred := self.config.get("credentials"):
+                self.credentials: dict = config.get_cred(cred)
+            else: 
+                eprint("No credentials in the config!", True)
             self.trusted = "trusted" if self.config.get("trusted", False) else None
             info_form_config: bool = (
                 False
                 if (pref.get("info", "").lower() == "mal") or not pref.get("info")
                 else True
             )
+            self.headers = {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.2088.46",
+                    "sec-ch-ua": '"Chromium";v="118", "Microsoft Edge";v="118", "Not=A?Brand";v="99"',
+                    "sec-ch-ua-mobile": "?0",
+                    "sec-ch-ua-platform": '"Windows"',
+                }
+            self.kek_headers = {}
+            if key := pref.get("keks_key", None):
+                self.kek_headers["x-kek-auth"] = key
+                self.kek_headers.update(self.headers)
 
             add_mal: bool = pref.get("mal", True)
             mediainfo_to_torrent: bool = (
                 pref.get("mediainfo", True) if not self.args.no_mediainfo else False
             )
             self.add_pub_trackers: bool = pref.get("add_pub_trackers", False)
+        else:
+            eprint("No preferences in the config!", True)
 
         multi_sub: bool = self.args.multi_subs
         multi_audio: bool = self.args.multi_audios
@@ -212,7 +222,6 @@ class Nyaasi:
             self.cache_dir.mkdir(parents=True, exist_ok=True)
 
             create_torrent(self, name, in_file, self.args.overwrite)
-            torrent_fd = open(f"{self.cache_dir}/{name}.torrent", "rb")
 
             with console.status("[bold magenta]MediaInfo parsing...") as _:
                 mediainfo = json.loads(MediaInfo.parse(file, output="JSON", full=True))[
@@ -240,12 +249,14 @@ class Nyaasi:
                     file, output="", parse_speed=1 if reparse_main else 0.5, full=False
                 ).replace(str(file), str(file.name))
 
-            if self.cat in {"1_2", "1_3", "1_4"}:
+            if self.category in {"1_2", "1_3", "1_4"}:
                 anime = True
             else:
                 anime = False
-            name_to_mal: Optional[str] = None
-            mal_data = None
+
+            name_to_mal: str = ""
+            mal_data: Optional[Anime] = None
+
             if (
                 anime
                 and add_mal
@@ -254,8 +265,7 @@ class Nyaasi:
             ):
                 mal_data, name_to_mal = get_mal_link(anime, self.args.myanimelist, name)
 
-            information: Optional[str] = None
-
+            information: str = ""
             if add_mal and not self.args.skip_myanimelist:
                 if not info_form_config and anime:
                     if self.args.myanimelist:
@@ -280,6 +290,8 @@ class Nyaasi:
 
             self.description += f'`Tech Specs:`\n* `Video:` {videode}\n* `Audios ({audiodelen if self.real_lenght else len(audiode)}):` {" │ ".join(audiode)}\n* `Subtitles ({sublen if self.real_lenght else len(subde)}):` {" │ ".join(subde)}\n* `Chapters:` **{"Yes" if mediainfo[0].get("MenuCount") else "No"}**\n* `Duration:` **~{mediainfo[0].get("Duration_String3")}**'
 
+            mediainfo_url = ""
+            edit_code = ""
             if not self.args.skip_upload and mediainfo_to_torrent:
                 try:
                     rentry_response = rentry_upload(self)
@@ -287,7 +299,7 @@ class Nyaasi:
                     edit_code = rentry_response["edit_code"]
                     self.description += f"\n\n[MediaInfo]({mediainfo_url}/raw)"
                 except httpx.HTTPError as e:
-                    wprint(f"Failed to upload mediainfo to rentry.co! ({e.response})")
+                    wprint(f"Failed to upload mediainfo to rentry.co! ({e})")
             self.description += "\n\n---\n\n"
 
             if self.args.auto:
@@ -298,15 +310,15 @@ class Nyaasi:
                 if sublen > 1:
                     multi_sub = True
 
-            name = (
+            name_nyaa = (
                 name.replace(".", " ")
                 .replace("2 0", "2.0")
                 .replace("5 1", "5.1")
                 .replace("7 1", "7.1")
-            )  # noqa: E501
+            )
 
-            if add_mal and anime and not self.args.skip_myanimelist:
-                if self.cat in {"1_3", "1_4"}:
+            if mal_data and add_mal and anime and not self.args.skip_myanimelist:
+                if self.category in {"1_3", "1_4"}:
                     if (
                         mal_data.title_english
                         and mal_data.title_english.casefold()
@@ -324,25 +336,27 @@ class Nyaasi:
             if multi_sub:
                 name_plus.append("Multi-Subs")
 
-            display_name = f'{name} ({", ".join(name_plus)})' if name_plus else name
+            display_name = f'{name_nyaa} ({", ".join(name_plus)})' if name_plus else name_nyaa
 
+            images: Optional[Tree] = None
             if self.pic_num != 0:
-                images: Tree = snapshot(self, file, name, mediainfo)
+                images = snapshot(self, file, name_nyaa, mediainfo)
 
             infos = Tree("[bold white]Information[not bold]")
             if add_mal and anime and info_form_config and name_to_mal:
                 infos.add(
                     f"[bold white]MAL link ({name_to_mal}): [cornflower_blue not bold]{information}[white]"
                 )
-            infos.add(
-                f"[bold white]Selected category: [cornflower_blue not bold]{self.get_category(self.cat)}[white]"
-            )
+            if self.category:
+                infos.add(
+                    f"[bold white]Selected category: [cornflower_blue not bold]{self.get_category(self.category)}[white]"
+                )
 
             title: str = ""
             style: str = "yellow"
 
             if not self.args.skip_upload:
-                if mediainfo_to_torrent:
+                if mediainfo_to_torrent and mediainfo_url and edit_code:
                     medlink = Tree(
                         f"[bold white]MediaInfo link: [cornflower_blue not bold][link={mediainfo_url}]{mediainfo_url}[/link][white]"
                     )
@@ -352,7 +366,8 @@ class Nyaasi:
                     infos.add(medlink)
                 if self.pic_num != 0:
                     infos.add(images)
-                link = self.upload(torrent_fd, name, display_name, information, infos)
+                torrent_fd: Any = open(f"{self.cache_dir}/{name}.torrent", "rb")
+                link = self.upload(torrent_fd, name_nyaa, display_name, information, infos)
                 if not link:
                     wprint("Something happened during the uploading!")
                 else:

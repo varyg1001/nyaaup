@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import subprocess
 import json
 
@@ -14,7 +12,8 @@ console = Console()
 
 class Torrent:
     def __init__(
-        self, name: str,
+        self,
+        name: str,
         path: Path,
         display_name: str,
         category,
@@ -34,9 +33,15 @@ class Torrent:
         self.get_mediainfo(self)
 
     def get_mediainfo(self):
-        with console.status("[bold magenta]MediaInfo parseing...") as status:
-            self.mediainfo_json = json.loads(subprocess.run(
-            ["mediainfo",  "--ParseSpeed=1.0", "-f", "--output=JSON", self.path], capture_output=True, encoding="utf-8").stdout)["media"]["track"]
+        with console.status("[bold magenta]MediaInfo parseing...") as _:
+            self.mediainfo_json = json.loads(
+                subprocess.run(
+                    ["mediainfo", "--ParseSpeed=1.0", "-f", "--output=JSON", self.path],
+                    capture_output=True,
+                    encoding="utf-8",
+                ).stdout
+            )["media"]["track"]
 
             self.mediainfo = MediaInfo.parse(self.path, output="", full=False).replace(
-                str(self.path), str(self.path.name))
+                str(self.path), str(self.path.name)
+            )
