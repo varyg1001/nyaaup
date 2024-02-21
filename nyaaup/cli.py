@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
+import argparse
+import sys
+from pathlib import Path
+
+
+from rich.traceback import install
+from rich.console import Console
+
 from .utils import RParse
 from .nyaaup import Nyaasi
 from .auth import Auth
 from .__init__ import __version__
 
-import argparse
-import sys
-from pathlib import Path
-from rich.traceback import install
-from rich.console import Console
 
 console = Console()
 install(show_locals=True)
@@ -106,11 +109,11 @@ def main():
         help="Extension of the snapshot to upload (default: png).",
     )
     parser_up.add_argument(
-            "-n",
-            "--note",
-            type=str,
-            default=None,
-            help="Put a note in to the description.",
+        "-n",
+        "--note",
+        type=str,
+        default=None,
+        help="Put a note in to the description.",
     )
     parser_up.add_argument(
         "-M",

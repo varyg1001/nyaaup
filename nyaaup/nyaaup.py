@@ -12,17 +12,7 @@ from rich.tree import Tree
 from rich import print
 from rich.traceback import install
 
-from .utils import (
-    Config,
-    create_torrent,
-    rentry_upload,
-    get_description,
-    get_mal_link,
-    wprint,
-    eprint,
-    iprint,
-    snapshot,
-)
+from .utils import *  # noqa F401
 
 install(show_locals=True)
 console = Console()
@@ -170,7 +160,7 @@ class Nyaasi:
             self.real_lenght: bool = not pref.get("real_lenght", False)
             if cred := self.config.get("credentials"):
                 self.credentials: dict = config.get_cred(cred)
-            else: 
+            else:
                 eprint("No credentials in the config!", True)
             self.trusted = "trusted" if self.config.get("trusted", False) else None
             info_form_config: bool = (
@@ -179,11 +169,11 @@ class Nyaasi:
                 else True
             )
             self.headers = {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.2088.46",
-                    "sec-ch-ua": '"Chromium";v="118", "Microsoft Edge";v="118", "Not=A?Brand";v="99"',
-                    "sec-ch-ua-mobile": "?0",
-                    "sec-ch-ua-platform": '"Windows"',
-                }
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.2088.46",
+                "sec-ch-ua": '"Chromium";v="118", "Microsoft Edge";v="118", "Not=A?Brand";v="99"',
+                "sec-ch-ua-mobile": "?0",
+                "sec-ch-ua-platform": '"Windows"',
+            }
             self.kek_headers = {}
             if key := pref.get("keks_key", None):
                 self.kek_headers["x-kek-auth"] = key
@@ -224,9 +214,9 @@ class Nyaasi:
             create_torrent(self, name, in_file, self.args.overwrite)
 
             with console.status("[bold magenta]MediaInfo parsing...") as _:
-                mediainfo = json.loads(MediaInfo.parse(file, output="JSON", full=True))[
-                    "media"
-                ]["track"]
+                mediainfo: dict = json.loads(
+                    MediaInfo.parse(file, output="JSON", full=True)
+                )["media"]["track"]
 
                 reparse_main = False
                 if not mediainfo[0]["Duration"]:
@@ -241,7 +231,7 @@ class Nyaasi:
                             reparse_main = True
 
                 if reparse_main:
-                    mediainfo: dict = json.loads(
+                    mediainfo = json.loads(
                         MediaInfo.parse(file, output="JSON", parse_speed=1, full=True)
                     )["media"]["track"]
 
@@ -336,7 +326,9 @@ class Nyaasi:
             if multi_sub:
                 name_plus.append("Multi-Subs")
 
-            display_name = f'{name_nyaa} ({", ".join(name_plus)})' if name_plus else name_nyaa
+            display_name = (
+                f'{name_nyaa} ({", ".join(name_plus)})' if name_plus else name_nyaa
+            )
 
             images: Optional[Tree] = None
             if self.pic_num != 0:
@@ -367,7 +359,9 @@ class Nyaasi:
                 if self.pic_num != 0:
                     infos.add(images)
                 torrent_fd: Any = open(f"{self.cache_dir}/{name}.torrent", "rb")
-                link = self.upload(torrent_fd, name_nyaa, display_name, information, infos)
+                link = self.upload(
+                    torrent_fd, name_nyaa, display_name, information, infos
+                )
                 if not link:
                     wprint("Something happened during the uploading!")
                 else:

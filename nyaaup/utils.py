@@ -33,9 +33,8 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
-
-dirs = PlatformDirs(appname="nyaaup", appauthor=False)
 console = Console()
+dirs = PlatformDirs(appname="nyaaup", appauthor=False)
 transport = httpx.HTTPTransport(retries=5)
 
 
@@ -215,41 +214,6 @@ class Config:
         sys.exit(1)
 
 
-class GetTracksInfo:
-    def __init__(self, data: dict):
-        self.track_info: list = []
-        lang = data.get("Language")
-        if not lang:
-            self.lang = "Und"
-            wprint("One track has unknown language!")
-        else:
-            self.lang = Language.get(lang).display_name()
-        self.track_name = data.get("Title") or None
-
-    def get_return(self, lang: str, track_name: Optional[str] = None) -> str:
-        if track_name:
-            if track_name in {"SDH", "Forced"}:
-                return f"**{lang}** [{track_name}]"
-            if r := re.search(r"(.*) \((SDH|Forced)\)", track_name):
-                return f"**{lang}** ({r[1]}) [{r[2]}]"
-            else:
-                return f"**{lang}** ({track_name})"
-        else:
-            return f"**{lang}**"
-
-    def get_info(self) -> str:
-        if self.track_name and "(" in self.lang:
-            self.lang = self.lang.split(" (")[0]
-            return self.get_return(self.lang, self.track_name)
-        elif "(" in self.lang:
-            self.lang = self.lang.split(" (")[0]
-            return self.get_return(self.lang)
-        elif self.track_name:
-            return self.get_return(self.lang, self.track_name)
-        else:
-            return self.get_return(self.lang)
-
-
 def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
     def up(image_path: Path) -> str:
         with open(image_path, "rb") as file:
@@ -342,6 +306,23 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
         return images
 
 
+def get_public_trackers(self) -> list[str]:
+    trackers: list = ["http://nyaa.tracker.wf:7777/announce"]
+
+    if self.add_pub_trackers:
+        with httpx.Client(transport=transport) as client:
+            try:
+                response = client.get(
+                    "https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt"
+                )
+                response.raise_for_status()
+                trackers += [x for x in response.text.splitlines() if x]
+            except httpx.HTTPError as e:
+                eprint(str(e))
+
+    return trackers
+
+
 def create_torrent(self, name: str, filename: Path, overwrite: bool) -> bool:
     torrent_file = Path(f"{self.cache_dir}/{name}.torrent")
     if torrent_file.is_file():
@@ -422,6 +403,39 @@ def rentry_upload(self) -> dict:
         return res
 
 
+def get_return(lang: str, track_name: Optional[str] = None) -> str:
+    if track_name:
+        if track_name in {"SDH", "Forced"}:
+            return f"**{lang}** [{track_name}]"
+        if r := re.search(r"(.*) \((SDH|Forced)\)", track_name):
+            return f"**{lang}** ({r[1]}) [{r[2]}]"
+        else:
+            return f"**{lang}** ({track_name})"
+    else:
+        return f"**{lang}**"
+
+
+def get_track_info(data: dict) -> str:
+    lang = data.get("Language")
+    if not lang:
+        lang = "Und"
+        wprint("One track has unknown language!")
+    else:
+        lang = Language.get(lang).display_name()
+    track_name = data.get("Title") or None
+
+    if track_name and "(" in lang:
+        lang = lang.split(" (")[0]
+        return get_return(lang, track_name)
+    elif "(" in lang:
+        lang = lang.split(" (")[0]
+        return get_return(lang)
+    elif track_name:
+        return get_return(lang, track_name)
+    else:
+        return get_return(lang)
+
+
 def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
     video_info = ""
     audio_info: list[str] = []
@@ -464,7 +478,7 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
                     [
                         x
                         for x in [
-                            GetTracksInfo(info).get_info(),
+                            get_track_info(info),
                             f'{info.get("Format")}{" Atmos" if atmos and "JOC" in atmos else ""}',
                             f'{CHANNELS.get(info["Channels"])}' + a_bitrate,
                         ]
@@ -479,7 +493,7 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
                     [
                         x
                         for x in [
-                            GetTracksInfo(info).get_info(),
+                            get_track_info(info),
                             f'{CODECS.get(info["Format"], info["Format"])}',
                         ]
                         if x
@@ -528,18 +542,14 @@ def get_mal_link(myanimelist, name) -> tuple[Optional[Anime], str]:
     return mal_data, name_to_mal
 
 
-def get_public_trackers(self) -> list[str]:
-    trackers: list = ["http://nyaa.tracker.wf:7777/announce"]
-
-    if self.add_pub_trackers:
-        with httpx.Client(transport=transport) as client:
-            try:
-                response = client.get(
-                    "https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt"
-                )
-                response.raise_for_status()
-                trackers += [x for x in response.text.splitlines() if x]
-            except httpx.HTTPError as e:
-                eprint(str(e))
-
-    return trackers
+__all__ = (
+    "get_mal_link",
+    "get_description",
+    "wprint",
+    "iprint",
+    "eprint",
+    "create_torrent",
+    "rentry_upload",
+    "snapshot",
+    "Config",
+)
