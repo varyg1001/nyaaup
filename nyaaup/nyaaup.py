@@ -266,14 +266,14 @@ class Nyaasi:
                 mal_data, name_to_mal = get_mal_link(anime, self.args.myanimelist, name)
 
             information: str = ""
-            if add_mal and not self.args.skip_myanimelist:
-                if not info_form_config and anime:
+            if not info_form_config and anime and not self.args.info:
+                if add_mal and not self.args.skip_myanimelist:
                     if self.args.myanimelist:
                         information = self.args.myanimelist
                     else:
                         information = f"{'/'.join(mal_data.url.split('/')[:-1])}/"
-                elif info_form_config:
-                    information = self.config["preferences"]["info"]
+            elif self.args.info or info_form_config:
+                information = self.args.info or pref["info"]
 
             videode, audiode, subde = get_description(mediainfo)
 

@@ -190,7 +190,7 @@ class Config:
             self.create(True)
 
     @staticmethod
-    def get_cred(cred: str):
+    def get_cred(cred: str) -> tuple[Any] | NoReturn:
         if cred == "user:pass":
             eprint("Set valid credentials!", True)
         if return_cred := re.fullmatch(r"^([^:]+?):([^:]+?)(?::(.+))?$", cred):

@@ -85,6 +85,13 @@ def main():
         help="Use uniq edit code for mediainfo on rentry.co",
     )
     parser_up.add_argument(
+        "-i",
+        "--info",
+        type=str,
+        default=None,
+        help="Set information.",
+    )
+    parser_up.add_argument(
         "-p",
         "--pictures-number",
         type=int,
