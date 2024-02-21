@@ -190,7 +190,7 @@ class Config:
             self.create(True)
 
     @staticmethod
-    def get_cred(cred: str) -> tuple[Any] | NoReturn:
+    def get_cred(cred: str) -> tuple[Any | str] | NoReturn:
         if cred == "user:pass":
             eprint("Set valid credentials!", True)
         if return_cred := re.fullmatch(r"^([^:]+?):([^:]+?)(?::(.+))?$", cred):
@@ -500,33 +500,32 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
     return video_info, audio_info, subtitles_info
 
 
-def get_mal_link(anime, myanimelist, name) -> Optional[tuple[Anime, str]]:
-    if anime:
-        mal_data: Optional[Anime] = None
-        name_to_mal = re.sub(r"\.S\d+.*", "", name)
-        if name_to_mal == name:
-            name_to_mal = re.sub(r"\.\d\d\d\d\..*", "", name)
-        name_to_mal = name_to_mal.replace(".", " ")
-        if myanimelist:
-            with console.status(
-                "[bold magenta]Getting MyAnimeList info form input link..."
-            ) as _:
-                malid = int(str(myanimelist).split("/")[4])
-                while not mal_data:
-                    mal_data = Anime(malid)
-        else:
-            with console.status(
-                "[bold magenta]Searching MyAnimeList link form input name..."
-            ) as _:
-                while not mal_data:
-                    mal_data = Anime(AnimeSearch(name_to_mal).results[0].mal_id)
-        iprint(
-            "[bold magenta]Myanimelist page successfuly found![not bold white]",
-            up=0,
-            down=0,
-        )
+def get_mal_link(myanimelist, name) -> tuple[Optional[Anime], str]:
+    mal_data: Optional[Anime] = None
+    name_to_mal = re.sub(r"\.S\d+.*", "", name)
+    if name_to_mal == name:
+        name_to_mal = re.sub(r"\.\d{4}\..*", "", name)
+    name_to_mal = name_to_mal.replace(".", " ")
+    if myanimelist:
+        with console.status(
+            "[bold magenta]Getting MyAnimeList info form input link..."
+        ) as _:
+            malid = int(str(myanimelist).split("/")[4])
+            while not mal_data:
+                mal_data = Anime(malid)
+    else:
+        with console.status(
+            "[bold magenta]Searching MyAnimeList link form input name..."
+        ) as _:
+            while not mal_data:
+                mal_data = Anime(AnimeSearch(name_to_mal).results[0].mal_id)
+    iprint(
+        "[bold magenta]Myanimelist page successfuly found![not bold white]",
+        up=0,
+        down=0,
+    )
 
-        return mal_data, name_to_mal
+    return mal_data, name_to_mal
 
 
 def get_public_trackers(self) -> list[str]:

@@ -263,7 +263,7 @@ class Nyaasi:
                 and not info_form_config
                 and not self.args.skip_myanimelist
             ):
-                mal_data, name_to_mal = get_mal_link(anime, self.args.myanimelist, name)
+                mal_data, name_to_mal = get_mal_link(self.args.myanimelist, name)
 
             information: str = ""
             if not info_form_config and anime and not self.args.info:
