@@ -12,7 +12,17 @@ from rich.tree import Tree
 from rich import print
 from rich.traceback import install
 
-from .utils import *  # noqa F401
+from .utils import (
+    Config,
+    create_torrent,
+    rentry_upload,
+    get_description,
+    get_mal_link,
+    wprint,
+    eprint,
+    iprint,
+    snapshot,
+)
 
 install(show_locals=True)
 console = Console()
@@ -104,12 +114,9 @@ class Nyaasi:
                 headers=self.headers,
             )
 
-        if (
-            res.json().get("errors")
-            and "This torrent already exists"
-            in res.json().get("errors").get("torrent")[0]
-        ):
-            eprint("\nThe torrent once uploaded in the past!\n")
+        if error := res.json().get("errors"):
+            info = next(iter(error))
+            eprint(f"\n{info} error: {error[info][0]}!\n")
             print(Panel.fit(infos, border_style="red"))
             sys.exit(1)
 
