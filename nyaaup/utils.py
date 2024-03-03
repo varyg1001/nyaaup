@@ -17,7 +17,7 @@ from ruamel.yaml import YAML
 from torf import Torrent
 from wand.image import Image
 from langcodes import Language
-from mal import AnimeSearch, Anime, AnimeSearchResult
+from mal import AnimeSearch, Anime
 from platformdirs import PlatformDirs
 from rich.tree import Tree
 from rich.text import Text
@@ -135,37 +135,6 @@ def lprint(
             file.flush()
 
 
-@overload
-def eprint(text: str, fatal: Literal[False] = False, exit_code: int = 1) -> None:
-    ...
-
-
-@overload
-def eprint(text: str, fatal: Literal[True], exit_code: int = 1) -> NoReturn:
-    ...
-
-
-def eprint(text: str, fatal: bool = False, exit_code: int = 1) -> None | NoReturn:
-    if text.startswith("\n"):
-        text = text.lstrip("\n")
-        lprint()
-    lprint(f"[bold color(231) on red]ERROR:[/] [red]{text}[/]")
-    if fatal:
-        sys.exit(exit_code)
-    return None
-
-
-def iprint(text: str, up: int = 1, down: int = 1) -> None:
-    lprint(Padding(f"[bold green]{text}[white]", (up, 0, down, 0), expand=False))
-
-
-def wprint(text: str) -> None:
-    if text.startswith("\n"):
-        text = text.lstrip("\n")
-        lprint()
-    lprint(f"[bold color(231) on yellow]WARNING:[/] [yellow]{text}[/]")
-
-
 class Config:
     def __init__(self):
         self.dirs = dirs
@@ -212,6 +181,37 @@ class Config:
         self.yaml.dump(data, self.config_path)
         lprint("[bold green]\nCredential successfully added![white]")
         sys.exit(1)
+
+
+@overload
+def eprint(text: str, fatal: Literal[False] = False, exit_code: int = 1) -> None:
+    ...
+
+
+@overload
+def eprint(text: str, fatal: Literal[True], exit_code: int = 1) -> NoReturn:
+    ...
+
+
+def eprint(text: str, fatal: bool = False, exit_code: int = 1) -> None | NoReturn:
+    if text.startswith("\n"):
+        text = text.lstrip("\n")
+        lprint()
+    lprint(f"[bold color(231) on red]ERROR:[/] [red]{text}[/]")
+    if fatal:
+        sys.exit(exit_code)
+    return None
+
+
+def iprint(text: str, up: int = 1, down: int = 1) -> None:
+    lprint(Padding(f"[bold green]{text}[white]", (up, 0, down, 0), expand=False))
+
+
+def wprint(text: str) -> None:
+    if text.startswith("\n"):
+        text = text.lstrip("\n")
+        lprint()
+    lprint(f"[bold color(231) on yellow]WARNING:[/] [yellow]{text}[/]")
 
 
 def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
