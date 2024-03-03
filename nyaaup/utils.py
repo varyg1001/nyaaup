@@ -17,7 +17,7 @@ from ruamel.yaml import YAML
 from torf import Torrent
 from wand.image import Image
 from langcodes import Language
-from mal import AnimeSearch, Anime
+from mal import AnimeSearch, Anime, AnimeSearchResult
 from platformdirs import PlatformDirs
 from rich.tree import Tree
 from rich.text import Text
@@ -528,11 +528,20 @@ def get_mal_link(myanimelist, name) -> tuple[Optional[Anime], str]:
             while not mal_data:
                 mal_data = Anime(malid)
     else:
+        data: list | None = None
         with console.status(
             "[bold magenta]Searching MyAnimeList link form input name..."
         ) as _:
-            while not mal_data:
-                mal_data = Anime(AnimeSearch(name_to_mal).results[0].mal_id)
+            while not data:
+                data = AnimeSearch(name_to_mal).results[:10]
+            for x in data:
+                anime = Anime(x.mal_id)
+                if (anime.title_english.casefold() == name_to_mal.casefold()) or (anime.title.casefold() == name_to_mal.casefold()):
+                    mal_data = anime
+                    break
+                if not mal_data:
+                    mal_data = Anime(data[0].mal_id)
+
     iprint(
         "[bold magenta]Myanimelist page successfuly found![not bold white]",
         up=0,
