@@ -151,7 +151,7 @@ class Nyaasi:
 
     def main(self) -> None:
         config = Config()
-        dirs = config.get_dirs()
+        dirs = config.get_dirs
         Path(dirs.user_config_path).mkdir(parents=True, exist_ok=True)
         self.config = config.load() or {}
         if pref := self.config.get("preferences"):

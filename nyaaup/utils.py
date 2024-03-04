@@ -9,6 +9,7 @@ import os
 
 import httpx
 import oxipng
+from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any, IO, Literal, NoReturn, overload, Optional
 from rich.padding import Padding
@@ -141,10 +142,11 @@ class Config:
         self.config_path = Path(dirs.user_config_path / "nyaaup.ymal")
         self.yaml = YAML()
 
+    @property
     def get_dirs(self):
         return self.dirs
 
-    def create(self, exit: bool = False):
+    def create(self, exit=False):
         shutil.copy(
             Path(__file__).resolve().parent.with_name("nyaaup.yaml.example"),
             self.config_path,
@@ -516,9 +518,9 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
 
 def get_mal_link(myanimelist, name) -> tuple[Optional[Anime], str]:
     mal_data: Optional[Anime] = None
-    name_to_mal = re.sub(r"\.S\d+.*", "", name)
+    name_to_mal = re.sub(r"\.|\-S\d+.*", "", name)
     if name_to_mal == name:
-        name_to_mal = re.sub(r"\.\d{4}\..*", "", name)
+        name_to_mal = re.sub(r"\.|\-\d{4}\..*", "", name)
     name_to_mal = name_to_mal.replace(".", " ")
     if myanimelist:
         with console.status(
@@ -536,7 +538,12 @@ def get_mal_link(myanimelist, name) -> tuple[Optional[Anime], str]:
                 data = AnimeSearch(name_to_mal).results[:10]
             for x in data:
                 anime = Anime(x.mal_id)
-                if (anime.title_english.casefold() == name_to_mal.casefold()) or (anime.title.casefold() == name_to_mal.casefold()):
+                name_in = (name_to_mal or "").casefold()
+                name_en = (anime.title_english or "").casefold()
+                name_ori = (anime.title or "").casefold()
+                if (similar(name_en, name_in) >= 0.75) or (
+                    similar(name_ori, name_in) >= 0.75
+                ):
                     mal_data = anime
                     break
                 if not mal_data:
@@ -549,6 +556,10 @@ def get_mal_link(myanimelist, name) -> tuple[Optional[Anime], str]:
     )
 
     return mal_data, name_to_mal
+
+
+def similar(x, y):
+    return SequenceMatcher(None, x, y).ratio()
 
 
 __all__ = (
