@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nyaaup"
-version = "2.5.2"
+version = "2.5.3"
 description = "Auto torrent uploader to Nyaa.si"
 authors = ["varyg"]
 readme = "README.md"
