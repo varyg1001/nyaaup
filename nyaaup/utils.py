@@ -518,9 +518,9 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
 
 def get_mal_link(myanimelist, name) -> tuple[Optional[Anime], str]:
     mal_data: Optional[Anime] = None
-    name_to_mal = re.sub(r"\.|\-S\d+.*", "", name)
+    name_to_mal = re.sub(r"[\.|\-]S\d+.*", "", name)
     if name_to_mal == name:
-        name_to_mal = re.sub(r"\.|\-\d{4}\..*", "", name)
+        name_to_mal = re.sub(r"[\.|\-]\d{4}\..*", "", name)
     name_to_mal = name_to_mal.replace(".", " ")
     if myanimelist:
         with console.status(
