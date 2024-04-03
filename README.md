@@ -1,6 +1,5 @@
-![img](https://forthebadge.com/images/badges/made-with-python.png)
-
 <p align="center">
+![img](https://forthebadge.com/images/badges/made-with-python.png)
 <sup><em>Auto torrent uploader to Nyaa.si</em></sup>
 </p>
 
@@ -44,12 +43,13 @@ $ ./install.sh
 ### Usage
 
 ```
-                                                        nyaaup v2.5.0
+                                                   nyaaup v3.0.0
 
-                                               Auto torrent uploader to Nyaa.si
+                                          Auto torrent uploader to Nyaa.si
 
-USAGE: nyaaup up [-h] [-ch] [-ms] [-da] [-ma] [-a] [-A] [-H] [-C] [-s] [-e EDIT_CODE] [-p PICTURES_NUMBER]
-                 [-pe PICTURE_EXTENSION] [-n NOTE] [-M] [-m MYANIMELIST] [--skip-myanimelist] [-c CATEGORY] [-o]
+USAGE: nyaaup up [-h] [-ch] [-ms] [-t] [-da] [-ma] [-a] [-A] [-H] [-C] [-s] [-e EDIT_CODE] [-i INFO]
+                 [-p PICTURES_NUMBER] [-pe PICTURE_EXTENSION] [-n NOTE] [-M] [-m MYANIMELIST] [--skip-myanimelist]
+                 [-c CATEGORY] [-o]
 
 
 ╭─ Positional arguments ─────────────────────────────────────────────────────╮
@@ -60,6 +60,7 @@ USAGE: nyaaup up [-h] [-ch] [-ms] [-da] [-ma] [-a] [-A] [-H] [-C] [-s] [-e EDIT_
 │   -h, --help                                  show this help message and exit                                  │
 │   -ch, --category-help                        Print available categories.                                      │
 │   -ms, --multi-subs                           Add Multi Subs tag to title.                                     │
+│   -t, --telegram                              Send telegram message.                                           │
 │   -da, --dual-audios                          Add Dual audios tag to title.                                    │
 │   -ma, --multi-audios                         Add Multi audios tag to title.                                   │
 │   -a, --auto                                  Detect multi subs, multi audios and dual audios.                 │
@@ -68,6 +69,7 @@ USAGE: nyaaup up [-h] [-ch] [-ms] [-da] [-ma] [-a] [-A] [-H] [-C] [-s] [-e EDIT_
 │   -C, --complete                              If the torrnet is a complete batch.                              │
 │   -s, --skip-upload                           Skip torrent upload.                                             │
 │   -e, --edit-code EDIT_CODE                   Use uniq edit code for mediainfo on rentry.co                    │
+│   -i, --info INFO                             Set information.                                                 │
 │   -p, --pictures-number PICTURES_NUMBER       Number of picture to upload to the torrent (default: 3).         │
 │   -pe, --picture-extension PICTURE_EXTENSION  Extension of the snapshot to upload (default: png).              │
 │   -n, --note NOTE                             Put a note in to the description.                                │
