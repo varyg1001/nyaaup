@@ -1,5 +1,7 @@
 <p align="center">
 ![img](https://forthebadge.com/images/badges/made-with-python.png)
+</p>
+<p align="center">
 <sup><em>Auto torrent uploader to Nyaa.si</em></sup>
 </p>
 
