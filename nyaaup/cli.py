@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 import argparse
 import sys
 from pathlib import Path
@@ -7,18 +8,17 @@ from pathlib import Path
 from rich.traceback import install
 from rich.console import Console
 
-from .utils import RParse
-from .nyaaup import Nyaasi
+from .utils.argparse import RParse
+from .upload import Upload
 from .auth import Auth
 from .__init__ import __version__
 
 
-console = Console()
 install(show_locals=True)
 
 
 def main():
-    console.print(
+    Console().print(
         f"[b]nyaaup[/b] [magenta bold]v{__version__}[/]\n\n[dim]Auto torrent uploader to Nyaa.si\n",
         justify="center",
     )
@@ -46,6 +46,12 @@ def main():
     )
     parser_up.add_argument(
         "-ms", "--multi-subs", action="store_true", help="Add Multi Subs tag to title."
+    )
+    parser_up.add_argument(
+        "-t",
+        "--telegram",
+        action="store_true",
+        help="Send telegram message.",
     )
     parser_up.add_argument(
         "-da",
@@ -154,7 +160,7 @@ def main():
     if args.command == "auth":
         Auth(args, parser)
     else:
-        Nyaasi(args, parser)
+        Upload(args, parser)
 
 
 if __name__ == "__main__":

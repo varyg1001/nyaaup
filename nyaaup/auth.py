@@ -1,4 +1,4 @@
-from .utils import Config
+from .utils.config import Config
 
 
 class Auth:
@@ -6,5 +6,7 @@ class Auth:
         self.args = args
         self.parser = parser
 
-        if self.args.add_credential:
-            Config().add(self.args.add_credential)
+        config = Config()
+
+        if self.args.add_credentifal:
+            config.add(self.args.add_credential)

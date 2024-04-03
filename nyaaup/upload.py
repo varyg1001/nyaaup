@@ -1,7 +1,9 @@
+import re
 import sys
 import json
 from pathlib import Path
 from typing import Any, Optional
+from types import SimpleNamespace
 
 import httpx
 from mal import Anime
@@ -13,7 +15,6 @@ from rich import print
 from rich.traceback import install
 
 from .utils import (
-    Config,
     create_torrent,
     rentry_upload,
     get_description,
@@ -22,13 +23,14 @@ from .utils import (
     eprint,
     iprint,
     snapshot,
+    tgpost,
 )
+from .utils.config import Config
 
 install(show_locals=True)
-console = Console()
 
 
-class Nyaasi:
+class Upload:
     def __init__(self, args, parser):
         self.args = args
         self.parser = parser
@@ -82,13 +84,19 @@ class Nyaasi:
         self.main()
 
     def upload(
-        self, torrent_byte: Any, name: str, display_name: str, info: str, infos: Tree
+        self,
+        torrent_byte: Any,
+        name: str,
+        display_name: str,
+        info: str,
+        infos: Tree,
+        provider,
     ) -> dict:
         iprint("Uploading to Nyaa...", down=0)
 
         with httpx.Client(transport=httpx.HTTPTransport(retries=2)) as client:
             res = client.post(
-                url=self.up_api,
+                url=provider.api,
                 files={
                     "torrent": (
                         f"{name}.torrent",
@@ -110,7 +118,7 @@ class Nyaasi:
                         }
                     )
                 },
-                auth=(self.credentials[0], self.credentials[1]),
+                auth=(provider.credentials.username, provider.credentials.password),
                 headers=self.headers,
             )
 
@@ -160,27 +168,27 @@ class Nyaasi:
                 if not self.args.edit_code
                 else self.args.edit_code
             )
-            self.up_api: str = self.config.get(
-                "up_api", "https://nyaa.si/api/v2/upload"
-            )
+
             self.random_snapshots: str = pref.get("random_snapshots", False)
             self.real_lenght: bool = not pref.get("real_lenght", False)
-            if cred := self.config.get("credentials"):
-                self.credentials: dict = config.get_cred(cred)
-            else:
-                eprint("No credentials in the config!", True)
+            self.tg_id = pref.get("id", None)
+            self.tg_token = pref.get("token", None)
+            self.announces = []
+            self.providers = []
             self.trusted = "trusted" if self.config.get("trusted", False) else None
             info_form_config: bool = (
                 False
                 if (pref.get("info", "").lower() == "mal") or not pref.get("info")
                 else True
             )
+
             self.headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.2088.46",
                 "sec-ch-ua": '"Chromium";v="118", "Microsoft Edge";v="118", "Not=A?Brand";v="99"',
                 "sec-ch-ua-mobile": "?0",
                 "sec-ch-ua-platform": '"Windows"',
             }
+
             self.kek_headers = {}
             if key := pref.get("keks_key", None):
                 self.kek_headers["x-kek-auth"] = key
@@ -193,6 +201,28 @@ class Nyaasi:
             self.add_pub_trackers: bool = pref.get("add_pub_trackers", False)
         else:
             eprint("No preferences in the config!", True)
+
+        if providers := self.config.get("providers"):
+            for x in providers:
+                temp = {}
+                temp["name"] = ""
+                if name := x.get("name"):
+                    temp["name"] = name
+                if cred := x.get("credentials"):
+                    temp["credentials"] = config.get_cred(cred)
+                else:
+                    eprint("No credentials in the config!", True)
+                if api := x.get("api"):
+                    temp["api"] = api
+                else:
+                    eprint("No api in the config!", True)
+                if announces := x.get("announces"):
+                    self.announces.extend(announces)
+                else:
+                    wprint("No announces in the config!")
+                self.providers.append(SimpleNamespace(**temp))
+        else:
+            eprint("No providers in the config!", True)
 
         multi_sub: bool = self.args.multi_subs
         multi_audio: bool = self.args.multi_audios
@@ -220,7 +250,7 @@ class Nyaasi:
 
             create_torrent(self, name, in_file, self.args.overwrite)
 
-            with console.status("[bold magenta]MediaInfo parsing...") as _:
+            with Console().status("[bold magenta]MediaInfo parsing...") as _:
                 mediainfo: dict = json.loads(
                     MediaInfo.parse(file, output="JSON", full=True)
                 )["media"]["track"]
@@ -251,16 +281,20 @@ class Nyaasi:
             else:
                 anime = False
 
-            name_to_mal: str = ""
-            mal_data: Optional[Anime] = None
 
+            mal_data: Optional[Anime] = None
+            name_to_mal = re.sub(r"[\.|\-]S\d+.*", "", name)
+            if name_to_mal == name:
+                name_to_mal = re.sub(r"[\.|\-]\d{4}\..*", "", name)
+            name_to_mal = name_to_mal.replace(".", " ")
+            
             if (
                 anime
                 and add_mal
                 and not info_form_config
                 and not self.args.skip_myanimelist
             ):
-                mal_data, name_to_mal = get_mal_link(self.args.myanimelist, name)
+                mal_data = get_mal_link(self.args.myanimelist, name_to_mal)
 
             information: str = ""
             if not info_form_config and anime and not self.args.info:
@@ -341,46 +375,65 @@ class Nyaasi:
             if self.pic_num != 0:
                 images = snapshot(self, file, name_nyaa, mediainfo)
 
-            infos = Tree("[bold white]Information[not bold]")
-            if add_mal and anime and info_form_config and name_to_mal:
-                infos.add(
-                    f"[bold white]MAL link ({name_to_mal}): [cornflower_blue not bold]{information}[white]"
-                )
-            if self.category:
-                infos.add(
-                    f"[bold white]Selected category: [cornflower_blue not bold]{self.get_category(self.category)}[white]"
-                )
-
-            title: str = ""
-            style: str = "yellow"
-
-            if not self.args.skip_upload:
-                if mediainfo_to_torrent and mediainfo_url and edit_code:
-                    medlink = Tree(
-                        f"[bold white]MediaInfo link: [cornflower_blue not bold][link={mediainfo_url}]{mediainfo_url}[/link][white]"
+            for provider in self.providers:
+                infos = Tree("[bold white]Information[not bold]")
+                if add_mal and anime and info_form_config and name_to_mal:
+                    infos.add(
+                        f"[bold white]MAL link ({name_to_mal}): [cornflower_blue not bold]{information}[white]"
                     )
-                    medlink.add(
-                        f"[bold white]Edit code: [cornflower_blue not bold]{edit_code}[white]"
+                if self.category:
+                    infos.add(
+                        f"[bold white]Selected category: [cornflower_blue not bold]{self.get_category(self.category)}[white]"
                     )
-                    infos.add(medlink)
-                if self.pic_num != 0:
-                    infos.add(images)
-                torrent_fd: Any = open(f"{self.cache_dir}/{name}.torrent", "rb")
-                link = self.upload(
-                    torrent_fd, name_nyaa, display_name, information, infos
-                )
-                if not link:
-                    wprint("Something happened during the uploading!")
+
+                title: str = ""
+                style: str = "yellow"
+
+                if not self.args.skip_upload:
+                    if mediainfo_to_torrent and mediainfo_url and edit_code:
+                        medlink = Tree(
+                            f"[bold white]MediaInfo link: [cornflower_blue not bold][link={mediainfo_url}]{mediainfo_url}[/link][white]"
+                        )
+                        medlink.add(
+                            f"[bold white]Edit code: [cornflower_blue not bold]{edit_code}[white]"
+                        )
+                        infos.add(medlink)
+
+                    if self.pic_num != 0:
+                        infos.add(images)
+
+                    torrent_fd: Any = open(f"{self.cache_dir}/{name}.torrent", "rb")
+                    link = self.upload(
+                        torrent_fd,
+                        name_nyaa,
+                        display_name,
+                        information,
+                        infos,
+                        provider,
+                    )
+
+                    if not link:
+                        wprint("Something happened during the uploading!")
+                    else:
+                        page_link = link["url"]
+                        infos.add(
+                            f"[bold white]Page link: [cornflower_blue not bold][link={page_link}]{page_link}[/link][white]"
+                        )
+                        download_link = page_link.replace(
+                            f"view/{link['id']}", f"download/{link['id']}.torrent"
+                        )
+                        infos.add(
+                            f"""[bold white]Download link: [cornflower_blue not bold]{download_link}[white]"""
+                        )
+                        style = "bold green"
+                        title = f"Torrent successfully uploaded to {provider.name}!"
+
+                        if self.args.telegram and self.tg_id and self.tg_token:
+                            tgpost(
+                                self,
+                                ms=f'\nName: {name_to_mal}\n\nNyaa link: {page_link}\n\n<a href="{download_link}">Torrent file</a>',
+                            )
                 else:
-                    infos.add(
-                        f'[bold white]Page link: [cornflower_blue not bold][link={link["url"]}]{link["url"]}[/link][white]'
-                    )
-                    infos.add(
-                        f"""[bold white]Download link: [cornflower_blue not bold]{link["url"].replace(f"view/{link['id']}", f"download/{link['id']}.torrent")}[white]"""
-                    )
-                    style = "bold green"
-                    title = "Torrent successfully uploaded!"
-            else:
-                wprint("Torrent is not uploaded!")
-            print("")
-            print(Panel.fit(infos, title=title, border_style=style))
+                    wprint("Torrent is not uploaded!")
+                print("")
+                print(Panel.fit(infos, title=title, border_style=style))

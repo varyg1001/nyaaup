@@ -1,11 +1,10 @@
-import argparse
-import humanize
 import random
 import subprocess
+import humanize
 import sys
 import re
-import shutil
 import os
+import time
 
 import httpx
 import oxipng
@@ -14,15 +13,12 @@ from pathlib import Path
 from typing import Any, IO, Literal, NoReturn, overload, Optional
 from rich.padding import Padding
 from rich.console import Console
-from ruamel.yaml import YAML
 from torf import Torrent
 from wand.image import Image
 from langcodes import Language
 from mal import AnimeSearch, Anime
-from platformdirs import PlatformDirs
 from rich.tree import Tree
 from rich.text import Text
-from rich.panel import Panel
 from rich.progress import (
     Task,
     Progress,
@@ -34,10 +30,8 @@ from rich.progress import (
     TimeRemainingColumn,
 )
 
-console = Console()
-dirs = PlatformDirs(appname="nyaaup", appauthor=False)
 transport = httpx.HTTPTransport(retries=5)
-
+console = Console()
 
 CODECS = {"UTF-8": "SRT"}
 
@@ -48,70 +42,6 @@ CHANNELS = {
     "6": "5.1",
     "8": "7.1",
 }
-
-
-class RParse(argparse.ArgumentParser):
-    def __init__(self, *args: Any, **kwargs: Any):
-        kwargs.setdefault("formatter_class", lambda prog: CustomHelpFormatter(prog))
-        super().__init__(*args, **kwargs)
-
-    def _print_message(self, message: str, file: IO[str] | None = None) -> None:
-        if "error" in message:
-            lprint(f"[white not bold]{message}")
-        if message:
-            if message.startswith("usage"):
-                message = re.sub(
-                    r"(-[a-z-A-Z]+\s*|\[)([A-Z-_:]+)(?=]|,|\s\s|\s\.)",
-                    r"\1[bold color(231)]\2[/]",
-                    message,
-                )
-                message = re.sub(r"((-|--)[a-z-A-Z]+)", r"[green]\1[/]", message)
-                message = message.replace("usage", "[yellow]USAGE[/]")
-                message = message.replace(" file ", "[bold magenta] file [/]", 2)
-                message = message.replace(self.prog, f"[bold cyan]{self.prog}[/]")
-            message = f"{message.strip()}"
-            if "options:" in message:
-                m = message.split("options:")
-                if "positional arguments:" in m[0]:
-                    op = m[0].split("positional arguments:")
-                    pa = op[1].strip().replace("}", "").replace("{", "").split(",")
-                    pa = f'[green]{"[/], [green]".join(pa)}[/]'
-                    lprint(op[0].strip().replace(op[1].strip(), pa))
-                    lprint("")
-                    console.print(
-                        Panel.fit(
-                            f"  {pa}",
-                            border_style="dim",
-                            title="Positional arguments",
-                            title_align="left",
-                        )
-                    )
-                    lprint("")
-                else:
-                    lprint(m[0].strip())
-                    lprint("")
-
-                console.print(
-                    Panel.fit(
-                        f"  {m[1].strip()}",
-                        border_style="dim",
-                        title="Options",
-                        title_align="left",
-                    )
-                )
-
-
-class CustomHelpFormatter(argparse.RawTextHelpFormatter):
-    def __init__(self, *args: Any, **kwargs: Any):
-        kwargs.setdefault("max_help_position", 80)
-        super().__init__(*args, **kwargs)
-
-    def _format_action_invocation(self, action: argparse.Action) -> str:
-        if not action.option_strings or action.nargs == 0:
-            return super()._format_action_invocation(action)
-        default = self._get_default_metavar_for_optional(action)
-        args_string = self._format_args(action, default)
-        return ", ".join(action.option_strings) + " " + args_string
 
 
 class CustomTransferSpeedColumn(ProgressColumn):
@@ -134,55 +64,6 @@ def lprint(
         cons.print(text, **kwargs)
         if flush:
             file.flush()
-
-
-class Config:
-    def __init__(self):
-        self.dirs = dirs
-        self.config_path = Path(dirs.user_config_path / "nyaaup.ymal")
-        self.yaml = YAML()
-
-    @property
-    def get_dirs(self):
-        return self.dirs
-
-    def create(self, exit=False):
-        shutil.copy(
-            Path(__file__).resolve().parent.with_name("nyaaup.yaml.example"),
-            self.config_path,
-        )
-        eprint(f"Config file doesn't exist, created to: {self.config_path}", fatal=exit)
-
-    def load(self):
-        try:
-            return self.yaml.load(self.config_path)
-        except FileNotFoundError:
-            self.create(True)
-
-    @staticmethod
-    def get_cred(cred: str) -> tuple[Any | str] | NoReturn:
-        if cred == "user:pass":
-            eprint("Set valid credentials!", True)
-        if return_cred := re.fullmatch(r"^([^:]+?):([^:]+?)(?::(.+))?$", cred):
-            return return_cred.groups()
-        else:
-            eprint("Incorrect credentials format!", True)
-
-    def add(self, text: str):
-        credential = self.get_cred(text)
-        data = dict()
-        if credential:
-            try:
-                data = self.yaml.load(self.config_path)
-            except FileNotFoundError:
-                self.create()
-                data = self.yaml.load(self.config_path)
-        else:
-            eprint("No credentials found in text. Format: `user:pass`")
-        data["credentials"] = text
-        self.yaml.dump(data, self.config_path)
-        lprint("[bold green]\nCredential successfully added![white]")
-        sys.exit(1)
 
 
 @overload
@@ -308,9 +189,7 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
         return images
 
 
-def get_public_trackers(self) -> list[str]:
-    trackers: list = ["http://nyaa.tracker.wf:7777/announce"]
-
+def get_public_trackers(self):
     if self.add_pub_trackers:
         with httpx.Client(transport=transport) as client:
             try:
@@ -318,11 +197,9 @@ def get_public_trackers(self) -> list[str]:
                     "https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt"
                 )
                 response.raise_for_status()
-                trackers += [x for x in response.text.splitlines() if x]
+                self.announces.extend([x for x in response.text.splitlines() if x])
             except httpx.HTTPError as e:
                 eprint(str(e))
-
-    return trackers
 
 
 def create_torrent(self, name: str, filename: Path, overwrite: bool) -> bool:
@@ -337,9 +214,11 @@ def create_torrent(self, name: str, filename: Path, overwrite: bool) -> bool:
 
     iprint("Creating torrent...", 0)
 
+    get_public_trackers(self)
+
     torrent = Torrent(
         filename,
-        trackers=get_public_trackers(self),
+        trackers=self.announces,
         source="nyaa.si",
         creation_date=None,
         created_by="",
@@ -407,9 +286,9 @@ def rentry_upload(self) -> dict:
 
 def get_return(lang: str, track_name: Optional[str] = None) -> str:
     if track_name:
-        if track_name in {"SDH", "Forced"}:
+        if track_name in {"SDH", "Forced", "Dubtitle"}:
             return f"**{lang}** [{track_name}]"
-        if r := re.search(r"(.*) \((SDH|Forced)\)", track_name):
+        if r := re.search(r"(.*) \((SDH|Forced|Dubtitle)\)", track_name):
             return f"**{lang}** ({r[1]}) [{r[2]}]"
         else:
             return f"**{lang}** ({track_name})"
@@ -453,11 +332,22 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
             except KeyError:
                 wprint("Couldn't get video bitrate!")
 
+            codec = ""
+            if codec_ := info.get("InternetMediaType"):
+                codec = codec_.split("/")[1] + " "
+            elif codec_ := info.get("Format"):
+                codec = codec_
+            level = f'**{info.get("Format_Profile")}@L{info.get("Format_Level")}**'
+            if "None" in level:
+                level = ""
+            else:
+                codec = codec + " "
+
             video_info += ", ".join(
                 [
                     x
                     for x in [
-                        f'**{info.get("InternetMediaType").split("/")[1]} {info.get("Format_Profile")}@L{info.get("Format_Level")}**',
+                        f'**{codec}{level}**',
                         f'**{info.get("Width")}x{info.get("Height")}**' + v_bitrate,
                         f'**{info.get("FrameRate_String")}**',
                     ]
@@ -516,12 +406,9 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
     return video_info, audio_info, subtitles_info
 
 
-def get_mal_link(myanimelist, name) -> tuple[Optional[Anime], str]:
+def get_mal_link(myanimelist, name_to_mal) -> Optional[Anime]:
     mal_data: Optional[Anime] = None
-    name_to_mal = re.sub(r"[\.|\-]S\d+.*", "", name)
-    if name_to_mal == name:
-        name_to_mal = re.sub(r"[\.|\-]\d{4}\..*", "", name)
-    name_to_mal = name_to_mal.replace(".", " ")
+
     if myanimelist:
         with console.status(
             "[bold magenta]Getting MyAnimeList info form input link..."
@@ -555,11 +442,25 @@ def get_mal_link(myanimelist, name) -> tuple[Optional[Anime], str]:
         down=0,
     )
 
-    return mal_data, name_to_mal
+    return mal_data
 
 
 def similar(x, y):
     return SequenceMatcher(None, x, y).ratio()
+
+
+def tgpost(self, ms=None):
+    if ms:
+        with httpx.Client(transport=transport) as client:
+            client.post(
+                url=f"https://api.telegram.org/bot{self.tg_token}/sendMessage",
+                params={
+                    "text": ms,
+                    "chat_id": self.tg_id,
+                    "parse_mode": "html",
+                    "disable_web_page_preview": True,
+                },
+            )
 
 
 __all__ = (
@@ -571,5 +472,4 @@ __all__ = (
     "create_torrent",
     "rentry_upload",
     "snapshot",
-    "Config",
 )

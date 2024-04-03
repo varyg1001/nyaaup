@@ -1,6 +1,8 @@
-credentials: user:pass
-up_api: https://nyaa.si/api/v2/upload
-announces: ["http://nyaa.tracker.wf:7777/announce"]
+providers:
+- name: nyaasi
+  api: https://nyaa.si/api/v2/upload
+  credentials: user:pass
+  announces: ["http://nyaa.tracker.wf:7777/announce"]
 
 preferences:
     real_lenght: false # if true in description audio and subs len will be the real lenght and not languages count
@@ -12,3 +14,5 @@ preferences:
     mediainfo: true # If attach mediainfo to the torrent (provider rentry.co)
     add_pub_trackers: false # true if you want to add https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt trackers to your torrent
     keks_key: "" # api key for bigger images and for easier manage
+    id: "" # channel id
+    token: "" # bot token
