@@ -8,7 +8,7 @@ from pathlib import Path
 from rich.traceback import install
 from rich.console import Console
 
-from .utils.argparse import RParse
+from .utils import RParse
 from .upload import Upload
 from .auth import Auth
 from .__init__ import __version__

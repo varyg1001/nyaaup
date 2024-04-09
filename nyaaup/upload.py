@@ -24,8 +24,8 @@ from .utils import (
     iprint,
     snapshot,
     tgpost,
+    Config,
 )
-from .utils.config import Config
 
 install(show_locals=True)
 
@@ -283,10 +283,6 @@ class Upload:
 
 
             mal_data: Optional[Anime] = None
-            name_to_mal = re.sub(r"[\.|\-]S\d+.*", "", name)
-            if name_to_mal == name:
-                name_to_mal = re.sub(r"[\.|\-]\d{4}\..*", "", name)
-            name_to_mal = name_to_mal.replace(".", " ")
             
             if (
                 anime
@@ -294,6 +290,10 @@ class Upload:
                 and not info_form_config
                 and not self.args.skip_myanimelist
             ):
+                name_to_mal = re.sub(r"[\.|\-]S\d+.*", "", name)
+                if name_to_mal == name:
+                    name_to_mal = re.sub(r"[\.|\-]\d{4}\..*", "", name)
+                name_to_mal = name_to_mal.replace(".", " ")
                 mal_data = get_mal_link(self.args.myanimelist, name_to_mal)
 
             information: str = ""
@@ -431,7 +431,7 @@ class Upload:
                         if self.args.telegram and self.tg_id and self.tg_token:
                             tgpost(
                                 self,
-                                ms=f'\nName: {name_to_mal}\n\nNyaa link: {page_link}\n\n<a href="{download_link}">Torrent file</a>',
+                                ms=f'\nName: {display_name}\n\nNyaa link: {page_link}\n\n<a href="{download_link}">Torrent file</a>',
                             )
                 else:
                     wprint("Torrent is not uploaded!")
