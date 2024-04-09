@@ -171,7 +171,9 @@ class Upload:
 
             self.random_snapshots: str = pref.get("random_snapshots", False)
             self.real_lenght: bool = not pref.get("real_lenght", False)
-            self.tg_id = pref.get("id", None)
+            self.tg_id: Optional[str] = pref.get("id", None)
+            self.note: Optional[str] = pref.get("note", None)
+            self.telegram: bool = pref.get("telegram", False)
             self.tg_token = pref.get("token", None)
             self.announces = []
             self.providers = []
@@ -231,7 +233,7 @@ class Upload:
         for in_file in self.args.path:
             self.in_f = in_file
             self.description: str = ""
-            if note := self.args.note:
+            if note := (self.args.note or self.note):
                 self.description += f"{note}\n\n---\n\n"
             name_plus = list()
 
@@ -428,7 +430,7 @@ class Upload:
                         style = "bold green"
                         title = f"Torrent successfully uploaded to {provider.name}!"
 
-                        if self.args.telegram and self.tg_id and self.tg_token:
+                        if (self.args.telegram or self.telegram) and self.tg_id and self.tg_token:
                             tgpost(
                                 self,
                                 ms=f'\nName: {display_name}\n\nNyaa link: {page_link}\n\n<a href="{download_link}">Torrent file</a>',
