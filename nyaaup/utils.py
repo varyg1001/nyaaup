@@ -337,9 +337,9 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
             try:
                 b_raw = float(float(info["StreamSize"]) * 8 / float(info["Duration"]))
                 if b_raw / 1000 < 10000:
-                    b = f"{b_raw / 1000:.0f}kbps"
+                    b = f"{b_raw / 1000:.0f} kbps"
                 else:
-                    b = f"{b_raw / 1000000:.2f}Mbps"
+                    b = f"{b_raw / 1000000:.2f} Mbps"
                 v_bitrate = f" @ **{b}**"
             except KeyError:
                 wprint("Couldn't get video bitrate!")
