@@ -248,7 +248,7 @@ class Upload:
                     reparse_main = True
                 else:
                     for m in mediainfo:
-                        if m.get("@type", "") in ["Video", "Audio"] and not m.get(
+                        if m.get("@type", "") in ("Audio") and not m.get(
                             "BitRate"
                         ):
                             reparse_main = True
