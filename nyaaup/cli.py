@@ -140,7 +140,7 @@ def main():
         "--category",
         type=str,
         default=None,
-        help="Select a category, for help use: --category-help (1-6).",
+        help="Select a category, for help use: --category-help.",
     )
     parser_up.add_argument(
         "-o",

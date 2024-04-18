@@ -24,6 +24,7 @@ from .utils import (
     iprint,
     snapshot,
     tgpost,
+    cat_help,
     Config,
 )
 
@@ -40,28 +41,9 @@ class Upload:
             sys.exit(1)
 
         self.category = self.get_category(self.args.category)
-        categories_help = Tree("[chartreuse2]Available categories:[white /not bold]")
-        categories_help.add(
-            "[1] [cornflower_blue not bold]Anime - English-translated[white /not bold]"
-        )
-        categories_help.add(
-            "[2] [cornflower_blue not bold]Anime - Non-English-translated[white /not bold]"
-        )
-        categories_help.add(
-            "[3] [cornflower_blue not bold]Anime - Raw[white /not bold]"
-        )
-        categories_help.add(
-            "[4] [cornflower_blue not bold]Live Action - English-translated[white /not bold]"
-        )
-        categories_help.add(
-            "[5] [cornflower_blue not bold]Live Action - Non-English-translated[white /not bold]"
-        )
-        categories_help.add(
-            "[6] [cornflower_blue not bold]Live Action - Raw[white /not bold]"
-        )
 
         if self.args.category_help:
-            print(categories_help)
+            cat_help()
             sys.exit(1)
 
         if not self.args.path:
@@ -71,7 +53,7 @@ class Upload:
 
         if not self.args.category:
             eprint("No selected category!\n")
-            print(categories_help)
+            cat_help()
             sys.exit(1)
 
         self.pic_ext = self.args.picture_extension
@@ -132,6 +114,8 @@ class Upload:
 
     def get_category(self, category: str) -> Optional[str]:
         match category:
+            case "Anime - Anime Music Video" | "7":
+                return "1_1"
             case "Anime - English-translated" | "1":
                 return "1_2"
             case "Anime - Non-English-translated" | "2":
@@ -144,6 +128,8 @@ class Upload:
                 return "4_1"
             case "Live Action - Raw" | "6":
                 return "4_4"
+            case "1_1":
+                return "Anime - Anime Music Video"
             case "1_2":
                 return "Anime - English-translated"
             case "1_3":
@@ -253,9 +239,9 @@ class Upload:
             create_torrent(self, name, in_file, self.args.overwrite)
 
             with Console().status("[bold magenta]MediaInfo parsing...") as _:
-                mediainfo: dict = json.loads(
-                    MediaInfo.parse(file, output="JSON", full=True)
-                )["media"]["track"]
+                mediainfo = json.loads(MediaInfo.parse(file, output="JSON", full=True))[
+                    "media"
+                ]["track"]
 
                 reparse_main = False
                 if not mediainfo[0]["Duration"]:
@@ -283,9 +269,8 @@ class Upload:
             else:
                 anime = False
 
-
             mal_data: Optional[Anime] = None
-            
+
             if (
                 anime
                 and add_mal
@@ -308,20 +293,24 @@ class Upload:
             elif self.args.info or info_form_config:
                 information = self.args.info or pref["info"]
 
-            videode, audiode, subde = get_description(mediainfo)
+            video_de, audio_de, sub_de = get_description(mediainfo)
 
-            sublen: int = (
-                len(set([x.split("**")[1] for x in subde]))
-                if len(subde) > 1
-                else len(subde)
-            )
-            audiodelen: int = (
-                len(set([x.split("**")[1] for x in audiode]))
-                if len(audiode) > 1
-                else len(audiode)
-            )
+            audiode_str: str = " │ ".join(audio_de)
+            subde_str: str = " │ ".join(sub_de)
+            if not subde_str:
+                subde_str = "**N/A**"
+            chapter_str: str = ["No", "Yes"][bool(mediainfo[0].get("MenuCount", False))]
+            duration_str: str = mediainfo[0].get("Duration_String3", "?")
 
-            self.description += f'`Tech Specs:`\n* `Video:` {videode}\n* `Audios ({audiodelen if self.real_lenght else len(audiode)}):` {" │ ".join(audiode)}\n* `Subtitles ({sublen if self.real_lenght else len(subde)}):` {" │ ".join(subde)}\n* `Chapters:` **{"Yes" if mediainfo[0].get("MenuCount") else "No"}**\n* `Duration:` **~{mediainfo[0].get("Duration_String3")}**'
+            sub_len: int = len(sub_de)
+            audio_len: int = len(audio_de)
+            if self.real_lenght:
+                if sub_len > 1:
+                    sub_len = len(set([x.split("**")[1] for x in sub_de]))
+                if audio_len > 1:
+                    audio_len = len(set([x.split("**")[1] for x in audio_de]))
+
+            self.description += f"`Tech Specs:`\n* `Video:` {video_de}\n* `Audios ({audio_len}):` {audiode_str}\n* `Subtitles ({sub_len}):` {subde_str}\n* `Chapters:` **{chapter_str}**\n* `Duration:` **~{duration_str}**"
 
             mediainfo_url = ""
             edit_code = ""
@@ -336,19 +325,17 @@ class Upload:
             self.description += "\n\n---\n\n"
 
             if self.args.auto:
-                if audiodelen == 2:
+                if audio_len == 2:
                     dual_audio = True
-                elif audiodelen > 2:
+                elif audio_len > 2:
                     multi_audio = True
-                if sublen > 1:
+                if sub_len > 1:
                     multi_sub = True
 
-            name_nyaa = (
-                name.replace(".", " ")
-                .replace("2 0", "2.0")
-                .replace("5 1", "5.1")
-                .replace("7 1", "7.1")
-            )
+            name_nyaa = name.replace(".", " ")
+            if channel := re.search(r"[A-Z]{3}[2|5|7] [0|1]", name_nyaa):
+                c = channel[0]
+                name_nyaa = name_nyaa.replace(c, c.replace(" ", "."))
 
             if mal_data and add_mal and anime and not self.args.skip_myanimelist:
                 if self.category in {"1_3", "1_4"}:
@@ -401,7 +388,7 @@ class Upload:
                         )
                         infos.add(medlink)
 
-                    if self.pic_num != 0:
+                    if images and self.pic_num != 0:
                         infos.add(images)
 
                     torrent_fd: Any = open(f"{self.cache_dir}/{name}.torrent", "rb")
@@ -430,7 +417,11 @@ class Upload:
                         style = "bold green"
                         title = f"Torrent successfully uploaded to {provider.name}!"
 
-                        if (self.args.telegram or self.telegram) and self.tg_id and self.tg_token:
+                        if (
+                            (self.args.telegram or self.telegram)
+                            and self.tg_id
+                            and self.tg_token
+                        ):
                             tgpost(
                                 self,
                                 ms=f'\nName: {display_name}\n\nNyaa link: {page_link}\n\n<a href="{download_link}">Torrent file</a>',

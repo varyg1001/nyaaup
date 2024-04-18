@@ -23,6 +23,7 @@ from rich.tree import Tree
 from rich.text import Text
 from rich.padding import Padding
 from rich.console import Console
+from rich import print as rprint
 from rich.panel import Panel
 from rich.progress import (
     Task,
@@ -334,7 +335,12 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
         if info["@type"] == "Video":
             v_bitrate = ""
             try:
-                v_bitrate = f' @ **{round(float(info["BitRate"])/1000)} kbps**'
+                b_raw = float(float(info["StreamSize"]) * 8 / float(info["Duration"]))
+                if b_raw / 1000 < 10000:
+                    b = f"{b_raw / 1000:.0f}kbps"
+                else:
+                    b = f"{b_raw / 1000000:.2f}Mbps"
+                v_bitrate = f" @ **{b}**"
             except KeyError:
                 wprint("Couldn't get video bitrate!")
 
@@ -353,7 +359,7 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
                 [
                     x
                     for x in [
-                        f'**{codec}{level}**',
+                        f"**{codec}{level}**",
                         f'**{info.get("Width")}x{info.get("Height")}**' + v_bitrate,
                         f'**{info.get("FrameRate_String")}**',
                     ]
@@ -369,7 +375,7 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
                 a_bitrate = f" @ {round(float(info['BitRate'])/1000)} kbps"
             except KeyError:
                 wprint("Couldn't get audio bitrate!")
-            atmos = info.get("Format_AdditionalFeatures")
+            atmos = "JOC" in info.get("Format_AdditionalFeatures", "")
 
             audio_info += [
                 ", ".join(
@@ -377,8 +383,10 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
                         x
                         for x in [
                             get_track_info(info),
-                            f'{info.get("Format")}{" Atmos" if atmos and "JOC" in atmos else ""}',
-                            f'{CHANNELS.get(info["Channels"])}' + a_bitrate,
+                            f'{info.get("Format")}'
+                            + f'{CHANNELS.get(info.get("Channels", ""), "?")}'
+                            + f'{" Atmos" if atmos else ""}'
+                            + a_bitrate,
                         ]
                         if x
                     ]
@@ -406,7 +414,7 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
         eprint("Unable to determine audio language!", True)
 
     if not subtitles_info:
-        subtitles_info.append("N/A")
+        subtitles_info = []
         wprint("Unable to determine subtitle language!")
 
     return video_info, audio_info, subtitles_info
@@ -520,6 +528,24 @@ class RParse(argparse.ArgumentParser):
                 )
 
 
+def cat_help() -> None:
+    categories_help = Tree("[chartreuse2]Available categories:[white /not bold]")
+    cats = [
+        "Anime - English-translated",
+        "Anime - Non-English-translated",
+        "Anime - Raw",
+        "Live Action - English-translated",
+        "Live Action - Non-English-translated",
+        "Live Action - Raw",
+        "Anime - Anime Music Video",
+    ]
+
+    for num, x in enumerate(cats, start=1):
+        categories_help.add(f"[{num}] [cornflower_blue not bold]{x}[white /not bold]")
+
+    rprint(categories_help)
+
+
 class CustomHelpFormatter(argparse.RawTextHelpFormatter):
     def __init__(self, *args: Any, **kwargs: Any):
         kwargs.setdefault("max_help_position", 80)
@@ -580,4 +606,4 @@ class Config:
         data["credentials"] = text
         self.yaml.dump(data, self.config_path)
         lprint("[bold green]\nCredential successfully added![white]")
-        sys.exit(1)
+        sys.exit(0)
