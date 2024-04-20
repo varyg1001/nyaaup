@@ -248,9 +248,7 @@ class Upload:
                     reparse_main = True
                 else:
                     for m in mediainfo:
-                        if m.get("@type", "") in ("Audio") and not m.get(
-                            "BitRate"
-                        ):
+                        if m.get("@type", "") in ("Audio") and not m.get("BitRate"):
                             reparse_main = True
                         if m.get("@type", "") == "General" and not m.get("Duration"):
                             reparse_main = True
@@ -260,7 +258,7 @@ class Upload:
                         MediaInfo.parse(file, output="JSON", parse_speed=1, full=True)
                     )["media"]["track"]
 
-                self.text = MediaInfo.parse(
+                self.text: str = MediaInfo.parse(
                     file, output="", parse_speed=1 if reparse_main else 0.5, full=False
                 ).replace(str(file), str(file.name))
 
@@ -288,7 +286,7 @@ class Upload:
                 if add_mal and not self.args.skip_myanimelist:
                     if self.args.myanimelist:
                         information = self.args.myanimelist
-                    else:
+                    elif mal_data and getattr(mal_data, "url", None):
                         information = f"{'/'.join(mal_data.url.split('/')[:-1])}/"
             elif self.args.info or info_form_config:
                 information = self.args.info or pref["info"]
@@ -310,7 +308,13 @@ class Upload:
                 if audio_len > 1:
                     audio_len = len(set([x.split("**")[1] for x in audio_de]))
 
-            self.description += f"`Tech Specs:`\n* `Video:` {video_de}\n* `Audios ({audio_len}):` {audiode_str}\n* `Subtitles ({sub_len}):` {subde_str}\n* `Chapters:` **{chapter_str}**\n* `Duration:` **~{duration_str}**"
+            self.description += (
+                f"`Tech Specs:`\n* `Video:` {video_de}"
+                + f"\n* `Audios ({audio_len}):` {audiode_str}"
+                + f"\n* `Subtitles ({sub_len}):` {subde_str}"
+                + f"\n* `Chapters:` **{chapter_str}**"
+                + f"\n* `Duration:` **~{duration_str}**"
+            )
 
             mediainfo_url = ""
             edit_code = ""
@@ -424,7 +428,7 @@ class Upload:
                         ):
                             tgpost(
                                 self,
-                                ms=f'\nName: {display_name}\n\nNyaa link: {page_link}\n\n<a href="{download_link}">Torrent file</a>',
+                                ms=f'\n{display_name}\n\nNyaa link: {page_link}\n\n<a href="{download_link}">Torrent file</a>',
                             )
                 else:
                     wprint("Torrent is not uploaded!")

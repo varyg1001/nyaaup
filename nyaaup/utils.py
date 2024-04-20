@@ -40,10 +40,13 @@ dirs = PlatformDirs(appname="nyaaup", appauthor=False)
 transport = httpx.HTTPTransport(retries=5)
 console = Console()
 
-CODECS = {"UTF-8": "SRT"}
-
-
-CHANNELS = {
+SUB_CODEC_MAP = {"UTF-8": "SRT"}
+AUDIO_CODEC_MAP = {
+    "E-AC-3": "DDP",
+    "AC-3": "DD",
+    "fLaC": "FLAC",
+}
+CHANNEL_MAP = {
     "1": "1.0",
     "2": "2.0",
     "6": "5.1",
@@ -383,8 +386,8 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
                         x
                         for x in [
                             get_track_info(info),
-                            f'{info.get("Format")}'
-                            + f'{CHANNELS.get(info.get("Channels", ""), "?")}'
+                            f'{AUDIO_CODEC_MAP.get(info["Format"], info["Format"])}'
+                            + f'{CHANNEL_MAP.get(info.get("Channels", ""), "?")}'
                             + f'{" Atmos" if atmos else ""}'
                             + a_bitrate,
                         ]
@@ -400,7 +403,7 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
                         x
                         for x in [
                             get_track_info(info),
-                            f'{CODECS.get(info["Format"], info["Format"])}',
+                            f'{SUB_CODEC_MAP.get(info["Format"], info["Format"])}',
                         ]
                         if x
                     ]
