@@ -273,13 +273,21 @@ def create_torrent(self, name: str, filename: Path, overwrite: bool) -> bool:
 
 def rentry_upload(self) -> dict:
     with httpx.Client(transport=transport) as client:
+        client.headers.update(
+            {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0",
+            }
+        )
         # get csrftoken
         client.get(url="https://rentry.co")
+        res = {}
 
         try:
             res = client.post(
                 "https://rentry.co/api/new",
-                headers={"Referer": "https://rentry.co"},
+                headers={
+                    "Referer": "https://rentry.co",
+                },
                 data={
                     "csrfmiddlewaretoken": client.cookies["csrftoken"],
                     "edit_code": self.edit_code,
@@ -287,11 +295,12 @@ def rentry_upload(self) -> dict:
                 },
             ).json()
         except httpx.HTTPError as e:
-            eprint(str(e), True)
-        finally:
-            client.close()
+            eprint(str(e))
+
+        client.close()
 
         return res
+
 
 
 def get_return(lang: str, track_name: Optional[str] = None) -> str:
