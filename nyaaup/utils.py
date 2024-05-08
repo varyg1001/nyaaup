@@ -6,6 +6,7 @@ import sys
 import re
 import os
 import shutil
+from tls_client import Session
 from pathlib import Path
 from typing import Any, IO, Literal, NoReturn, overload, Optional
 from types import SimpleNamespace
@@ -77,13 +78,11 @@ def lprint(
 
 
 @overload
-def eprint(text: str, fatal: Literal[False] = False, exit_code: int = 1) -> None:
-    ...
+def eprint(text: str, fatal: Literal[False] = False, exit_code: int = 1) -> None: ...
 
 
 @overload
-def eprint(text: str, fatal: Literal[True], exit_code: int = 1) -> NoReturn:
-    ...
+def eprint(text: str, fatal: Literal[True], exit_code: int = 1) -> NoReturn: ...
 
 
 def eprint(text: str, fatal: bool = False, exit_code: int = 1) -> None | NoReturn:
@@ -272,35 +271,33 @@ def create_torrent(self, name: str, filename: Path, overwrite: bool) -> bool:
 
 
 def rentry_upload(self) -> dict:
-    with httpx.Client(transport=transport) as client:
-        client.headers.update(
-            {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0",
-            }
+    with Session(client_identifier="firefox_120") as session:
+        res = session.get(
+            url="https://rentry.co",
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/120.0",
+                "Origin": "https://rentry.co",
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            allow_redirects=True,
         )
-        # get csrftoken
-        client.get(url="https://rentry.co")
-        res = {}
 
         try:
-            res = client.post(
+            res = session.post(
                 "https://rentry.co/api/new",
                 headers={
                     "Referer": "https://rentry.co",
                 },
                 data={
-                    "csrfmiddlewaretoken": client.cookies["csrftoken"],
+                    "csrfmiddlewaretoken": session.cookies["csrftoken"],
                     "edit_code": self.edit_code,
                     "text": self.text,
                 },
             ).json()
-        except httpx.HTTPError as e:
+        except Exception as e:
             eprint(str(e))
 
-        client.close()
-
-        return res
-
+    return res
 
 
 def get_return(lang: str, track_name: Optional[str] = None) -> str:
