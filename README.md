@@ -12,7 +12,7 @@ Works both on Linux and windows.
 
 ## Requirements
 
-- [Python](https://python.org/) 3.10 or newer
+- [Python](https://python.org/) 3.10, 3.11 or 3.12
 - [Poetry](https://python-poetry.org/) 1.2.0 or newer (to install Python package dependencies)
 
 ### Dependencies
