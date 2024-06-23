@@ -571,7 +571,7 @@ class CustomHelpFormatter(argparse.RawTextHelpFormatter):
 class Config:
     def __init__(self):
         self.dirs = dirs
-        self.config_path = Path(dirs.user_config_path / "nyaaup.ymal")
+        self.config_path = Path(dirs.user_config_path / "nyaaup.yaml")
         self.yaml = YAML()
 
     @property
@@ -579,6 +579,7 @@ class Config:
         return self.dirs
 
     def create(self, exit=False):
+        self.config_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(
             Path(__file__).resolve().parent.with_name("nyaaup.yaml.example"),
             self.config_path,
