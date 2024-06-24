@@ -8,5 +8,5 @@ class Auth:
 
         config = Config()
 
-        if self.args.add_credentifal:
+        if self.args.add_credential:
             config.add(self.args.add_credential)
