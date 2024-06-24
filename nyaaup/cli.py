@@ -30,12 +30,36 @@ def main():
     subparsers = parser.add_subparsers(dest="command", required=True)
     parser_auth = subparsers.add_parser("auth")
     parser_auth.add_argument(
-        "-add",
-        "--add-credential",
+        "-c",
+        "--credential",
         type=str,
         metavar="USER:PASS",
         default=None,
-        help="Add or replace credential in config file.",
+        help="Add or replace credential.",
+    )
+    parser_auth.add_argument(
+        "-an",
+        "--announces",
+        type=str,
+        metavar="NAME",
+        default=None,
+        help="Add new announces url to config.",
+    )
+    parser_auth.add_argument(
+        "-ap",
+        "--api",
+        type=str,
+        metavar="NAME",
+        default=None,
+        help="Add or replace api.",
+    )
+    parser_auth.add_argument(
+        "-p",
+        "--provider",
+        type=str,
+        metavar="NAME",
+        default=None,
+        help="Provider name for config. (default: nyaasi)",
     )
     parser_up = subparsers.add_parser("up")
     parser_up.add_argument(

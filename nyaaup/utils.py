@@ -584,13 +584,16 @@ class Config:
             Path(__file__).resolve().parent.with_name("nyaaup.yaml.example"),
             self.config_path,
         )
+
         eprint(f"Config file doesn't exist, created to: {self.config_path}", fatal=exit)
 
-    def load(self):
+        return self.load(exit)
+
+    def load(self, exit=True):
         try:
             return self.yaml.load(self.config_path)
         except FileNotFoundError:
-            self.create(True)
+            return self.create(exit)
 
     @staticmethod
     def get_cred(cred: str) -> SimpleNamespace | NoReturn:
@@ -600,20 +603,13 @@ class Config:
             cred_ = return_cred.groups()
             return SimpleNamespace(**{"username": cred_[0], "password": cred_[1]})
         else:
-            eprint("Incorrect credentials format!", True)
+            eprint("Incorrect credentials format! (Format: `user:pass`)", True)
 
-    def add(self, text: str):
-        credential = self.get_cred(text)
-        data = dict()
-        if credential:
-            try:
-                data = self.yaml.load(self.config_path)
-            except FileNotFoundError:
-                self.create()
-                data = self.yaml.load(self.config_path)
-        else:
-            eprint("No credentials found in text. Format: `user:pass`")
-        data["credentials"] = text
-        self.yaml.dump(data, self.config_path)
-        lprint("[bold green]\nCredential successfully added![white]")
-        sys.exit(0)
+    def update(self, data):
+        try:
+            self.yaml.dump(data, self.config_path)
+        except FileNotFoundError:
+            self.create()
+            self.update(data)
+
+        lprint("[bold green]\nConfig successfully updated![white]")
