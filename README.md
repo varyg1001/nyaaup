@@ -35,7 +35,7 @@ Run `./install.py` or `./install.sh` to install the tool and its dependencies
 ### Examples
 
 ```shell
-nyaaup auth -add user:pass
+nyaaup auth -c user:pass
 ```
 ```shell
 nyaaup up -p 5 -c 1 -a -m https://myanimelist.net/anime/50652/ /path/Boku.to.Roboco.S01E06.1080p.AMZN.WEB-DL.DDP2.0.H.264-VARYG.mkv
