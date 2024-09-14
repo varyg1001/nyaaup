@@ -16,7 +16,7 @@ from rich.traceback import install
 
 from .utils import (
     create_torrent,
-    rentry_upload,git a
+    rentry_upload,
     get_description,
     get_mal_link,
     wprint,
