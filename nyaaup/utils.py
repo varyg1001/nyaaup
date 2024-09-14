@@ -281,7 +281,6 @@ def rentry_upload(self) -> dict:
             },
             allow_redirects=True,
         )
-
         try:
             res = session.post(
                 "https://rentry.co/api/new",
@@ -292,10 +291,19 @@ def rentry_upload(self) -> dict:
                     "csrfmiddlewaretoken": session.cookies["csrftoken"],
                     "edit_code": self.edit_code,
                     "text": self.text,
+                    "url": ""
                 },
-            ).json()
+            )
+        except httpx.HTTPError as e:
+            eprint(str(e), True)
+
+        if res.status_code != 200:
+            eprint(f"Failed to upload to rentry.co! ({res.status_code})", True)
+        
+        try:
+            res = res.json()
         except Exception as e:
-            eprint(str(e))
+            eprint(f"{str(e)}, {res.text}", True)
 
     return res
 

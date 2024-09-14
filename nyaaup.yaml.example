@@ -1,8 +1,9 @@
 providers:
-- name: nyaasi
-  api: https://nyaa.si/api/v2/upload
-  credentials: user:pass
-  announces: ["http://nyaa.tracker.wf:7777/announce"]
+  - name: nyaasi
+    api: https://nyaa.si/api/v2/upload
+    credentials: user:pass
+    announces:
+      - http://nyaa.tracker.wf:7777/announce
 
 preferences:
   real_lenght: false # if true in description audio and subs len will be the real lenght and not languages count
@@ -10,7 +11,7 @@ preferences:
   trusted: false
   note: "" # Note to add to the torrent.
   telegram: false # Send tgpost if possible.
-  edit_code:  # If you keep it blank, it will be random.
+  edit_code: # If you keep it blank, it will be random.
   info: mal # This will be put to Information part. ('mal' will put Myanimelist link in it if can.)
   mal: true # Use MyAnimeList.net to add anime original name to display name.
   mediainfo: true # If attach mediainfo to the torrent (provider rentry.co)

@@ -16,7 +16,7 @@ from rich.traceback import install
 
 from .utils import (
     create_torrent,
-    rentry_upload,
+    rentry_upload,git a
     get_description,
     get_mal_link,
     wprint,
@@ -104,13 +104,21 @@ class Upload:
                 headers=self.headers,
             )
 
-        if error := res.json().get("errors"):
-            info = next(iter(error))
-            eprint(f"\n{info} error: {error[info][0]}!\n")
+        try:
+            res = res.json()
+        except json.JSONDecodeError:
+            eprint(f"Failed to decode JSON: {res.text}", True)
+
+        if error := res.get("errors"):
+            if isinstance(error, str):
+                eprint(f"\n{error}!\n")
+            else:
+                info = next(iter(error))
+                eprint(f"\n{info} error: {error[info][0]}!\n")
             print(Panel.fit(infos, border_style="red"))
             sys.exit(1)
 
-        return res.json()
+        return res
 
     def get_category(self, category: str) -> Optional[str]:
         match category:
@@ -319,13 +327,11 @@ class Upload:
             mediainfo_url = ""
             edit_code = ""
             if not self.args.skip_upload and mediainfo_to_torrent:
-                try:
-                    rentry_response = rentry_upload(self)
+                rentry_response = rentry_upload(self)
+                if rentry_response:
                     mediainfo_url = rentry_response["url"]
                     edit_code = rentry_response["edit_code"]
                     self.description += f"\n\n[MediaInfo]({mediainfo_url}/raw)"
-                except httpx.HTTPError as e:
-                    wprint(f"Failed to upload mediainfo to rentry.co! ({e})")
             self.description += "\n\n---\n\n"
 
             if self.args.auto:
@@ -337,7 +343,7 @@ class Upload:
                     multi_sub = True
 
             name_nyaa = name.replace(".", " ")
-            if channel := re.search(r"[A-Z]{3}[2|5|7] [0|1]", name_nyaa):
+            if channel := re.search(r" ([A-Z]{3}|[A-Z]{4})[2|5|7] [0|1]", name_nyaa):
                 c = channel[0]
                 name_nyaa = name_nyaa.replace(c, c.replace(" ", "."))
 
