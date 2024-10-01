@@ -8,10 +8,10 @@ from pathlib import Path
 from rich.traceback import install
 from rich.console import Console
 
-from .utils import RParse
-from .upload import Upload
-from .auth import Auth
-from .__init__ import __version__
+from nyaaup.utils import RParse
+from nyaaup.upload import Upload
+from nyaaup.auth import Auth
+from nyaaup import __version__
 
 
 install(show_locals=True)
@@ -19,12 +19,12 @@ install(show_locals=True)
 
 def main():
     Console().print(
-        f"[b]nyaaup[/b] [magenta bold]v{__version__}[/]\n\n[dim]Auto torrent uploader to Nyaa.si\n",
+        f"[b]nyaaup[/b] [magenta bold]v{__version__}[/]\n\n[dim]Auto torrent uploader to Nyaa\n",
         justify="center",
     )
 
     parser = argparse.ArgumentParser(
-        description="Auto torrent uploader to Nyaa.si", prog="nyaaup"
+        description="Auto torrent uploader to Nyaa", prog="nyaaup"
     )
     parser = RParse()
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -38,7 +38,7 @@ def main():
         help="Add or replace credential.",
     )
     parser_auth.add_argument(
-        "-an",
+        "-a",
         "--announces",
         type=str,
         metavar="NAME",
@@ -46,12 +46,12 @@ def main():
         help="Add new announces url to config.",
     )
     parser_auth.add_argument(
-        "-ap",
-        "--api",
+        "-d",
+        "--domain",
         type=str,
         metavar="NAME",
         default=None,
-        help="Add or replace api.",
+        help="Add or replace domain.",
     )
     parser_auth.add_argument(
         "-p",
@@ -96,16 +96,22 @@ def main():
         help="Detect multi subs, multi audios and dual audios.",
     )
     parser_up.add_argument(
-        "-A", "--anonymous", action="store_true", help="Upload torrent as anonymous."
+        "-an", "--anonymous", action="store_true", help="Upload torrent as anonymous."
     )
     parser_up.add_argument(
-        "-H", "--hidden", action="store_true", help="Upload the torrent as hidden."
+        "-hi", "--hidden", action="store_true", help="Upload the torrent as hidden."
     )
     parser_up.add_argument(
-        "-C",
+        "-co",
         "--complete",
         action="store_true",
         help="If the torrnet is a complete batch.",
+    )
+    parser_up.add_argument(
+        "-re",
+        "--remake",
+        action="store_true",
+        help="If the torrnet is a remake.",
     )
     parser_up.add_argument(
         "-s", "--skip-upload", action="store_true", help="Skip torrent upload."

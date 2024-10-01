@@ -62,8 +62,43 @@ class Upload:
         self.hidden = "hidden" if self.args.hidden else None
         self.anonymous = "anonymous" if self.args.anonymous else None
         self.complete = "complete" if self.args.complete else None
+        self.remake = "remake" if self.args.remake else None
 
         self.main()
+
+    def edit(self, cookies, provider, id, display_name, information):
+        with httpx.Client(transport=httpx.HTTPTransport(retries=2)) as client:
+            res = client.post(
+                url=f"{provider.domain}/view/{id}/edit",
+                files={
+                    "display_name": (
+                        None,
+                        display_name,
+                    ),
+                    **({"is_anonymous": (None, "y")} if self.anonymous else {}),
+                    **({"is_remake": (None, "y")} if self.remake else {}),
+                    **({"is_complete": (None, "y")} if self.complete else {}),
+                    **({"is_hidden": (None, "y")} if self.hidden else {}),
+                    "category": (None, self.category),
+                    "information": (None, information),
+                    "description": (
+                        None,
+                        self.description,
+                    ),
+                    "submit": (None, "Save Changes"),
+                },
+                cookies=cookies,
+                headers={
+                    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+                    "content-type": "multipart/form-data; boundary=----WebKitFormBoundary",
+                    "origin": provider.domain,
+                    "referer": f"{provider.domain}/view/{id}/edit",
+                    **self.headers,
+                },
+            )
+
+            if res.status_code != 302:
+                eprint("Failed to add iamges the the torrent!")
 
     def upload(
         self,
@@ -73,12 +108,17 @@ class Upload:
         info: str,
         infos: Tree,
         provider,
+        cookies,
     ) -> dict:
-        iprint("Uploading to Nyaa...", down=0)
+        iprint(
+            "Uploading to Nyaa...",
+            down=0 if not cookies else 1,
+            up=1 if not cookies else 0,
+        )
 
         with httpx.Client(transport=httpx.HTTPTransport(retries=2)) as client:
             res = client.post(
-                url=provider.api,
+                url=provider.domain + "/api/v2/upload",
                 files={
                     "torrent": (
                         f"{name}.torrent",
@@ -96,6 +136,7 @@ class Upload:
                             "anonymous": self.anonymous,
                             "hidden": self.hidden,
                             "complete": self.complete,
+                            "remake": self.remake,
                             "trusted": self.trusted,
                         }
                     )
@@ -208,8 +249,8 @@ class Upload:
                     temp["credentials"] = config.get_cred(cred)
                 else:
                     eprint("No credentials in the config!", True)
-                if api := x.get("api"):
-                    temp["api"] = api
+                if domain := x.get("domain"):
+                    temp["domain"] = domain
                 else:
                     eprint("No api in the config!", True)
                 if announces := x.get("announces"):
@@ -327,11 +368,13 @@ class Upload:
             mediainfo_url = ""
             edit_code = ""
             if not self.args.skip_upload and mediainfo_to_torrent:
-                rentry_response = rentry_upload(self)
-                if rentry_response:
+                try:
+                    rentry_response = rentry_upload(self)
                     mediainfo_url = rentry_response["url"]
                     edit_code = rentry_response["edit_code"]
                     self.description += f"\n\n[MediaInfo]({mediainfo_url}/raw)"
+                except httpx.HTTPError as e:
+                    wprint(f"Failed to upload mediainfo to rentry.co! ({e})")
             self.description += "\n\n---\n\n"
 
             if self.args.auto:
@@ -343,7 +386,7 @@ class Upload:
                     multi_sub = True
 
             name_nyaa = name.replace(".", " ")
-            if channel := re.search(r" ([A-Z]{3}|[A-Z]{4})[2|5|7] [0|1]", name_nyaa):
+            if channel := re.search(r"[A-Z]{3}[2|5|7] [0|1]", name_nyaa):
                 c = channel[0]
                 name_nyaa = name_nyaa.replace(c, c.replace(" ", "."))
 
@@ -369,9 +412,8 @@ class Upload:
             display_name = (
                 f'{name_nyaa} ({", ".join(name_plus)})' if name_plus else name_nyaa
             )
-
             images: Optional[Tree] = None
-            if self.pic_num != 0:
+            if not config.cookies and self.pic_num != 0:
                 images = snapshot(self, file, name_nyaa, mediainfo)
 
             for provider in self.providers:
@@ -409,6 +451,7 @@ class Upload:
                         information,
                         infos,
                         provider,
+                        config.cookies,
                     )
 
                     if not link:
@@ -426,6 +469,19 @@ class Upload:
                         )
                         style = "bold green"
                         title = f"Torrent successfully uploaded to {provider.name}!"
+
+                        if config.cookies:
+                            if self.pic_num != 0:
+                                images = snapshot(self, file, name_nyaa, mediainfo)
+                            if images and self.pic_num != 0:
+                                infos.add(images)
+                            self.edit(
+                                config.cookies,
+                                provider,
+                                link["id"],
+                                display_name,
+                                information,
+                            )
 
                         if (
                             (self.args.telegram or self.telegram)

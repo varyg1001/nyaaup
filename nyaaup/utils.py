@@ -78,11 +78,13 @@ def lprint(
 
 
 @overload
-def eprint(text: str, fatal: Literal[False] = False, exit_code: int = 1) -> None: ...
+def eprint(text: str, fatal: Literal[False] = False, exit_code: int = 1) -> None:
+    ...
 
 
 @overload
-def eprint(text: str, fatal: Literal[True], exit_code: int = 1) -> NoReturn: ...
+def eprint(text: str, fatal: Literal[True], exit_code: int = 1) -> NoReturn:
+    ...
 
 
 def eprint(text: str, fatal: bool = False, exit_code: int = 1) -> None | NoReturn:
@@ -281,6 +283,7 @@ def rentry_upload(self) -> dict:
             },
             allow_redirects=True,
         )
+
         try:
             res = session.post(
                 "https://rentry.co/api/new",
@@ -289,7 +292,7 @@ def rentry_upload(self) -> dict:
                 },
                 data={
                     "csrfmiddlewaretoken": session.cookies["csrftoken"],
-                    "edit_code": self.edit_code,
+                    "edit_code": self.edit_code if self.edit_code else "", 
                     "text": self.text,
                     "url": ""
                 },
@@ -310,9 +313,9 @@ def rentry_upload(self) -> dict:
 
 def get_return(lang: str, track_name: Optional[str] = None) -> str:
     if track_name:
-        if track_name in {"SDH", "Forced", "Dubtitle"}:
+        if track_name in {"CC", "SDH", "Forced", "Dubtitle"}:
             return f"**{lang}** [{track_name}]"
-        if r := re.search(r"(.*) \((SDH|Forced|Dubtitle)\)", track_name):
+        if r := re.search(r"(.*) \((CC|SDH|Forced|Dubtitle)\)", track_name):
             return f"**{lang}** ({r[1]}) [{r[2]}]"
         else:
             return f"**{lang}** ({track_name})"
@@ -579,12 +582,23 @@ class CustomHelpFormatter(argparse.RawTextHelpFormatter):
 class Config:
     def __init__(self):
         self.dirs = dirs
-        self.config_path = Path(dirs.user_config_path / "nyaaup.yaml")
+        self.config_path = Path(dirs.user_config_path / "nyaaup.ymal")
+        self.cookies_path = Path(dirs.user_config_path / "cookies.txt")
+        self.cookies = {}
         self.yaml = YAML()
+
+        self.get_cookies()
 
     @property
     def get_dirs(self):
         return self.dirs
+
+    def get_cookies(self):
+        if self.cookies_path.exists():
+            data = self.cookies_path.read_text().splitlines()
+            for x in data:
+                if x and not x.startswith("#") and (values := x.split("\t")):
+                    self.cookies[values[-2]] = values[-1]
 
     def create(self, exit=False):
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
@@ -611,7 +625,7 @@ class Config:
             cred_ = return_cred.groups()
             return SimpleNamespace(**{"username": cred_[0], "password": cred_[1]})
         else:
-            eprint("Incorrect credentials format! (Format: `user:pass`)", True)
+            eprint("Incorrect credentials format!  (Format: `user:pass`)", True)
 
     def update(self, data):
         try:

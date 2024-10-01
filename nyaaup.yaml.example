@@ -1,7 +1,7 @@
 providers:
-  - name: nyaasi
-    api: https://nyaa.si/api/v2/upload
-    credentials: user:pass
+- name: nyaasi
+  domain: https://nyaa.si
+  credentials: user:pass
     announces:
       - http://nyaa.tracker.wf:7777/announce
 
@@ -10,12 +10,12 @@ preferences:
   random_snapshots: false # If you want to take random snapshots from the video.
   trusted: false
   note: "" # Note to add to the torrent.
-  telegram: false # Send tgpost if possible.
-  edit_code: # If you keep it blank, it will be random.
+  edit_code:  # If you keep it blank, it will be random.
   info: mal # This will be put to Information part. ('mal' will put Myanimelist link in it if can.)
   mal: true # Use MyAnimeList.net to add anime original name to display name.
   mediainfo: true # If attach mediainfo to the torrent (provider rentry.co)
   add_pub_trackers: false # true if you want to add https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt trackers to your torrent
   keks_key: "" # api key for bigger images and for easier manage
-  id: "" # channel id
-  token: "" # bot token
+  telegram: false # Send tgpost if possible.
+  id: "" # telegram channel id
+  token: "" # telegram bot token
