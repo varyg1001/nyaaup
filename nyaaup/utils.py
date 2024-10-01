@@ -582,7 +582,7 @@ class CustomHelpFormatter(argparse.RawTextHelpFormatter):
 class Config:
     def __init__(self):
         self.dirs = dirs
-        self.config_path = Path(dirs.user_config_path / "nyaaup.ymal")
+        self.config_path = Path(dirs.user_config_path / "nyaaup.yaml")
         self.cookies_path = Path(dirs.user_config_path / "cookies.txt")
         self.cookies = {}
         self.yaml = YAML()
