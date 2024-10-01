@@ -47,13 +47,12 @@ nyaaup up -ms -c 1 /path/My.Master.Has.No.Tail.S01.1080p.AMZN.WEB-DL.DDP2.0.H.26
 ### Usage
 
 ```
-                                                   nyaaup v3.3.3
+                                                            nyaaup v4.0.0
 
-                                          Auto torrent uploader to Nyaa.si
+                                                    Auto torrent uploader to Nyaa
 
-USAGE: nyaaup up [-h] [-ch] [-ms] [-t] [-da] [-ma] [-a] [-A] [-H] [-C] [-s] [-e EDIT_CODE] [-i INFO]
-                 [-p PICTURES_NUMBER] [-pe PICTURE_EXTENSION] [-n NOTE] [-M] [-m MYANIMELIST] [--skip-myanimelist]
-                 [-c CATEGORY] [-o]
+USAGE: nyaaup up [-h] [-ch] [-ms] [-t] [-da] [-ma] [-a] [-an] [-hi] [-co] [-re] [-s] [-e EDIT_CODE] [-i INFO] [-p PICTURES_NUMBER]
+                 [-pe PICTURE_EXTENSION] [-n NOTE] [-M] [-m MYANIMELIST] [--skip-myanimelist] [-c CATEGORY] [-o]
 
 
 ╭─ Positional arguments ─────────────────────────────────────────────────────╮
@@ -68,9 +67,10 @@ USAGE: nyaaup up [-h] [-ch] [-ms] [-t] [-da] [-ma] [-a] [-A] [-H] [-C] [-s] [-e 
 │   -da, --dual-audios                          Add Dual audios tag to title.                                    │
 │   -ma, --multi-audios                         Add Multi audios tag to title.                                   │
 │   -a, --auto                                  Detect multi subs, multi audios and dual audios.                 │
-│   -A, --anonymous                             Upload torrent as anonymous.                                     │
-│   -H, --hidden                                Upload the torrent as hidden.                                    │
-│   -C, --complete                              If the torrnet is a complete batch.                              │
+│   -an, --anonymous                            Upload torrent as anonymous.                                     │
+│   -hi, --hidden                               Upload the torrent as hidden.                                    │
+│   -co, --complete                             If the torrnet is a complete batch.                              │
+│   -re, --remake                               If the torrnet is a remake.                                      │
 │   -s, --skip-upload                           Skip torrent upload.                                             │
 │   -e, --edit-code EDIT_CODE                   Use uniq edit code for mediainfo on rentry.co                    │
 │   -i, --info INFO                             Set information.                                                 │
