@@ -1,6 +1,7 @@
 import re
 import sys
 import json
+import time
 from pathlib import Path
 from typing import Any, Optional
 from types import SimpleNamespace
@@ -66,7 +67,7 @@ class Upload:
 
         self.main()
 
-    def edit(self, cookies, provider, id, display_name, information):
+    def edit(self, cookies, provider, id, display_name, information) -> bool:
         with httpx.Client(transport=httpx.HTTPTransport(retries=2)) as client:
             res = client.post(
                 url=f"{provider.domain}/view/{id}/edit",
@@ -99,6 +100,9 @@ class Upload:
 
             if res.status_code != 302:
                 eprint("Failed to add iamges the the torrent!")
+                return False
+
+            return True
 
     def upload(
         self,
@@ -116,7 +120,7 @@ class Upload:
             up=1 if not cookies else 0,
         )
 
-        with httpx.Client(transport=httpx.HTTPTransport(retries=2)) as client:
+        with httpx.Client(transport=httpx.HTTPTransport(retries=5)) as client:
             res = client.post(
                 url=provider.domain + "/api/v2/upload",
                 files={
@@ -252,7 +256,7 @@ class Upload:
                 if domain := x.get("domain"):
                     temp["domain"] = domain
                 else:
-                    eprint("No api in the config!", True)
+                    eprint("No domain in the config!", True)
                 if announces := x.get("announces"):
                     self.announces.extend(announces)
                 else:
@@ -475,13 +479,19 @@ class Upload:
                                 images = snapshot(self, file, name_nyaa, mediainfo)
                             if images and self.pic_num != 0:
                                 infos.add(images)
-                            self.edit(
-                                config.cookies,
-                                provider,
-                                link["id"],
-                                display_name,
-                                information,
-                            )
+
+                            for num in range(5):
+                                is_images_up = self.edit(
+                                    config.cookies,
+                                    provider,
+                                    link["id"],
+                                    display_name,
+                                    information,
+                                )
+                                if is_images_up:
+                                    break
+                                else:
+                                    time.sleep(5 * num)
 
                         if (
                             (self.args.telegram or self.telegram)

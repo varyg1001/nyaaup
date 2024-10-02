@@ -1,4 +1,6 @@
 import argparse
+import asyncio
+import aiofiles
 import random
 import subprocess
 import humanize
@@ -13,6 +15,7 @@ from types import SimpleNamespace
 
 import httpx
 import oxipng
+from httpx._client import AsyncClient
 from difflib import SequenceMatcher
 from torf import Torrent
 from wand.image import Image
@@ -109,15 +112,25 @@ def wprint(text: str) -> None:
 
 
 def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
-    def up(image_path: Path) -> str:
-        with open(image_path, "rb") as file:
-            res = httpx.post(
-                url="https://kek.sh/api/v1/posts",
-                headers=self.kek_headers,
-                files={"file": file},
-            )
+    async def up(image_path: Path, upload, progress) -> str:
+        async with aiofiles.open(image_path, "rb") as file:
+            content = await file.read()
+            async with httpx.AsyncClient() as client:
+                res = await client.post(
+                    url="https://kek.sh/api/v1/posts",
+                    headers=self.kek_headers,
+                    files={"file": content},
+                )
 
-            return f'https://i.kek.sh/{res.json()["filename"]}'
+                res = res.json()
+                progress.update(upload, advance=1)
+                return f'https://i.kek.sh/{res["filename"]}'
+
+    async def upload_files(files, upload, progress):
+        upload_tasks = [up(file, upload, progress) for file in files]
+        uploaded_links = await asyncio.gather(*upload_tasks)
+
+        return uploaded_links
 
     images = Tree("[bold white]Images[not bold]")
     num_snapshots = self.pic_num + 1
@@ -182,20 +195,14 @@ def snapshot(self, input: Path, name: str, mediainfo: list) -> Tree:
                 "[bold magenta]Uploading snapshots[white]", total=self.pic_num
             )
 
-            for x in range(1, num_snapshots):
-                snap = snapshots[x - 1]
-                file_size = os.path.getsize(snap)
+            snapshots = [x for x in snapshots if x.stat().st_size < 5 * 1024 * 1024]
+            snapshots_link = asyncio.run(upload_files(snapshots, upload, progress))
 
-                if file_size > 5 * 1024 * 1024:  # 5MB in bytes
-                    wprint(f"Skipping snapshot {snap} as its size is more than 5MB")
-
-                link = up(snapshots[x - 1])
+            for link in snapshots_link:
                 self.description += f"![]({link})\n"
                 images.add(
                     f"[not bold cornflower_blue][link={link}]{link}[/link][white /not bold]"
                 )
-
-                progress.update(upload, advance=1)
 
         return images
 
@@ -292,9 +299,9 @@ def rentry_upload(self) -> dict:
                 },
                 data={
                     "csrfmiddlewaretoken": session.cookies["csrftoken"],
-                    "edit_code": self.edit_code if self.edit_code else "", 
+                    "edit_code": self.edit_code if self.edit_code else "",
                     "text": self.text,
-                    "url": ""
+                    "url": "",
                 },
             )
         except httpx.HTTPError as e:
@@ -302,7 +309,7 @@ def rentry_upload(self) -> dict:
 
         if res.status_code != 200:
             eprint(f"Failed to upload to rentry.co! ({res.status_code})", True)
-        
+
         try:
             res = res.json()
         except Exception as e:
