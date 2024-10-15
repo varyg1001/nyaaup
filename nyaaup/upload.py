@@ -474,24 +474,30 @@ class Upload:
                         style = "bold green"
                         title = f"Torrent successfully uploaded to {provider.name}!"
 
-                        if config.cookies:
-                            if self.pic_num != 0:
-                                images = snapshot(self, file, name_nyaa, mediainfo)
-                            if images and self.pic_num != 0:
-                                infos.add(images)
+                        try:
+                            # Skip images if could not edit the upload.
+                            if config.cookies:
+                                if self.pic_num != 0:
+                                    images = snapshot(self, file, name_nyaa, mediainfo)
+                                if images and self.pic_num != 0:
+                                    infos.add(images)
 
-                            for num in range(5):
-                                is_images_up = self.edit(
-                                    config.cookies,
-                                    provider,
-                                    link["id"],
-                                    display_name,
-                                    information,
-                                )
-                                if is_images_up:
-                                    break
-                                else:
-                                    time.sleep(5 * num)
+                                for num in range(5):
+                                    is_images_up = self.edit(
+                                        config.cookies,
+                                        provider,
+                                        link["id"],
+                                        display_name,
+                                        information,
+                                    )
+                                    if is_images_up:
+                                        break
+                                    else:
+                                        time.sleep(5 * num)
+                        except Exception as e:
+                            wprint(f"Failed to add images to the torrent! ({e})")
+                            style = "yellow"
+                            title = f"Torrent successfully uploaded to {provider.name}, but could not add images!"
 
                         if (
                             (self.args.telegram or self.telegram)
