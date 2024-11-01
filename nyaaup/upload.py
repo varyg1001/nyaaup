@@ -120,34 +120,37 @@ class Upload:
             up=1 if not cookies else 0,
         )
 
-        with httpx.Client(transport=httpx.HTTPTransport(retries=5)) as client:
-            res = client.post(
-                url=provider.domain + "/api/v2/upload",
-                files={
-                    "torrent": (
-                        f"{name}.torrent",
-                        torrent_byte,
-                        "application/x-bittorrent",
-                    )
-                },
-                data={
-                    "torrent_data": json.dumps(
-                        {
-                            "name": display_name,
-                            "category": self.category,
-                            "information": info,
-                            "description": self.description,
-                            "anonymous": self.anonymous,
-                            "hidden": self.hidden,
-                            "complete": self.complete,
-                            "remake": self.remake,
-                            "trusted": self.trusted,
-                        }
-                    )
-                },
-                auth=(provider.credentials.username, provider.credentials.password),
-                headers=self.headers,
-            )
+        try:
+            with httpx.Client(transport=httpx.HTTPTransport(retries=5)) as client:
+                res = client.post(
+                    url=f"{provider.domain}/api/v2/upload",
+                    files={
+                        "torrent": (
+                            f"{name}.torrent",
+                            torrent_byte,
+                            "application/x-bittorrent",
+                        )
+                    },
+                    data={
+                        "torrent_data": json.dumps(
+                            {
+                                "name": display_name,
+                                "category": self.category,
+                                "information": info,
+                                "description": self.description,
+                                "anonymous": self.anonymous,
+                                "hidden": self.hidden,
+                                "complete": self.complete,
+                                "remake": self.remake,
+                                "trusted": self.trusted,
+                            }
+                        )
+                    },
+                    auth=(provider.credentials.username, provider.credentials.password),
+                    headers=self.headers,
+                )
+        except httpx.HTTPError as e:
+            eprint(f"Failed to upload torrent! ({e})")
 
         try:
             res = res.json()
@@ -160,7 +163,7 @@ class Upload:
             else:
                 info = next(iter(error))
                 eprint(f"\n{info} error: {error[info][0]}!\n")
-            print(Panel.fit(infos, border_style="red"))
+            print(Panel.fit(infos, title="ERROR", border_style="red"))
             sys.exit(1)
 
         return res
@@ -417,6 +420,25 @@ class Upload:
                 f'{name_nyaa} ({", ".join(name_plus)})' if name_plus else name_nyaa
             )
             images: Optional[Tree] = None
+            if config.cookies:
+                for provider in self.providers:
+                    with httpx.Client(
+                        headers=self.headers,
+                        cookies=config.cookies,
+                        transport=httpx.HTTPTransport(retries=2),
+                    ) as client:
+                        try:
+                            res = client.get(url=f"{provider.domain}/profile")
+                        except httpx.HTTPError as e:
+                            wprint(f"Failed to verify cookies! ({e})")
+                            continue
+
+                        if res.status_code == 200:
+                            break
+                        else:
+                            wprint("Failed to verify cookies!")
+                            config.cookies = {}
+
             if not config.cookies and self.pic_num != 0:
                 images = snapshot(self, file, name_nyaa, mediainfo)
 
@@ -473,10 +495,10 @@ class Upload:
                         )
                         style = "bold green"
                         title = f"Torrent successfully uploaded to {provider.name}!"
-
-                        try:
-                            # Skip images if could not edit the upload.
-                            if config.cookies:
+                        if config.cookies:
+                            img_good = False
+                            try:
+                                # Skip images if could not edit the upload.
                                 if self.pic_num != 0:
                                     images = snapshot(self, file, name_nyaa, mediainfo)
                                 if images and self.pic_num != 0:
@@ -491,18 +513,23 @@ class Upload:
                                         information,
                                     )
                                     if is_images_up:
+                                        img_good = True
                                         break
                                     else:
                                         time.sleep(5 * num)
-                        except Exception as e:
-                            wprint(f"Failed to add images to the torrent! ({e})")
-                            style = "yellow"
-                            title = f"Torrent successfully uploaded to {provider.name}, but could not add images!"
+                            except Exception as e:
+                                wprint(f"Error: {e})")
+
+                            if not img_good:
+                                wprint("Failed to add images to the torrent!")
+                                style = "yellow"
+                                title = f"Torrent successfully uploaded to {provider.name}, but could not add images!"
 
                         if (
                             (self.args.telegram or self.telegram)
                             and self.tg_id
                             and self.tg_token
+                            and not self.hidden
                         ):
                             tgpost(
                                 self,
