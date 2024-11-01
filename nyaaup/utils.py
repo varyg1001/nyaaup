@@ -604,7 +604,12 @@ class Config:
         if self.cookies_path.exists():
             data = self.cookies_path.read_text().splitlines()
             for x in data:
-                if x and not x.startswith("#") and (values := x.split("\t")):
+                if (
+                    x
+                    and not x.startswith("#")
+                    and (values := x.split("\t"))
+                    and values[-2] != "__ddg9__"
+                ):
                     self.cookies[values[-2]] = values[-1]
 
     def create(self, exit=False):
