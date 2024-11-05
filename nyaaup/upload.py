@@ -335,7 +335,11 @@ class Upload:
                 if name_to_mal == name:
                     name_to_mal = re.sub(r"[\.|\-]\d{4}\..*", "", name)
                 name_to_mal = name_to_mal.replace(".", " ")
-                mal_data = get_mal_link(self.args.myanimelist, name_to_mal)
+
+                try:
+                    mal_data = get_mal_link(self.args.myanimelist, name_to_mal)
+                except Exception as e:
+                    wprint(f"Failed to get MAL link! ({e})")
 
             information: str = ""
             if not info_form_config and anime and not self.args.info:
