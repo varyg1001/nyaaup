@@ -1,44 +1,42 @@
 import argparse
 import asyncio
-import aiofiles
 import random
-import subprocess
-import humanize
-import sys
 import re
-import os
 import shutil
-from tls_client import Session
-from pathlib import Path
-from typing import Any, IO, Literal, NoReturn, overload, Optional
-from types import SimpleNamespace
-
-import httpx
-import oxipng
-from httpx._client import AsyncClient
+import subprocess
+import sys
 from difflib import SequenceMatcher
-from torf import Torrent
-from wand.image import Image
+from pathlib import Path
+from types import SimpleNamespace
+from typing import IO, Any, Literal, NoReturn, overload
+
+import aiofiles
+import httpx
+import humanize
+import oxipng
 from langcodes import Language
-from mal import AnimeSearch, Anime
-from ruamel.yaml import YAML
+from mal import Anime, AnimeSearch
 from platformdirs import PlatformDirs
-from rich.tree import Tree
-from rich.text import Text
-from rich.padding import Padding
-from rich.console import Console
 from rich import print as rprint
+from rich.console import Console
+from rich.padding import Padding
 from rich.panel import Panel
 from rich.progress import (
-    Task,
-    Progress,
     BarColumn,
-    TextColumn,
-    ProgressColumn,
-    TaskProgressColumn,
     MofNCompleteColumn,
+    Progress,
+    ProgressColumn,
+    Task,
+    TaskProgressColumn,
+    TextColumn,
     TimeRemainingColumn,
 )
+from rich.text import Text
+from rich.tree import Tree
+from ruamel.yaml import YAML
+from tls_client import Session
+from torf import Torrent
+from wand.image import Image
 
 dirs = PlatformDirs(appname="nyaaup", appauthor=False)
 transport = httpx.HTTPTransport(retries=5)
@@ -318,7 +316,7 @@ def rentry_upload(self) -> dict:
     return res
 
 
-def get_return(lang: str, track_name: Optional[str] = None) -> str:
+def get_return(lang: str, track_name: str | None = None) -> str:
     if track_name:
         if track_name in {"CC", "SDH", "Forced", "Dubtitle"}:
             return f"**{lang}** [{track_name}]"
@@ -447,8 +445,8 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
     return video_info, audio_info, subtitles_info
 
 
-def get_mal_link(myanimelist, name_to_mal) -> Optional[Anime]:
-    mal_data: Optional[Anime] = None
+def get_mal_link(myanimelist, name_to_mal) -> Anime | None:
+    mal_data: Anime | None = None
 
     if myanimelist:
         with console.status(

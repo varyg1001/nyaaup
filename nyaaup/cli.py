@@ -4,15 +4,13 @@ import argparse
 import sys
 from pathlib import Path
 
-
-from rich.traceback import install
 from rich.console import Console
+from rich.traceback import install
 
-from nyaaup.utils import RParse
-from nyaaup.upload import Upload
-from nyaaup.auth import Auth
 from nyaaup import __version__
-
+from nyaaup.auth import Auth
+from nyaaup.upload import Upload
+from nyaaup.utils import RParse
 
 install(show_locals=True)
 

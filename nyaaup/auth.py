@@ -1,4 +1,4 @@
-from .utils import Config, wprint, eprint
+from .utils import Config, eprint, wprint
 
 
 class Auth:
@@ -15,7 +15,7 @@ class Auth:
         api = self.args.api or "https://nyaa.si/api/v2/upload"
         announces = [self.args.announces] if self.args.announces else []
         credential = self.args.credential
-        
+
         if not self.args.announces and not self.args.api and not self.args.credential:
             eprint("No arguments provided!", True)
 

@@ -1,0 +1,34 @@
+extends: default
+
+rules:
+  braces:
+    forbid: non-empty
+  comments:
+    require-starting-space: false
+  comments-indentation: disable # Causes false positives
+  document-end:
+    present: false
+  document-start:
+    present: false
+  empty-lines:
+    max: 1
+  empty-values:
+    forbid-in-block-mappings: false
+    forbid-in-flow-mappings: true
+  float-values:
+    forbid-inf: true
+    forbid-nan: true
+    forbid-scientific-notation: false # Causes false positives
+    require-numeral-before-decimal: true
+  indentation:
+    spaces: 2
+  line-length: disable
+  octal-values: enable
+  quoted-strings:
+    quote-type: double
+    required: only-when-needed
+    allow-quoted-quotes: true
+  truthy: disable # Not needed with YAML 1.2
+
+ignore: |
+  .venv

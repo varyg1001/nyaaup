@@ -5,7 +5,6 @@ import platform
 import subprocess
 from pathlib import Path
 
-
 print("\n[*] Installing dependencies")
 subprocess.run(["poetry", "install"], check=True)
 
