@@ -1,32 +1,32 @@
+import json
 import re
 import sys
-import json
 import time
 from pathlib import Path
-from typing import Any, Optional
 from types import SimpleNamespace
+from typing import Any, Optional
 
 import httpx
 from mal import Anime
+from pymediainfo import MediaInfo
+from rich import print
 from rich.console import Console
 from rich.panel import Panel
-from pymediainfo import MediaInfo
-from rich.tree import Tree
-from rich import print
 from rich.traceback import install
+from rich.tree import Tree
 
 from .utils import (
+    Config,
+    cat_help,
     create_torrent,
-    rentry_upload,
+    eprint,
     get_description,
     get_mal_link,
-    wprint,
-    eprint,
     iprint,
+    rentry_upload,
     snapshot,
     tgpost,
-    cat_help,
-    Config,
+    wprint,
 )
 
 install(show_locals=True)
@@ -168,7 +168,7 @@ class Upload:
 
         return res
 
-    def get_category(self, category: str) -> Optional[str]:
+    def get_category(self, category: str) -> str | None:
         match category:
             case "Anime - Anime Music Video" | "7":
                 return "1_1"
@@ -205,7 +205,7 @@ class Upload:
         Path(dirs.user_config_path).mkdir(parents=True, exist_ok=True)
         self.config = config.load() or {}
         if pref := self.config.get("preferences"):
-            self.edit_code: Optional[str] = (
+            self.edit_code: str | None = (
                 pref.get("edit_code")
                 if not self.args.edit_code
                 else self.args.edit_code
@@ -213,8 +213,8 @@ class Upload:
 
             self.random_snapshots: str = pref.get("random_snapshots", False)
             self.real_lenght: bool = not pref.get("real_lenght", False)
-            self.tg_id: Optional[str] = pref.get("id", None)
-            self.note: Optional[str] = pref.get("note", None)
+            self.tg_id: str | None = pref.get("id", None)
+            self.note: str | None = pref.get("note", None)
             self.telegram: bool = pref.get("telegram", False)
             self.tg_token = pref.get("token", None)
             self.announces = []
@@ -227,10 +227,19 @@ class Upload:
             )
 
             self.headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.2088.46",
+                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.2088.46",
                 "sec-ch-ua": '"Chromium";v="118", "Microsoft Edge";v="118", "Not=A?Brand";v="99"',
                 "sec-ch-ua-mobile": "?0",
                 "sec-ch-ua-platform": '"Windows"',
+                "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "accept-language": "en-US,en;q=0.9",
+                "cache-control": "max-age=0",
+                "dnt": "1",
+                "sec-fetch-dest": "document",
+                "sec-fetch-mode": "navigate",
+                "sec-fetch-site": "same-origin",
+                "sec-fetch-user": "?1",
+                "upgrade-insecure-requests": "1",
             }
 
             self.kek_headers = {}
@@ -323,7 +332,7 @@ class Upload:
             else:
                 anime = False
 
-            mal_data: Optional[Anime] = None
+            mal_data: Anime | None = None
 
             if (
                 anime
@@ -364,9 +373,9 @@ class Upload:
             audio_len: int = len(audio_de)
             if self.real_lenght:
                 if sub_len > 1:
-                    sub_len = len(set([x.split("**")[1] for x in sub_de]))
+                    sub_len = len({x.split("**")[1] for x in sub_de})
                 if audio_len > 1:
-                    audio_len = len(set([x.split("**")[1] for x in audio_de]))
+                    audio_len = len({x.split("**")[1] for x in audio_de})
 
             self.description += (
                 f"`Tech Specs:`\n* `Video:` {video_de}"
@@ -423,7 +432,7 @@ class Upload:
             display_name = (
                 f'{name_nyaa} ({", ".join(name_plus)})' if name_plus else name_nyaa
             )
-            images: Optional[Tree] = None
+            images: Tree | None = None
             if config.cookies:
                 for provider in self.providers:
                     with httpx.Client(
@@ -473,7 +482,9 @@ class Upload:
                     if images and self.pic_num != 0:
                         infos.add(images)
 
-                    torrent_fd: Any = open(f"{self.cache_dir}/{name}.torrent", "rb")
+                    with open(f"{self.cache_dir}/{name}.torrent", "rb") as f:
+                        torrent_fd = f.read()
+
                     link = self.upload(
                         torrent_fd,
                         name_nyaa,
