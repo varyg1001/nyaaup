@@ -68,7 +68,7 @@ class Upload:
         self.main()
 
     def edit(self, cookies, provider, id, display_name, information) -> bool:
-        with httpx.Client(transport=httpx.HTTPTransport(retries=2)) as client:
+        with httpx.Client(transport=httpx.HTTPTransport(retries=2), proxy=provider.proxy) as client:
             res = client.post(
                 url=f"{provider.domain}/view/{id}/edit",
                 files={
@@ -121,7 +121,7 @@ class Upload:
         )
 
         try:
-            with httpx.Client(transport=httpx.HTTPTransport(retries=5)) as client:
+            with httpx.Client(transport=httpx.HTTPTransport(retries=5), proxy=provider.proxy) as client:
                 res = client.post(
                     url=f"{provider.domain}/api/v2/upload",
                     files={
@@ -150,7 +150,7 @@ class Upload:
                     headers=self.headers,
                 )
         except httpx.HTTPError as e:
-            eprint(f"Failed to upload torrent! ({e})")
+            eprint(f"Failed to upload torrent! ({e})", True)
 
         try:
             res = res.json()
@@ -269,6 +269,8 @@ class Upload:
                     temp["domain"] = domain
                 else:
                     eprint("No domain in the config!", True)
+                if proxy := x.get("proxy"):
+                    temp["proxy"] = proxy
                 if announces := x.get("announces"):
                     self.announces.extend(announces)
                 else:
@@ -436,6 +438,7 @@ class Upload:
             if config.cookies:
                 for provider in self.providers:
                     with httpx.Client(
+                        proxy=provider.proxy,
                         headers=self.headers,
                         cookies=config.cookies,
                         transport=httpx.HTTPTransport(retries=2),

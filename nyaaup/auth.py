@@ -12,11 +12,12 @@ class Auth:
         def_an = "http://nyaa.tracker.wf:7777/announce"
         provider = None
         name = self.args.provider or "nyaasi"
-        api = self.args.api or "https://nyaa.si/api/v2/upload"
+        domain = self.args.domain or "https://nyaa.si"
+        proxy = self.args.proxy or None
         announces = [self.args.announces] if self.args.announces else []
         credential = self.args.credential
 
-        if not self.args.announces and not self.args.api and not self.args.credential:
+        if not self.args.announces and not self.args.domain and not self.args.credential:
             eprint("No arguments provided!", True)
 
         if credential:
@@ -44,17 +45,20 @@ class Auth:
             config["providers"].append(
                 {
                     "name": name,
-                    "api": api,
+                    "domain": domain,
                     "credentials": credential,
+                    "proxy": proxy,
                     "announces": announces,
                 }
             )
         else:
             if announces:
                 provider["announces"] += announces
-            if api:
-                provider["api"] = api
+            if domain:
+                provider["domain"] = domain
             if credential:
                 provider["credentials"] = credential
+            if proxy:
+                provider["proxy"] = proxy
 
         conf.update(config)

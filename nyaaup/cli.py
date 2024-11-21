@@ -44,6 +44,13 @@ def main():
         help="Add new announces url to config.",
     )
     parser_auth.add_argument(
+        "--proxy",
+        type=str,
+        metavar="NAME",
+        default=None,
+        help="Add or replace proxy.",
+    )
+    parser_auth.add_argument(
         "-d",
         "--domain",
         type=str,
