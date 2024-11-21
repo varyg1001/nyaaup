@@ -271,6 +271,8 @@ class Upload:
                     eprint("No domain in the config!", True)
                 if proxy := x.get("proxy"):
                     temp["proxy"] = proxy
+                else:
+                    temp["proxy"] = None
                 if announces := x.get("announces"):
                     self.announces.extend(announces)
                 else:
