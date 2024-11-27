@@ -396,7 +396,7 @@ class Upload:
                     rentry_response = rentry_upload(self)
                     mediainfo_url = rentry_response["url"]
                     edit_code = rentry_response["edit_code"]
-                    self.description += f"\n\n[MediaInfo]({mediainfo_url}"
+                    self.description += f"\n\n[MediaInfo]({mediainfo_url})"
                 except httpx.HTTPError as e:
                     wprint(f"Failed to upload mediainfo to rentry.co! ({e})")
             self.description += "\n\n---\n\n"
