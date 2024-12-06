@@ -1,3 +1,6 @@
+# nfofiller 5.0.0:
+- Rework files
+
 # nfofiller 4.2.0:
 - Fixes for image uploading
 - Verify cookies and fall back to normal image upload

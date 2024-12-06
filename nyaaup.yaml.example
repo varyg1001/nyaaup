@@ -2,8 +2,8 @@ providers:
 - name: nyaasi
   domain: https://nyaa.si
   credentials: user:pass
-    announces:
-      - http://nyaa.tracker.wf:7777/announce
+  announces:
+    - http://nyaa.tracker.wf:7777/announce
 
 preferences:
   real_lenght: false # if true in description audio and subs len will be the real lenght and not languages count

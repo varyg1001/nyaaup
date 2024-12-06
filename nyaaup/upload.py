@@ -2,20 +2,21 @@ import json
 import re
 import sys
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Optional
 
+import cloup
 import httpx
-from mal import Anime
+from platformdirs import PlatformDirs
 from pymediainfo import MediaInfo
-from rich import print
+from rich import print as rich_print
 from rich.console import Console
 from rich.panel import Panel
 from rich.traceback import install
 from rich.tree import Tree
 
-from .utils import (
+from nyaaup.utils import (
     Config,
     cat_help,
     create_torrent,
@@ -32,24 +33,156 @@ from .utils import (
 install(show_locals=True)
 
 
-class Upload:
-    def __init__(self, args, parser):
+@dataclass
+class UploadConfig:
+    category: str
+    anonymous: bool = False
+    hidden: bool = False
+    complete: bool = False
+    remake: bool = False
+    trusted: bool = False
+    mediainfo_enabled: bool = True
+    telegram_enabled: bool = False
+    random_snapshots: bool = False
+    pic_num: int = 3
+    pic_ext: str = "png"
+    edit_code: str | None = None
+    text: str | None = None
+    tg_token: str | None = None
+    tg_id: str | None = None
+    kek_headers: dict | None = None
+    info_form_config: bool = False
+    info: str = ""
+
+
+@dataclass
+class Provider:
+    name: str
+    domain: str
+    proxy: str
+    credentials: SimpleNamespace
+
+
+@dataclass
+class UploadResult:
+    url: str
+    id: str
+    download_url: str
+    name: str
+
+
+@dataclass
+class ProcessResult:
+    video_info: str
+    audio_info: list
+    sub_info: list
+    display_info: Tree
+
+
+@cloup.command()
+@cloup.option_group(
+    "Upload Tags",
+    cloup.option(
+        "-ms", "--multi-subs", is_flag=True, help="Add Multi Subs tag to title."
+    ),
+    cloup.option(
+        "-da", "--dual-audios", is_flag=True, help="Add Dual audios tag to title."
+    ),
+    cloup.option(
+        "-ma", "--multi-audios", is_flag=True, help="Add Multi audios tag to title."
+    ),
+    cloup.option(
+        "-a",
+        "--auto",
+        is_flag=True,
+        help="Detect multi subs, multi audios and dual audios.",
+    ),
+)
+@cloup.option_group(
+    "Upload Settings",
+    cloup.option(
+        "-an", "--anonymous", is_flag=True, help="Upload torrent as anonymous."
+    ),
+    cloup.option("-hi", "--hidden", is_flag=True, help="Upload the torrent as hidden."),
+    cloup.option(
+        "-co", "--complete", is_flag=True, help="If the torrnet is a complete batch."
+    ),
+    cloup.option("-re", "--remake", is_flag=True, help="If the torrnet is a remake."),
+    cloup.option("-s", "--skip-upload", is_flag=True, help="Skip torrent upload."),
+    cloup.option("-c", "--category", type=str, help="Select a category."),
+)
+@cloup.option_group(
+    "Content Information",
+    cloup.option(
+        "-e",
+        "--edit-code",
+        type=str,
+        help="Use uniq edit code for mediainfo on rentry.co",
+    ),
+    cloup.option("-i", "--info", type=str, help="Set information."),
+    cloup.option("-n", "--note", type=str, help="Put a note in to the description."),
+    cloup.option("-m", "--myanimelist", type=str, help="MyAnimeList link."),
+    cloup.option("-sm", "--skip-myanimelist", type=str, help="Skip myanimelist."),
+)
+@cloup.option_group(
+    "Media Settings",
+    cloup.option(
+        "-p",
+        "--pictures-number",
+        type=int,
+        default=3,
+        help="Number of pictures to upload (default: 3).",
+    ),
+    cloup.option(
+        "-pe",
+        "--picture-extension",
+        type=str,
+        default="png",
+        help="Extension of the snapshot to upload.",
+    ),
+    cloup.option(
+        "-M",
+        "--no-mediainfo",
+        is_flag=True,
+        help="Do not attach mediainfo to the torrent.",
+    ),
+    cloup.option(
+        "-o",
+        "--overwrite",
+        is_flag=True,
+        help="Recreate the .torrent if it already exists.",
+    ),
+)
+@cloup.option(
+    "-ch", "--category-help", is_flag=True, help="Print available categories."
+)
+@cloup.argument("path", type=Path, nargs=-1, required=False)
+@cloup.pass_context
+def up(ctx, **kwargs):
+    """Upload torrents to Nyaa"""
+    uploader = NyaaUploader(ctx, SimpleNamespace(**kwargs))
+    uploader.main()
+
+
+class NyaaUploader:
+    def __init__(self, ctx, args):
+        self.ctx = ctx
         self.args = args
-        self.parser = parser
+        self.announces = []
+        self.add_pub_trackers = False
+        self.dirs: PlatformDirs
 
-        if len(sys.argv) == 1:
-            parser.print_help(sys.stderr)
-            sys.exit(1)
+        self.console = Console()
+        self.mediainfo = []
+        self.description = ""
 
-        self.category = self.get_category(self.args.category)
+        self._validate_inputs()
+        self._setup_config()
 
-        if self.args.category_help:
-            cat_help()
-            sys.exit(1)
-
+    def _validate_inputs(self):
         if not self.args.path:
             eprint("No input!\n")
-            self.parser.print_help(sys.stderr)
+            print(self.ctx.get_help())
             sys.exit(1)
 
         if not self.args.category:
@@ -57,505 +190,643 @@ class Upload:
             cat_help()
             sys.exit(1)
 
-        self.pic_ext = self.args.picture_extension
-        self.pic_num = self.args.pictures_number
-
-        self.hidden = "hidden" if self.args.hidden else None
-        self.anonymous = "anonymous" if self.args.anonymous else None
-        self.complete = "complete" if self.args.complete else None
-        self.remake = "remake" if self.args.remake else None
-
-        self.main()
-
-    def edit(self, cookies, provider, id, display_name, information) -> bool:
-        with httpx.Client(transport=httpx.HTTPTransport(retries=2), proxy=provider.proxy) as client:
-            res = client.post(
-                url=f"{provider.domain}/view/{id}/edit",
-                files={
-                    "display_name": (
-                        None,
-                        display_name,
-                    ),
-                    **({"is_anonymous": (None, "y")} if self.anonymous else {}),
-                    **({"is_remake": (None, "y")} if self.remake else {}),
-                    **({"is_complete": (None, "y")} if self.complete else {}),
-                    **({"is_hidden": (None, "y")} if self.hidden else {}),
-                    "category": (None, self.category),
-                    "information": (None, information),
-                    "description": (
-                        None,
-                        self.description,
-                    ),
-                    "submit": (None, "Save Changes"),
-                },
-                cookies=cookies,
-                headers={
-                    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-                    "content-type": "multipart/form-data; boundary=----WebKitFormBoundary",
-                    "origin": provider.domain,
-                    "referer": f"{provider.domain}/view/{id}/edit",
-                    **self.headers,
-                },
-            )
-
-            if res.status_code != 302:
-                eprint("Failed to add iamges the the torrent!")
-                return False
-
-            return True
-
-    def upload(
-        self,
-        torrent_byte: Any,
-        name: str,
-        display_name: str,
-        info: str,
-        infos: Tree,
-        provider,
-        cookies,
-    ) -> dict:
-        iprint(
-            "Uploading to Nyaa...",
-            down=0 if not cookies else 1,
-            up=1 if not cookies else 0,
-        )
-
-        try:
-            with httpx.Client(transport=httpx.HTTPTransport(retries=5), proxy=provider.proxy) as client:
-                res = client.post(
-                    url=f"{provider.domain}/api/v2/upload",
-                    files={
-                        "torrent": (
-                            f"{name}.torrent",
-                            torrent_byte,
-                            "application/x-bittorrent",
-                        )
-                    },
-                    data={
-                        "torrent_data": json.dumps(
-                            {
-                                "name": display_name,
-                                "category": self.category,
-                                "information": info,
-                                "description": self.description,
-                                "anonymous": self.anonymous,
-                                "hidden": self.hidden,
-                                "complete": self.complete,
-                                "remake": self.remake,
-                                "trusted": self.trusted,
-                            }
-                        )
-                    },
-                    auth=(provider.credentials.username, provider.credentials.password),
-                    headers=self.headers,
-                )
-        except httpx.HTTPError as e:
-            eprint(f"Failed to upload torrent! ({e})", True)
-
-        try:
-            res = res.json()
-        except json.JSONDecodeError:
-            eprint(f"Failed to decode JSON: {res.text}", True)
-
-        if error := res.get("errors"):
-            if isinstance(error, str):
-                eprint(f"\n{error}!\n")
-            else:
-                info = next(iter(error))
-                eprint(f"\n{info} error: {error[info][0]}!\n")
-            print(Panel.fit(infos, title="ERROR", border_style="red"))
+        if self.args.category_help:
+            cat_help()
             sys.exit(1)
 
-        return res
+    def _setup_config(self):
+        self.config = Config()
+        self.dirs = config.get_dirs
+        self.config_data = config.load()
+        self._validate_config()
+        if not (pref := self.config_data.get("preferences")):
+            eprint("No preferences in config!", True)
 
-    def get_category(self, category: str) -> str | None:
-        match category:
-            case "Anime - Anime Music Video" | "7":
-                return "1_1"
-            case "Anime - English-translated" | "1":
-                return "1_2"
-            case "Anime - Non-English-translated" | "2":
-                return "1_3"
-            case "Anime - Raw" | "3":
-                return "1_4"
-            case "Live Action - English-Translated" | "4":
-                return "4_1"
-            case "Live Action - Non-English-translated" | "5":
-                return "4_1"
-            case "Live Action - Raw" | "6":
-                return "4_4"
-            case "1_1":
-                return "Anime - Anime Music Video"
-            case "1_2":
-                return "Anime - English-translated"
-            case "1_3":
-                return "Anime - Non-English-translated"
-            case "1_4":
-                return "Anime - Raw"
-            case "4_1":
-                return "Live Action - English-Translated"
-            case "4_3":
-                return "Live Action - Non-English-translated"
-            case "4_4":
-                return "Live Action - Raw"
-
-    def main(self) -> None:
-        config = Config()
-        dirs = config.get_dirs
-        Path(dirs.user_config_path).mkdir(parents=True, exist_ok=True)
-        self.config = config.load() or {}
-        if pref := self.config.get("preferences"):
-            self.edit_code: str | None = (
-                pref.get("edit_code")
-                if not self.args.edit_code
-                else self.args.edit_code
-            )
-
-            self.random_snapshots: str = pref.get("random_snapshots", False)
-            self.real_lenght: bool = not pref.get("real_lenght", False)
-            self.tg_id: str | None = pref.get("id", None)
-            self.note: str | None = pref.get("note", None)
-            self.telegram: bool = pref.get("telegram", False)
-            self.tg_token = pref.get("token", None)
-            self.announces = []
-            self.providers = []
-            self.trusted = "trusted" if self.config.get("trusted", False) else None
-            info_form_config: bool = (
+        self.upload_config = UploadConfig(
+            category=self.get_category(self.args.category),
+            anonymous="anonymous" if self.args.anonymous else None,
+            hidden="hidden" if self.args.hidden else None,
+            complete="complete" if self.args.complete else None,
+            remake="remake" if self.args.remake else None,
+            trusted="trusted" if self.config_data.get("trusted") else None,
+            mediainfo_enabled=not self.args.no_mediainfo
+            and pref.get("mediainfo", True),
+            telegram_enabled=pref.get("telegram", False),
+            random_snapshots=pref.get("random_snapshots", False),
+            pic_num=self.args.pictures_number,
+            pic_ext=self.args.picture_extension,
+            edit_code=self.args.edit_code or pref.get("edit_code"),
+            tg_token=pref.get("token"),
+            tg_id=pref.get("id"),
+            info_form_config=(
                 False
                 if (pref.get("info", "").lower() == "mal") or not pref.get("info")
                 else True
-            )
+            ),
+        )
 
-            self.headers = {
-                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.2088.46",
-                "sec-ch-ua": '"Chromium";v="118", "Microsoft Edge";v="118", "Not=A?Brand";v="99"',
-                "sec-ch-ua-mobile": "?0",
-                "sec-ch-ua-platform": '"Windows"',
-                "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-                "accept-language": "en-US,en;q=0.9",
-                "cache-control": "max-age=0",
-                "dnt": "1",
-                "sec-fetch-dest": "document",
-                "sec-fetch-mode": "navigate",
-                "sec-fetch-site": "same-origin",
-                "sec-fetch-user": "?1",
-                "upgrade-insecure-requests": "1",
-            }
+        self.providers = self._setup_providers()
+        self.headers = self._get_default_headers()
 
-            self.kek_headers = {}
-            if key := pref.get("keks_key", None):
-                self.kek_headers["x-kek-auth"] = key
-                self.kek_headers.update(self.headers)
+        if key := pref.get("keks_key"):
+            self.upload_config.kek_headers = {"x-kek-auth": key, **self.headers}
 
-            add_mal: bool = pref.get("mal", True)
-            mediainfo_to_torrent: bool = (
-                pref.get("mediainfo", True) if not self.args.no_mediainfo else False
-            )
-            self.add_pub_trackers: bool = pref.get("add_pub_trackers", False)
-        else:
-            eprint("No preferences in the config!", True)
-
-        if providers := self.config.get("providers"):
-            for x in providers:
-                temp = {}
-                temp["name"] = ""
-                if name := x.get("name"):
-                    temp["name"] = name
-                if cred := x.get("credentials"):
-                    temp["credentials"] = config.get_cred(cred)
-                else:
-                    eprint("No credentials in the config!", True)
-                if domain := x.get("domain"):
-                    temp["domain"] = domain
-                else:
-                    eprint("No domain in the config!", True)
-                if proxy := x.get("proxy"):
-                    temp["proxy"] = proxy
-                else:
-                    temp["proxy"] = None
-                if announces := x.get("announces"):
-                    self.announces.extend(announces)
-                else:
-                    wprint("No announces in the config!")
-                self.providers.append(SimpleNamespace(**temp))
-        else:
-            eprint("No providers in the config!", True)
-
-        multi_sub: bool = self.args.multi_subs
-        multi_audio: bool = self.args.multi_audios
-        dual_audio: bool = self.args.dual_audios
-
-        for in_file in self.args.path:
-            self.in_f = in_file
-            self.description: str = ""
-            if note := (self.args.note or self.note):
-                self.description += f"{note}\n\n---\n\n"
-            name_plus = list()
-
-            if not in_file.exists():
-                eprint("Input file doesn't exist!", True)
-
-            if in_file.is_file():
-                file = in_file
-                name = str(in_file.name).removesuffix(".mkv").removesuffix(".mp4")
+    def _setup_providers(self) -> list[Provider]:
+        providers = []
+        for p in self.config_data.get("providers", []):
+            if cred := p.get("credentials"):
+                credentials = Config.get_cred(cred)
             else:
-                file = Path(sorted([*in_file.glob("*.mkv"), *in_file.glob("*.mp4")])[0])
-                name = in_file.name
+                eprint("No credentials in config!", True)
 
-            self.cache_dir = dirs.user_cache_path / f"{name}_files"
-            self.cache_dir.mkdir(parents=True, exist_ok=True)
+            if not (domain := p.get("domain")):
+                eprint("No domain in config!", True)
 
-            create_torrent(self, name, in_file, self.args.overwrite)
+            provider = Provider(
+                name=p.get("name", ""),
+                domain=domain,
+                proxy=p.get("proxy", ""),
+                credentials=credentials,
+            )
+            if p.get("add_pub_trackers", False):
+                self.add_pub_trackers = True
 
-            with Console().status("[bold magenta]MediaInfo parsing...") as _:
-                mediainfo = json.loads(MediaInfo.parse(file, output="JSON", full=True))[
-                    "media"
-                ]["track"]
+            if announces := p.get("announces", []):
+                self.announces.extend(list(announces))
 
-                reparse_main = False
-                if not mediainfo[0]["Duration"]:
-                    reparse_main = True
-                else:
-                    for m in mediainfo:
-                        if m.get("@type", "") in ("Audio") and not m.get("BitRate"):
-                            reparse_main = True
-                        if m.get("@type", "") == "General" and not m.get("Duration"):
-                            reparse_main = True
+            providers.append(provider)
 
-                if reparse_main:
-                    mediainfo = json.loads(
-                        MediaInfo.parse(file, output="JSON", parse_speed=1, full=True)
-                    )["media"]["track"]
+        return providers
 
-                self.text: str = MediaInfo.parse(
-                    file, output="", parse_speed=1 if reparse_main else 0.5, full=False
-                ).replace(str(file), str(file.name))
+    def _get_default_headers(self) -> dict[str, str]:
+        return {
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "accept-language": "en-US,en;q=0.9",
+            "dnt": "1",
+            "sec-fetch-dest": "document",
+            "sec-fetch-mode": "navigate",
+            "upgrade-insecure-requests": "1",
+        }
 
-            if self.category in {"1_2", "1_3", "1_4"}:
-                anime = True
-            else:
-                anime = False
+    def process_file(self, file_path: Path, display_info: Tree) -> ProcessResult | None:
+        if not file_path.exists():
+            eprint("Input file doesn't exist!", True)
 
-            mal_data: Anime | None = None
+        file = (
+            file_path
+            if file_path.is_file()
+            else Path(sorted([*file_path.glob("*.mkv"), *file_path.glob("*.mp4")])[0])
+        )
+        name = str(file_path.name).removesuffix(".mkv").removesuffix(".mp4")
 
-            if (
-                anime
-                and add_mal
-                and not info_form_config
-                and not self.args.skip_myanimelist
+        self.cache_dir = Path(f"{self.dirs.user_cache_path}/{name}_files")
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+
+        with self.console.status("[bold magenta]Parsing file...") as _:
+            mediainfo = self._parse_mediainfo(file)
+
+        if not mediainfo:
+            return None
+
+        self.mediainfo = mediainfo
+
+        if not create_torrent(self, name, file_path, self.args.overwrite):
+            return None
+
+        video_info, audio_info, sub_info = get_description(mediainfo)
+        self._set_description(video_info, audio_info, sub_info, mediainfo)
+
+        if self.upload_config.mediainfo_enabled:
+            self.upload_config.text = MediaInfo.parse(
+                file, output="", full=False
+            ).replace(str(file), str(file.name))
+            if mediainfo_upload := self._upload_mediainfo():
+                url = mediainfo_upload["url"]
+                display_info = self._add_media_info_display(
+                    display_info, url, mediainfo_upload["edit_code"]
+                )
+                self.description += f"\n\n[MediaInfo]({url})"
+
+        return ProcessResult(
+            video_info=video_info,
+            audio_info=audio_info,
+            sub_info=sub_info,
+            display_info=display_info,
+        )
+
+    def _parse_mediainfo(self, file_path: Path) -> str | None:
+        def _get_mediainfo(file_path: Path, parse_speed: float = 0.5) -> dict:
+            mediainfo = {}
+            try:
+                mediainfo = json.loads(
+                    MediaInfo.parse(
+                        file_path, output="JSON", parse_speed=parse_speed, full=True
+                    )
+                )
+            except Exception as e:
+                wprint(f"Failed to get mediainfo: {e}")
+
+            return mediainfo.get("media", {}).get("track", {})
+
+        try:
+            mediainfo = _get_mediainfo(file_path)
+
+            if not mediainfo[0]["Duration"] or any(
+                m.get("@type", "") in ("Audio", "General") and not m.get("BitRate")
+                for m in mediainfo
             ):
-                name_to_mal = re.sub(r"[\.|\-]S\d+.*", "", name)
-                if name_to_mal == name:
-                    name_to_mal = re.sub(r"[\.|\-]\d{4}\..*", "", name)
-                name_to_mal = name_to_mal.replace(".", " ")
+                mediainfo = _get_mediainfo(file_path, 1)
 
-                try:
-                    mal_data = get_mal_link(self.args.myanimelist, name_to_mal)
-                except Exception as e:
-                    wprint(f"Failed to get MAL link! ({e})")
+            return mediainfo
+        except Exception as e:
+            eprint(f"MediaInfo error: {e}")
+            return None
 
-            information: str = ""
-            if not info_form_config and anime and not self.args.info:
-                if add_mal and not self.args.skip_myanimelist:
-                    if self.args.myanimelist:
-                        information = self.args.myanimelist
-                    elif mal_data and getattr(mal_data, "url", None):
-                        information = f"{'/'.join(mal_data.url.split('/')[:-1])}/"
-            elif self.args.info or info_form_config:
-                information = self.args.info or pref["info"]
+    def _set_description(
+        self,
+        video_info: str,
+        audio_info: list[str],
+        sub_info: list[str],
+        mediainfo: list,
+    ) -> None:
+        if note := (
+            self.args.note or self.config_data.get("preferences", {}).get("note")
+        ):
+            self.description += f"{note}\n\n---\n\n"
 
-            video_de, audio_de, sub_de = get_description(mediainfo)
+        chapter_str = ["No", "Yes"][bool(mediainfo[0].get("MenuCount", False))]
+        duration_str = mediainfo[0].get("Duration_String3", "?")
 
-            audiode_str: str = " │ ".join(audio_de)
-            subde_str: str = " │ ".join(sub_de)
-            if not subde_str:
-                subde_str = "**N/A**"
-            chapter_str: str = ["No", "Yes"][bool(mediainfo[0].get("MenuCount", False))]
-            duration_str: str = mediainfo[0].get("Duration_String3", "?")
+        self.description += (
+            f"`Tech Specs:`\n"
+            f"* `Video:` {video_info}\n"
+            f"* `Audios ({len(audio_info)}):` {' │ '.join(audio_info)}\n"
+            f"* `Subtitles ({len(sub_info)}):` {' │ '.join(sub_info) if sub_info else '**N/A**'}\n"
+            f"* `Chapters:` **{chapter_str}**\n"
+            f"* `Duration:` **~{duration_str}**\n"
+        )
 
-            sub_len: int = len(sub_de)
-            audio_len: int = len(audio_de)
-            if self.real_lenght:
-                if sub_len > 1:
-                    sub_len = len({x.split("**")[1] for x in sub_de})
-                if audio_len > 1:
-                    audio_len = len({x.split("**")[1] for x in audio_de})
+    def _upload_mediainfo(self) -> dict | None:
+        try:
+            result = rentry_upload(self.upload_config)
+            return result
+        except Exception as e:
+            wprint(f"Failed to upload mediainfo: {e}")
+            return None
 
-            self.description += (
-                f"`Tech Specs:`\n* `Video:` {video_de}"
-                + f"\n* `Audios ({audio_len}):` {audiode_str}"
-                + f"\n* `Subtitles ({sub_len}):` {subde_str}"
-                + f"\n* `Chapters:` **{chapter_str}**"
-                + f"\n* `Duration:` **~{duration_str}**"
+    def _try_upload_with_retries(
+        self, display_name: str, name: str, provider, max_retries: int = 3
+    ) -> UploadResult | None:
+        torrent_path = self.cache_dir / f"{name}.torrent"
+        with open(torrent_path, "rb") as f:
+            torrent_data = f.read()
+
+        for attempt in range(max_retries):
+            try:
+                if result := self._try_upload(
+                    provider, torrent_data, name, display_name
+                ):
+                    return result
+            except Exception as e:
+                wprint(f"Attempt {attempt + 1} failed for {provider.name}: {e}")
+                if attempt == max_retries - 1:
+                    eprint("All upload attempts failed", True)
+
+        return None
+
+    def _try_upload(
+        self, provider: Provider, torrent_data: bytes, name: str, display_name: str
+    ) -> UploadResult | None:
+        try:
+            response = httpx.post(
+                f"{provider.domain}/api/v2/upload",
+                files={
+                    "torrent": (
+                        f"{name}.torrent",
+                        torrent_data,
+                        "application/x-bittorrent",
+                    ),
+                    "torrent_data": (
+                        None,
+                        json.dumps(
+                            {
+                                "name": display_name,
+                                "category": self.upload_config.category,
+                                "description": self.description,
+                                "anonymous": self.upload_config.anonymous,
+                                "hidden": self.upload_config.hidden,
+                                "complete": self.upload_config.complete,
+                                "remake": self.upload_config.remake,
+                                "trusted": self.upload_config.trusted,
+                                "information": self.upload_config.info,
+                            }
+                        ),
+                    ),
+                },
+                auth=(provider.credentials.username, provider.credentials.password),
+                headers=self.headers,
+                proxies={"all": provider.proxy} if provider.proxy else None,
             )
 
-            mediainfo_url = ""
-            edit_code = ""
-            if not self.args.skip_upload and mediainfo_to_torrent:
-                try:
-                    rentry_response = rentry_upload(self)
-                    mediainfo_url = rentry_response["url"]
-                    edit_code = rentry_response["edit_code"]
-                    self.description += f"\n\n[MediaInfo]({mediainfo_url})"
-                except httpx.HTTPError as e:
-                    wprint(f"Failed to upload mediainfo to rentry.co! ({e})")
-            self.description += "\n\n---\n\n"
+            result = response.json()
+            if errors := result.get("errors"):
+                self._handle_upload_errors(errors)
+                raise Exception("Upload failed")
 
-            if self.args.auto:
-                if audio_len == 2:
-                    dual_audio = True
-                elif audio_len > 2:
-                    multi_audio = True
-                if sub_len > 1:
-                    multi_sub = True
-
-            name_nyaa = name.replace(".", " ")
-            if channel := re.search(r"[A-Z]{3}[2|5|7] [0|1]", name_nyaa):
-                c = channel[0]
-                name_nyaa = name_nyaa.replace(c, c.replace(" ", "."))
-
-            if mal_data and add_mal and anime and not self.args.skip_myanimelist:
-                if self.category in {"1_3", "1_4"}:
-                    if (
-                        mal_data.title_english
-                        and mal_data.title_english.casefold()
-                        not in name_to_mal.casefold()
-                    ):
-                        name_plus.append(mal_data.title_english)
-                else:
-                    if mal_data.title.casefold() not in name_to_mal.casefold():
-                        name_plus.append(mal_data.title)
-
-            if dual_audio:
-                name_plus.append("Dual-Audio")
-            elif multi_audio:
-                name_plus.append("Multi-Audio")
-            if multi_sub:
-                name_plus.append("Multi-Subs")
-
-            display_name = (
-                f'{name_nyaa} ({", ".join(name_plus)})' if name_plus else name_nyaa
+            return UploadResult(
+                url=result["url"],
+                id=result["id"],
+                download_url=self._get_download_url(result["url"], result["id"]),
+                name=display_name,
             )
-            images: Tree | None = None
-            if config.cookies:
-                for provider in self.providers:
-                    with httpx.Client(
-                        proxy=provider.proxy,
-                        headers=self.headers,
-                        cookies=config.cookies,
-                        transport=httpx.HTTPTransport(retries=2),
-                    ) as client:
-                        try:
-                            res = client.get(url=f"{provider.domain}/profile")
-                        except httpx.HTTPError as e:
-                            wprint(f"Failed to verify cookies! ({e})")
-                            continue
 
-                        if res.status_code == 200:
-                            break
-                        else:
-                            wprint("Failed to verify cookies!")
-                            config.cookies = {}
+        except Exception as e:
+            eprint(f"Upload failed: {e}")
+            return None
 
-            if not config.cookies and self.pic_num != 0:
-                images = snapshot(self, file, name_nyaa, mediainfo)
+    def _handle_upload_errors(self, errors):
+        if isinstance(errors, str):
+            eprint(errors)
+        else:
+            info = next(iter(errors))
+            eprint(f"{info} error: {errors[info][0]}", True)
 
-            for provider in self.providers:
-                infos = Tree("[bold white]Information[not bold]")
-                if add_mal and anime and info_form_config and name_to_mal:
-                    infos.add(
-                        f"[bold white]MAL link ({name_to_mal}): [cornflower_blue not bold]{information}[white]"
+    def edit_torrent(
+        self,
+        provider: Provider,
+        torrent_id: str,
+        display_name: str,
+        information: str,
+    ) -> bool:
+        try:
+            response = httpx.post(
+                f"{provider.domain}/view/{torrent_id}/edit",
+                files={
+                    "display_name": (None, display_name),
+                    **(
+                        {"is_anonymous": (None, "y")}
+                        if self.upload_config.anonymous
+                        else {}
+                    ),
+                    **({"is_remake": (None, "y")} if self.upload_config.remake else {}),
+                    **(
+                        {"is_complete": (None, "y")}
+                        if self.upload_config.complete
+                        else {}
+                    ),
+                    **({"is_hidden": (None, "y")} if self.upload_config.hidden else {}),
+                    "category": (None, self.upload_config.category),
+                    "information": (None, information),
+                    "description": (None, self.description),
+                    "submit": (None, "Save Changes"),
+                },
+                cookies=self.session.cookies,
+                headers={
+                    **self.headers,
+                    "origin": provider.domain,
+                    "referer": f"{provider.domain}/view/{torrent_id}/edit",
+                },
+            )
+            return response.status_code == 302
+        except Exception as e:
+            eprint(f"Failed to edit torrent: {e}")
+            return False
+
+    def _get_download_url(self, page_url: str, torrent_id: str) -> str:
+        return page_url.replace(f"view/{torrent_id}", f"download/{torrent_id}.torrent")
+
+    def _send_notification(self, result: UploadResult) -> None:
+        if self.upload_config.tg_token and self.upload_config.tg_id:
+            message = (
+                f"\n{result.name}\n\n"
+                f"Nyaa link: {result.url}\n"
+                f'<a href="{result.download_url}">Torrent file</a>'
+            )
+            tgpost(self, message)
+
+    def get_category(self, category: str) -> str:
+        return {
+            "Anime - Anime Music Video": "1_1",
+            "7": "1_1",
+            "Anime - English-translated": "1_2",
+            "1": "1_2",
+            "Anime - Non-English-translated": "1_3",
+            "2": "1_3",
+            "Anime - Raw": "1_4",
+            "3": "1_4",
+            "Live Action - English-Translated": "4_1",
+            "4": "4_1",
+            "Live Action - Non-English-translated": "4_1",
+            "5": "4_1",
+            "Live Action - Raw": "4_4",
+            "6": "4_4",
+        }.get(category, category)
+
+    def detect_audio_subs(
+        self, audio_info: list[str], sub_info: list[str]
+    ) -> tuple[bool, bool, bool]:
+        audio_len = len(audio_info)
+        sub_len = len(sub_info)
+
+        if self.config_data.get("preferences", {}).get("real_lenght", False):
+            if sub_len > 1:
+                try:
+                    sub_len = len(
+                        {
+                            x.split("**")[1]
+                            for x in sub_info
+                            if "**" in x and len(x.split("**")) > 1
+                        }
                     )
-                if self.category:
-                    infos.add(
-                        f"[bold white]Selected category: [cornflower_blue not bold]{self.get_category(self.category)}[white]"
+                except (IndexError, Exception) as e:
+                    wprint(f"Error processing subtitle info: {e}")
+                    sub_len = len(sub_info)
+
+            if audio_len > 1:
+                try:
+                    audio_len = len(
+                        {
+                            x.split("**")[1]
+                            for x in audio_info
+                            if "**" in x and len(x.split("**")) > 1
+                        }
                     )
+                except (IndexError, Exception) as e:
+                    wprint(f"Error processing audio info: {e}")
+                    audio_len = len(audio_info)
 
-                title: str = ""
-                style: str = "yellow"
+        return (
+            audio_len == 2,  # dual_audio
+            audio_len > 2,  # multi_audio
+            sub_len > 1,  # multi_sub
+        )
 
-                if not self.args.skip_upload:
-                    if mediainfo_to_torrent and mediainfo_url and edit_code:
-                        medlink = Tree(
-                            f"[bold white]MediaInfo link: [cornflower_blue not bold][link={mediainfo_url}]{mediainfo_url}[/link][white]"
-                        )
-                        medlink.add(
-                            f"[bold white]Edit code: [cornflower_blue not bold]{edit_code}[white]"
-                        )
-                        infos.add(medlink)
+    def _format_display_name(self, name: str, name_plus: list[str]) -> str:
+        name_nyaa = name.replace(".", " ")
+        if channel := re.search(r"[A-Z]{3}[2|5|7] [0|1]", name_nyaa):
+            c = channel[0]
+            name_nyaa = name_nyaa.replace(c, c.replace(" ", "."))
 
-                    if images and self.pic_num != 0:
-                        infos.add(images)
+        return f'{name_nyaa} ({", ".join(name_plus)})' if name_plus else name_nyaa
 
-                    with open(f"{self.cache_dir}/{name}.torrent", "rb") as f:
-                        torrent_fd = f.read()
+    def _add_media_info_display(
+        self, display_info: Tree, mediainfo_url: str, edit_code: str
+    ):
+        medlink = Tree(
+            f"[bold white]MediaInfo link: [cornflower_blue not bold][link={mediainfo_url}]{mediainfo_url}[/link][white]"
+        )
+        medlink.add(
+            f"[bold white]Edit code: [cornflower_blue not bold]{edit_code}[white]"
+        )
+        display_info.add(medlink)
 
-                    link = self.upload(
-                        torrent_fd,
-                        name_nyaa,
-                        display_name,
-                        information,
-                        infos,
-                        provider,
-                        config.cookies,
-                    )
+        return display_info
 
-                    if not link:
-                        wprint("Something happened during the uploading!")
-                    else:
-                        page_link = link["url"]
-                        infos.add(
-                            f"[bold white]Page link: [cornflower_blue not bold][link={page_link}]{page_link}[/link][white]"
-                        )
-                        download_link = page_link.replace(
-                            f"view/{link['id']}", f"download/{link['id']}.torrent"
-                        )
-                        infos.add(
-                            f"""[bold white]Download link: [cornflower_blue not bold]{download_link}[white]"""
-                        )
-                        style = "bold green"
-                        title = f"Torrent successfully uploaded to {provider.name}!"
-                        if config.cookies:
-                            img_good = False
-                            try:
-                                # Skip images if could not edit the upload.
-                                if self.pic_num != 0:
-                                    images = snapshot(self, file, name_nyaa, mediainfo)
-                                if images and self.pic_num != 0:
-                                    infos.add(images)
+    def _check_cookies(self, provider: Provider) -> bool:
+        if self.config.cookies:
+            try:
+                res = httpx.get(
+                    f"{provider.domain}/profile",
+                    cookies=self.config.cookies,
+                    headers=self.headers,
+                    proxy=provider.proxy,
+                )
+                return res.status_code == 200
+            except Exception:
+                wprint("Failed to verify cookies")
+                return False
 
-                                for num in range(5):
-                                    is_images_up = self.edit(
-                                        config.cookies,
-                                        provider,
-                                        link["id"],
-                                        display_name,
-                                        information,
-                                    )
-                                    if is_images_up:
-                                        img_good = True
-                                        break
-                                    else:
-                                        time.sleep(5 * num)
-                            except Exception as e:
-                                wprint(f"Error: {e})")
+        return False
 
-                            if not img_good:
-                                wprint("Failed to add images to the torrent!")
-                                style = "yellow"
-                                title = f"Torrent successfully uploaded to {provider.name}, but could not add images!"
+    def _set_tech_specs(self, mediainfo: dict) -> None:
+        """Get media info with chapters and duration"""
+        chapter_str = ["No", "Yes"][bool(mediainfo[0].get("MenuCount", False))]
+        duration_str = mediainfo[0].get("Duration_String3", "?")
 
-                        if (
-                            (self.args.telegram or self.telegram)
-                            and self.tg_id
-                            and self.tg_token
-                            and not self.hidden
+        self.description += (
+            f"* `Chapters:` **{chapter_str}**\n" f"* `Duration:` **~{duration_str}**"
+        )
+
+    def _calculate_track_lengths(
+        self, audio_info: list[str], sub_info: list[str]
+    ) -> tuple[int, int]:
+        """Calculate real track lengths if configured"""
+        audio_len = len(audio_info)
+        sub_len = len(sub_info)
+
+        if self.config_data.get("preferences", {}).get("real_lenght", False):
+            if sub_len > 1:
+                sub_len = len({x.split("**")[1] for x in sub_info})
+            if audio_len > 1:
+                audio_len = len({x.split("**")[1] for x in audio_info})
+
+        return audio_len, sub_len
+
+    def _validate_config(self) -> None:
+        required = ["preferences", "providers"]
+        for key in required:
+            if key not in self.config_data:
+                eprint(f"Missing {key} in config!", True)
+
+        pref = self.config_data["preferences"]
+        if not pref.get("mediainfo") and not self.args.no_mediainfo:
+            wprint("MediaInfo disabled in config")
+
+    def _handle_image_upload(
+        self,
+        result: UploadResult,
+        display_info: Tree,
+        file_path: Path,
+        provider: Provider,
+    ):
+        try:
+            if self.upload_config.pic_num > 0:
+                images = snapshot(self, file_path, result.name, self.mediainfo)
+                if images:
+                    display_info.add(images)
+                    for _ in range(5):
+                        if self.edit_torrent(
+                            provider,
+                            result.id,
+                            result.name,
+                            result.url,
                         ):
-                            tgpost(
-                                self,
-                                ms=f'\n{display_name}\n\nNyaa link: {page_link}\n\n<a href="{download_link}">Torrent file</a>',
+                            return
+                        time.sleep(5)
+                    wprint("Failed to add images to torrent after retries")
+        except Exception as e:
+            wprint(f"Image upload failed: {e}")
+
+        return display_info
+
+    def _display_success(self, display_info: Tree, result: UploadResult, provider):
+        info = Tree(f"[bold white]Links for {provider.name}[not bold]")
+        info.add(
+            f"[bold white]Page link: [cornflower_blue not bold][link={result.url}]{result.url}[/link][white]"
+        )
+        info.add(
+            f"[bold white]Download link: [cornflower_blue not bold]{result.download_url}[white]"
+        )
+
+        display_info.add(info)
+
+        return display_info
+
+    @property
+    def is_anime_category(self) -> bool:
+        return self.upload_config.category in {"1_1", "1_2", "1_3", "1_4"}
+
+    @property
+    def is_non_english_category(self) -> bool:
+        return self.upload_config.category in {"1_3", "1_4"}
+
+    def process_anime_info(self, mal_data) -> str | None:
+        try:
+            return f"{'/'.join(mal_data.url.split('/')[:-1])}/"
+        except Exception as e:
+            wprint(f"Failed to get MAL link: {e}")
+
+        return None
+
+    def _get_mal_titles(self, mal_data) -> list[str]:
+        titles = []
+
+        if hasattr(self, "name_to_mal"):
+            if (
+                self.is_non_english_category
+                and mal_data.title_english
+                and mal_data.title_english.casefold() not in self.name_to_mal.casefold()
+            ):
+                titles.append(mal_data.title_english)
+            elif (
+                mal_data.title
+                and mal_data.title.casefold() not in self.name_to_mal.casefold()
+            ):
+                titles.append(mal_data.title)
+
+        return titles
+
+    def process_mal_info(
+        self, name: str, info_from_config: bool
+    ) -> tuple[str, list[str]]:
+        """Process MAL info and return information and name additions"""
+        information = ""
+        name_plus = []
+
+        if (
+            not info_from_config
+            and self.is_anime_category
+            and not self.args.skip_myanimelist
+        ):
+            name_to_mal = re.sub(r"[\.|\-]S\d+.*", "", name)
+            if name_to_mal == name:
+                name_to_mal = re.sub(r"[\.|\-]\d{4}\..*", "", name)
+            name_to_mal = name_to_mal.replace(".", " ")
+
+            self.name_to_mal = name_to_mal
+
+            mal_data = get_mal_link(self.args.myanimelist, name_to_mal)
+            if self.args.myanimelist:
+                information = self.args.myanimelist
+            elif mal_data and hasattr(mal_data, "url"):
+                try:
+                    information = f"{'/'.join(mal_data.url.split('/')[:-1])}/"
+                except Exception as e:
+                    wprint(f"Failed to process MAL URL: {e}")
+
+            if mal_data:
+                try:
+                    name_plus.extend(self._get_mal_titles(mal_data))
+                except Exception as e:
+                    wprint(f"Failed to get MAL titles: {e}")
+
+        return information, name_plus
+
+    def _get_file_name(self, file_path: Path) -> str:
+        if file_path.is_file():
+            return str(file_path.name).removesuffix(".mkv").removesuffix(".mp4")
+
+        return file_path.name
+
+    def main(self):
+        for file_path in self.args.path:
+            display_info = Tree("[bold white]Information[not bold]")
+
+            self.description = ""
+            self.mediainfo = []
+            name_plus = []
+            dual_audio = False
+            multi_audio = False
+            multi_sub = False
+
+            name = self._get_file_name(file_path)
+            result = self.process_file(file_path, display_info)
+
+            if result:
+                display_info = result.display_info
+                if self.args.auto:
+                    dual_audio, multi_audio, multi_sub = self.detect_audio_subs(
+                        result.audio_info, result.sub_info
+                    )
+
+                if self.is_anime_category and not self.args.skip_myanimelist:
+                    information, name_plus_ = self.process_mal_info(
+                        name, self.upload_config.info_form_config
+                    )
+                    name_plus.extend(name_plus_)
+                    display_info.add(
+                        f"[bold white]MAL link: [cornflower_blue not bold]{information}[white]"
+                    )
+                    self.upload_config.info = information
+
+                if dual_audio:
+                    name_plus.append("Dual-Audio")
+                elif multi_audio:
+                    name_plus.append("Multi-Audio")
+                if multi_sub:
+                    name_plus.append("Multi-Subs")
+
+                display_name = self._format_display_name(name, name_plus)
+
+                for provider in self.providers:
+                    ok_cookies = self._check_cookies(provider)
+                    if self.upload_config.pic_num > 0 and not ok_cookies:
+                        if images := snapshot(self, file, name, mediainfo):
+                            display_info.add(images)
+
+                    iprint("\nUploading to Nyaa...")
+                    upload_result = self._try_upload_with_retries(
+                        display_name, name, provider
+                    )
+
+                    if upload_result:
+                        if (
+                            self.upload_config.telegram_enabled
+                            and not self.upload_config.hidden
+                        ):
+                            self._send_notification(upload_result)
+
+                        display_info = self._display_success(
+                            display_info, upload_result, provider
+                        )
+
+                        if ok_cookies:
+                            display_info = self._handle_image_upload(
+                                upload_result,
+                                display_info,
+                                file_path,
+                                provider,
                             )
-                else:
-                    wprint("Torrent is not uploaded!")
-                print("")
-                print(Panel.fit(infos, title=title, border_style=style))
+
+                        style = "bold green"
+                        title = "Torrent successfully uploaded!"
+                    else:
+                        style = "yellow"
+                        title = "Upload completed with warnings"
+            else:
+                style = "red"
+                title = "Upload failed"
+
+        print("")
+        rich_print(Panel.fit(display_info, title=title, border_style=style))

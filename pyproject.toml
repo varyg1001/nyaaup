@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nyaaup"
-version = "4.4.0"
+version = "5.0.0"
 description = "Auto torrent uploader to Nyaa"
 authors = ["varyg"]
 readme = "README.md"
@@ -29,9 +29,10 @@ ruff = "^0.2.1"
 tls-client = "^1.0.1"
 typing-extensions = "^4.11.0"
 aiofiles = "^24.1.0"
+cloup = "^3.0.5"
 
 [tool.poetry.scripts]
-nyaaup = "nyaaup.cli:main"
+nyaaup = "__init__:main"
 
 [build-system]
 requires = ["poetry-core"]
