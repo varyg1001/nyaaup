@@ -8,7 +8,7 @@ from rich.console import Console
 import httpx
 from mal import Anime, AnimeSearch
 
-from nyaaup.utils.config import Config
+from nyaaup.utils.userconfig import Config
 from nyaaup.utils.mediainfo import get_description, parse_mediainfo
 from nyaaup.utils.torrent import create_torrent
 from nyaaup.utils.upload import snapshot, rentry_upload
