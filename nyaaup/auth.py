@@ -46,16 +46,14 @@ class AuthHandler:
     def validate_inputs(self) -> None:
         """Validate command inputs"""
         if not (
-            self.auth_config.announces
-            or self.auth_config.domain
-            or self.auth_config.credential
+            self.auth_config.announces or self.auth_config.domain or self.auth_config.credential
         ):
             eprint("No arguments provided!", fatal="exit")
 
     def process_credential(self, conf: Config) -> None:
         """Process credential if provided"""
         if self.auth_config.credential:
-            conf.get_cred(self.auth_config.credential)
+            conf.load_credentials(self.auth_config.credential)
 
     def find_provider(self) -> None:
         """Find or create provider configuration"""
@@ -142,19 +140,17 @@ def auth(ctx, **kwargs):
     if any(x in sys.argv for x in ctx.help_option_names):
         return
 
-    if len(sys.argv) == 1 or not ctx.invoked_subcommand:
+    if len(sys.argv) == 1:
         print(ctx.get_help())
         sys.exit(1)
 
-    conf = Config()
-    config = conf.load(False)
-
+    config = Config()
     auth_config = AuthConfig.from_args(SimpleNamespace(**kwargs))
 
-    handler = AuthHandler(config, auth_config)
+    handler = AuthHandler(config.config_data, auth_config)
     handler.validate_inputs()
-    handler.process_credential(conf)
+    handler.process_credential(config)
     handler.find_provider()
     handler.update_provider()
 
-    conf.update(config)
+    config.update(handler.config)

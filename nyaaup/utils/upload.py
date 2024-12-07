@@ -1,22 +1,16 @@
-import subprocess
 import asyncio
+import random
+import subprocess
 from pathlib import Path
 
 import aiofiles
 import httpx
-import random
-from rich.tree import Tree
-from rich.progress import (
-    Progress,
-    BarColumn,
-    TextColumn,
-    TaskProgressColumn,
-    TimeRemainingColumn,
-    MofNCompleteColumn,
-)
-from wand.image import Image
 import oxipng
+from rich.progress import (BarColumn, MofNCompleteColumn, Progress,
+                           TaskProgressColumn, TextColumn, TimeRemainingColumn)
+from rich.tree import Tree
 from tls_client import Session
+from wand.image import Image
 
 from nyaaup.utils.logging import eprint
 
@@ -53,20 +47,18 @@ def snapshot(config, input_path: Path, name: str, mediainfo: list) -> Tree:
         TimeRemainingColumn(elapsed_when_finished=True, compact=True),
     ) as progress:
         generate = progress.add_task(
-            "[bold magenta]Generating snapshots[not bold white]", total=config.upload_config.pic_num
+            "[bold magenta]Generating snapshots[not bold white]",
+            total=config.upload_config.pic_num,
         )
 
         for x in range(1, num_snapshots):
-            snap = Path(f"{config.upload_config.cache_dir}/{name}_{x}.{config.upload_config.pic_ext}")
+            snap = Path(f"{config.cache_dir}/{name}_{x}.{config.upload_config.pic_ext}")
             if not snap.exists():
                 duration = float(mediainfo[0].get("Duration"))
                 interval = duration / (num_snapshots + 1)
 
                 timestamp = (
-                    random.randint(
-                        round(interval * 10), round(interval * 10 * num_snapshots)
-                    )
-                    / 10
+                    random.randint(round(interval * 10), round(interval * 10 * num_snapshots)) / 10
                     if config.upload_config.random_snapshots
                     else interval * (x + 1)
                 )
@@ -102,7 +94,8 @@ def snapshot(config, input_path: Path, name: str, mediainfo: list) -> Tree:
 
         if not config.args.skip_upload:
             upload = progress.add_task(
-                "[bold magenta]Uploading snapshots[white]", total=config.upload_config.pic_num
+                "[bold magenta]Uploading snapshots[white]",
+                total=config.upload_config.pic_num,
             )
 
             # Filter out large files
@@ -111,9 +104,7 @@ def snapshot(config, input_path: Path, name: str, mediainfo: list) -> Tree:
             config.description += "\n\n"
             for link in snapshots_link:
                 config.description += f"![]({link})\n"
-                images.add(
-                    f"[not bold cornflower_blue][link={link}]{link}[/link][white /not bold]"
-                )
+                images.add(f"[not bold cornflower_blue][link={link}]{link}[/link][white /not bold]")
 
         return images
 

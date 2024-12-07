@@ -7,6 +7,7 @@ from nyaaup import __version__
 
 def command_header(f):
     """Decorator to add header banner to commands"""
+
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
         Console().print(

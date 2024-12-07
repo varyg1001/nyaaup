@@ -4,18 +4,17 @@ from typing import Literal, NoReturn, overload
 from rich.console import Console
 from rich.padding import Padding
 
+
 def _get_console(highlight: bool = False) -> Console:
     return Console(highlight=highlight)
 
 
 @overload
-def eprint(text: str, fatal: Literal[False] = False, exit_code: int = 1) -> None:
-    ...
+def eprint(text: str, fatal: Literal[False] = False, exit_code: int = 1) -> None: ...
 
 
 @overload
-def eprint(text: str, fatal: Literal[True], exit_code: int = 1) -> NoReturn:
-    ...
+def eprint(text: str, fatal: Literal[True], exit_code: int = 1) -> NoReturn: ...
 
 
 def eprint(text: str, fatal: bool = False, exit_code: int = 1) -> None | NoReturn:
@@ -29,9 +28,7 @@ def eprint(text: str, fatal: bool = False, exit_code: int = 1) -> None | NoRetur
 
 
 def iprint(text: str, up: int = 1, down: int = 1) -> None:
-    _get_console().print(
-        Padding(f"[bold green]{text}[white]", (up, 0, down, 0), expand=False)
-    )
+    _get_console().print(Padding(f"[bold green]{text}[white]", (up, 0, down, 0), expand=False))
 
 
 def wprint(text: str) -> None:

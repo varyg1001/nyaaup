@@ -1,19 +1,17 @@
 from difflib import SequenceMatcher
-from typing import Optional
 
 import cloup
-
-from rich.tree import Tree
-from rich.console import Console
 import httpx
 from mal import Anime, AnimeSearch
+from rich.console import Console
+from rich.tree import Tree
 
-from nyaaup.utils.userconfig import Config
+from nyaaup.utils.collections import first_or_none
+from nyaaup.utils.logging import eprint, iprint, wprint
 from nyaaup.utils.mediainfo import get_description, parse_mediainfo
 from nyaaup.utils.torrent import create_torrent
-from nyaaup.utils.upload import snapshot, rentry_upload
-from nyaaup.utils.logging import eprint, iprint, wprint
-from nyaaup.utils.collections import first_or_none
+from nyaaup.utils.upload import rentry_upload, snapshot
+from nyaaup.utils.userconfig import Config
 
 
 class DefaultCommandGroup(cloup.Group):
@@ -28,17 +26,15 @@ def similar(x: str, y: str) -> float:
     return SequenceMatcher(None, x, y).ratio()
 
 
-def get_mal_link(myanimelist: str, name_to_mal: str) -> Optional[Anime]:
+def get_mal_link(myanimelist: str, name_to_mal: str) -> Anime | None:
     console = Console()
 
     if myanimelist:
-        with console.status(
-            "[bold magenta]Getting MyAnimeList info from input link..."
-        ):
+        with console.status("[bold magenta]Getting MyAnimeList info from input link..."):
             malid = int(str(myanimelist).split("/")[4])
             return Anime(malid)
 
-    with console.status("[bold magenta]Searching MyAnimeList from input name..."):
+    with console.status("[bold magenta]Searching in MyAnimeList database..."):
         data = AnimeSearch(name_to_mal).results[:10]
 
         for result in data:
@@ -47,9 +43,7 @@ def get_mal_link(myanimelist: str, name_to_mal: str) -> Optional[Anime]:
             name_en = (anime.title_english or "").casefold()
             name_ori = (anime.title or "").casefold()
 
-            if (similar(name_en, name_in) >= 0.75) or (
-                similar(name_ori, name_in) >= 0.75
-            ):
+            if (similar(name_en, name_in) >= 0.75) or (similar(name_ori, name_in) >= 0.75):
                 return anime
 
         return Anime(data[0].mal_id) if data else None
@@ -73,7 +67,7 @@ def cat_help() -> None:
     Console().print(categories)
 
 
-def tgpost(config, message: Optional[str] = None) -> None:
+def tgpost(config, message: str | None = None) -> None:
     if message and config.tg_token and config.tg_id:
         with httpx.Client(transport=httpx.HTTPTransport(retries=5)) as client:
             client.post(

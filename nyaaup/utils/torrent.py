@@ -1,18 +1,13 @@
 from pathlib import Path
 
-import humanize
 import httpx
-from torf import Torrent
+import humanize
+from rich.progress import (BarColumn, Progress, TaskProgressColumn, TextColumn,
+                           TimeRemainingColumn)
 from rich.text import Text
-from rich.progress import (
-    Progress,
-    BarColumn,
-    TaskProgressColumn,
-    TimeRemainingColumn,
-    TextColumn,
-)
+from torf import Torrent
 
-from nyaaup.utils.logging import wprint, iprint, eprint
+from nyaaup.utils.logging import eprint, iprint, wprint
 
 
 class CustomTransferSpeedColumn(TimeRemainingColumn):
@@ -40,7 +35,7 @@ def get_public_trackers(announces: list) -> list:
 
 
 def create_torrent(self, name: str, filename: Path, overwrite: bool) -> bool:
-    torrent_file = Path(f"{self.upload_config.cache_dir}/{name}.torrent")
+    torrent_file = Path(f"{self.cache_dir}/{name}.torrent")
 
     if torrent_file.is_file():
         if overwrite:
@@ -90,9 +85,7 @@ def create_torrent(self, name: str, filename: Path, overwrite: bool) -> bool:
                 total=pieces_total * torrent.piece_size,
             )
 
-        create = progress.add_task(
-            description="[bold magenta]Creating torrent[not bold white]"
-        )
+        create = progress.add_task(description="[bold magenta]Creating torrent[not bold white]")
         torrent.generate(callback=update_progress, interval=1)
         torrent.write(torrent_file)
 

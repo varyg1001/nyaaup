@@ -1,7 +1,6 @@
-import re
 import json
+import re
 from pathlib import Path
-from typing import Dict
 
 from pymediainfo import MediaInfo
 
@@ -21,7 +20,7 @@ CHANNEL_MAP = {
 }
 
 
-def parse_mediainfo(file_path: Path, parse_speed: float = 0.5) -> Dict:
+def parse_mediainfo(file_path: Path, parse_speed: float = 0.5) -> dict:
     try:
         mediainfo = MediaInfo.parse(file_path, output="JSON", full=True)
         info = json.loads(mediainfo)
@@ -39,9 +38,7 @@ def parse_mediainfo(file_path: Path, parse_speed: float = 0.5) -> Dict:
                     break
 
         if needs_reparse:
-            mediainfo = MediaInfo.parse(
-                file_path, output="JSON", parse_speed=1, full=True
-            )
+            mediainfo = MediaInfo.parse(file_path, output="JSON", parse_speed=1, full=True)
             tracks = json.loads(mediainfo)["media"]["track"]
 
         return tracks
@@ -50,7 +47,7 @@ def parse_mediainfo(file_path: Path, parse_speed: float = 0.5) -> Dict:
         return None
 
 
-def get_track_info(data: Dict) -> str:
+def get_track_info(data: dict) -> str:
     from langcodes import Language
 
     lang = data.get("Language")

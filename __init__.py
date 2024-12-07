@@ -7,8 +7,8 @@ import cloup
 from cloup import Context, HelpFormatter, HelpTheme, Style
 from rich.console import Console
 
-from nyaaup.upload import up
 from nyaaup.auth import auth
+from nyaaup.upload import up
 from nyaaup.utils import DefaultCommandGroup
 from nyaaup.utils.decorators import command_header
 
@@ -34,6 +34,7 @@ CONTEXT_SETTINGS = Context.settings(
     ),
 )
 
+
 @cloup.group(
     cls=DefaultCommandGroup,
     context_settings=CONTEXT_SETTINGS,
@@ -47,6 +48,7 @@ def main(ctx, **kwargs):
 
     args = SimpleNamespace(**kwargs)
     ctx.obj = args
+
 
 main.add_command(auth)
 main.add_command(up)

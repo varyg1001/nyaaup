@@ -2,9 +2,9 @@ import re
 import shutil
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Dict, NoReturn
-from platformdirs import PlatformDirs
 
+from platformdirs import PlatformDirs
+from rich import print
 from ruamel.yaml import YAML
 
 from nyaaup.utils.logging import eprint
@@ -12,18 +12,23 @@ from nyaaup.utils.logging import eprint
 
 class Config:
     def __init__(self):
-        self.dirs = PlatformDirs(appname="nyaaup", appauthor=False)
-        self.config_path = Path(self.dirs.user_config_path / "nyaaup.yaml")
-        self.cookies_path = Path(self.dirs.user_config_path / "cookies.txt")
         self.cookies = {}
         self.yaml = YAML()
-        self.get_cookies()
+        self.config_data = {}
+        self.credentials = SimpleNamespace(username=None, password=None)
+
+        self._dirs = PlatformDirs(appname="nyaaup", appauthor=False)
+        self.config_path = Path(self._dirs.user_config_path / "nyaaup.yaml")
+        self.cookies_path = Path(self._dirs.user_config_path / "cookies.txt")
+
+        self._load()
+        self._get_cookies()
 
     @property
-    def get_dirs(self):
-        return self.dirs
+    def dirs(self):
+        return self._dirs
 
-    def get_cookies(self):
+    def _get_cookies(self):
         """Load cookies from file if it exists"""
         if self.cookies_path.exists():
             data = self.cookies_path.read_text().splitlines()
@@ -36,41 +41,50 @@ class Config:
                 ):
                     self.cookies[values[-2]] = values[-1]
 
-    def create(self, exit=False) -> Dict:
+    def _create(self) -> None:
         """Create default config file"""
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(
-            Path(__file__).resolve().parent.with_name("nyaaup.yaml.example"),
+            Path(__file__).resolve().parent.parent.with_name("nyaaup.yaml.example"),
             self.config_path,
         )
-        eprint(f"Config file doesn't exist, created at: {self.config_path}", fatal=exit)
-        return self.load(exit)
+        eprint(f"Config file doesn't exist, created at: {self.config_path}", fatal=True)
 
-    def load(self, exit=True) -> Dict:
+    def _load(self) -> None:
         """Load config from file"""
         try:
-            return self.yaml.load(self.config_path)
+            self.config_data = self.yaml.load(self.config_path)
         except FileNotFoundError:
-            return self.create(exit)
+            self._create()
 
-    @staticmethod
-    def get_cred(cred: str) -> SimpleNamespace | NoReturn:
+    def load_credentials(self, cred: str) -> None:
         """Parse credentials string into username/password"""
         if cred == "user:pass":
             eprint("Set valid credentials!", True)
         if return_cred := re.fullmatch(r"^([^:]+?):([^:]+?)(?::(.+))?$", cred):
             cred_ = return_cred.groups()
-            return SimpleNamespace(**{"username": cred_[0], "password": cred_[1]})
+            self.credentials = SimpleNamespace(username=cred_[0], password=cred_[1])
         else:
             eprint("Incorrect credentials format! (Format: `user:pass`)", True)
 
-    def update(self, data: Dict):
+    def update(self, data: dict) -> None:
         """Update config file with new data"""
         try:
             self.yaml.dump(data, self.config_path)
         except FileNotFoundError:
-            self.create()
+            self._create()
             self.update(data)
-        from rich import print
 
-        print("[bold green]\nConfig successfully updated![white]")
+        print("\n[bold green]Config successfully updated![white]")
+
+    def get(self, key, default=None) -> str | dict:
+        """Get value from config_data with optional default"""
+        return self.config_data.get(key, default)
+
+    def __getitem__(self, key):
+        """Allow bracket notation access to config_data"""
+        return self.config_data.get(key)
+
+    def __contains__(self, key):
+        """Support 'in' operator for checking if key exists"""
+        return key in self.config_data
