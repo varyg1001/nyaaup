@@ -21,9 +21,7 @@ def similar(x: str, y: str) -> float:
     return SequenceMatcher(None, x, y).ratio()
 
 
-def get_mal_link(myanimelist: str, name_to_mal: str) -> Anime | None:
-    console = Console()
-
+def get_mal_link(myanimelist: str, name_to_mal: str, console) -> Anime | None:
     if myanimelist:
         with console.status("[bold magenta]Getting MyAnimeList info from input link..."):
             malid = int(str(myanimelist).split("/")[4])

@@ -11,7 +11,6 @@ from nyaaup.utils.logging import iprint
 from nyaaup.utils.upload import snapshot
 from nyaaup.utils.uploader import NyaaUploader
 
-
 install(show_locals=True)
 
 

@@ -7,18 +7,18 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import httpx
+from mal import Anime
 from pymediainfo import MediaInfo
 from rich.console import Console
 from rich.traceback import install
 from rich.tree import Tree
 
 from nyaaup.utils import cat_help, get_mal_link, tgpost
-from nyaaup.utils.userconfig import Config
-from nyaaup.utils.torrent import create_torrent
 from nyaaup.utils.logging import eprint, wprint
 from nyaaup.utils.mediainfo import get_description
-from nyaaup.utils.upload import snapshot, rentry_upload
-
+from nyaaup.utils.torrent import create_torrent
+from nyaaup.utils.upload import rentry_upload, snapshot
+from nyaaup.utils.userconfig import Config
 
 install(show_locals=True)
 
@@ -99,7 +99,7 @@ class NyaaUploader:
             cat_help()
             sys.exit(1)
 
-    def _setup_config(self):
+    def _setup_config(self) -> None:
         self.config = Config()
         self._validate_config()
         if not (pref := self.config.get("preferences")):
@@ -335,7 +335,7 @@ class NyaaUploader:
             eprint(f"Upload failed: {e}")
             return None
 
-    def _handle_upload_errors(self, errors):
+    def _handle_upload_errors(self, errors: dict) -> None:
         if isinstance(errors, str):
             eprint(errors)
         else:
@@ -530,7 +530,7 @@ class NyaaUploader:
     def is_non_english_category(self) -> bool:
         return self.upload_config.category in {"1_3", "1_4"}
 
-    def _get_mal_titles(self, mal_data) -> list[str]:
+    def _get_mal_titles(self, mal_data: Anime) -> list[str]:
         titles = []
 
         if hasattr(self, "name_to_mal"):
@@ -557,7 +557,7 @@ class NyaaUploader:
 
             self.name_to_mal = name_to_mal
 
-            mal_data = get_mal_link(self.args.myanimelist, name_to_mal)
+            mal_data: Anime = get_mal_link(self.args.myanimelist, name_to_mal, self.console)
             if self.args.myanimelist:
                 self.upload_config.info = self.args.myanimelist
             elif mal_data and hasattr(mal_data, "url"):

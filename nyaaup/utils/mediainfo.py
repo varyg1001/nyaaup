@@ -2,8 +2,8 @@ import json
 import re
 from pathlib import Path
 
-from pymediainfo import MediaInfo
 from langcodes import Language
+from pymediainfo import MediaInfo
 
 from nyaaup.utils.logging import eprint, wprint
 
