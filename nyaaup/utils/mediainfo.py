@@ -3,6 +3,7 @@ import re
 from pathlib import Path
 
 from pymediainfo import MediaInfo
+from langcodes import Language
 
 from nyaaup.utils.logging import eprint, wprint
 
@@ -48,8 +49,6 @@ def parse_mediainfo(file_path: Path, parse_speed: float = 0.5) -> dict:
 
 
 def get_track_info(data: dict) -> str:
-    from langcodes import Language
-
     lang = data.get("Language")
     if not lang:
         lang = "Und"

@@ -6,7 +6,8 @@ from typing import Any
 import cloup
 from cloup import command, option
 
-from nyaaup.utils import Config, eprint, wprint
+from nyaaup.utils.userconfig import Config
+from nyaaup.utils.logging import eprint, wprint
 
 DEFAULT_ANNOUNCE = "http://nyaa.tracker.wf:7777/announce"
 DEFAULT_DOMAIN = "https://nyaa.si"

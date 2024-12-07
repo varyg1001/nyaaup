@@ -8,7 +8,7 @@ from cloup import Context, HelpFormatter, HelpTheme, Style
 from rich.console import Console
 
 from nyaaup.auth import auth
-from nyaaup.upload import up
+from nyaaup.up import up
 from nyaaup.utils import DefaultCommandGroup
 from nyaaup.utils.decorators import command_header
 
