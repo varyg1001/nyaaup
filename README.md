@@ -2,7 +2,7 @@
   <img src="https://forthebadge.com/images/badges/made-with-python.png"/>
 </p>
 <p align="center">
-<sup><em>Auto torrent uploader to Nyaa.si</em></sup>
+<sup><em>Auto torrent uploader to Nyaa</em></sup>
 </p>
 
 # Nyaaup
