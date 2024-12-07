@@ -46,7 +46,7 @@ nyaaup -ms -c 1 /path/My.Master.Has.No.Tail.S01.1080p.AMZN.WEB-DL.DDP2.0.H.264-V
 
 ### Usage
 
-## up
+#### up
 
 ```
 Usage: nyaaup up [OPTIONS] [PATH]...
@@ -85,7 +85,7 @@ Other options:
    -h, --help             Show this message and exit.
 ```
 
-## auth
+#### auth
 
 ```
 Usage: nyaaup auth [OPTIONS]
