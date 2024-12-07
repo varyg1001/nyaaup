@@ -12,7 +12,7 @@ Works both on Linux and windows.
 
 ## Requirements
 
-- [Python](https://python.org/) 3.10 to 3.12
+- [Python](https://python.org/) 3.10 to 3.13
 - [Poetry](https://python-poetry.org/) 1.2.0 or newer (to install Python package dependencies)
 
 ### Dependencies
@@ -22,9 +22,11 @@ Works both on Linux and windows.
 
 ### Installation
 
+#### auto
+
 Run `./install.py` to install the tool and its dependencies
 
-#### or
+##### manual
 
 1. `git clone https://github.com/varyg1001/nyaaup`
 2. `cd nyaaup`
@@ -32,16 +34,18 @@ Run `./install.py` to install the tool and its dependencies
 4. `poetry install`
 5. `nyaaup -h`
 
-### Examples
+### Examples usage
 
 ```shell
 nyaaup auth -c user:pass
 ```
+
 ```shell
-nyaaup -p 5 -c 1 -a -m https://myanimelist.net/anime/50652/ /path/Boku.to.Roboco.S01E06.1080p.AMZN.WEB-DL.DDP2.0.H.264-VARYG.mkv
+nyaaup -p 5 -c 1 -a -m https://myanimelist.net/anime/50652/ /path/example.mkv
 ```
+
 ```shell
-nyaaup -ms -c 1 /path/My.Master.Has.No.Tail.S01.1080p.AMZN.WEB-DL.DDP2.0.H.264-VARYG
+nyaaup -ms -c 1 /path/example_folder
 ```
 
 ### Usage
