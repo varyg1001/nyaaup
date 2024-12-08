@@ -15,24 +15,29 @@ from wand.image import Image
 from nyaaup.utils.logging import eprint
 
 
-def snapshot(config, input_path: Path, name: str, mediainfo: list) -> Tree:
-    async def upload_image(image_path: Path, upload_task, progress) -> str:
-        async with aiofiles.open(image_path, "rb") as file:
-            content = await file.read()
-            async with httpx.AsyncClient() as client:
-                res = await client.post(
-                    url="https://kek.sh/api/v1/posts",
-                    headers=config.upload_config.kek_headers,
-                    files={"file": content},
-                )
-                result = res.json()
-                progress.update(upload_task, advance=1)
-                return f'https://i.kek.sh/{result["filename"]}'
+async def _upload_image(image_path: Path, upload_task, progress, config) -> str:
+    async with aiofiles.open(image_path, "rb") as file:
+        content = await file.read()
+        async with httpx.AsyncClient() as client:
+            res = await client.post(
+                url="https://kek.sh/api/v1/posts",
+                headers=config.upload_config.kek_headers,
+                files={"file": content},
+            )
 
-    async def upload_all_images(files, upload_task, progress):
-        tasks = [upload_image(file, upload_task, progress) for file in files]
-        return await asyncio.gather(*tasks)
+            result = res.json()
 
+            progress.update(upload_task, advance=1)
+
+            return f'https://i.kek.sh/{result["filename"]}'
+
+
+async def _upload_all_images(files, upload_task, progress, config):
+    tasks = [_upload_image(file, upload_task, progress, config) for file in files]
+    return await asyncio.gather(*tasks)
+
+
+def snapshot_create_upload(config, input_path: Path, name: str, mediainfo: list) -> Tree:
     images = Tree("[bold white]Images[not bold]")
     num_snapshots = config.upload_config.pic_num + 1
     snapshots: list[Path] = []
@@ -100,7 +105,7 @@ def snapshot(config, input_path: Path, name: str, mediainfo: list) -> Tree:
 
             # Filter out large files
             snapshots = [x for x in snapshots if x.stat().st_size < 5 * 1024 * 1024]
-            snapshots_link = asyncio.run(upload_all_images(snapshots, upload, progress))
+            snapshots_link = asyncio.run(_upload_all_images(snapshots, upload, progress, config))
             config.description += "\n\n"
             for link in snapshots_link:
                 config.description += f"![]({link})\n"

@@ -56,7 +56,7 @@ def create_torrent(self, name: str, filename: Path, overwrite: bool) -> bool:
         source="nyaa.si",
         creation_date=None,
         created_by="",
-        exclude_regexs=[r".*\.(ffindex|jpg|nfo|png|srt|torrent|txt|json)$"],
+        exclude_regexs=[r".*\.(ffindex|jpg|nfo|png|torrent|txt|json)$"],
     )
 
     with Progress(

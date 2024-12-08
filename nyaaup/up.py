@@ -8,7 +8,7 @@ from rich.traceback import install
 from rich.tree import Tree
 
 from nyaaup.utils.logging import iprint
-from nyaaup.utils.upload import snapshot
+from nyaaup.utils.upload import snapshot_create_upload
 from nyaaup.utils.uploader import NyaaUploader
 
 install(show_locals=True)
@@ -131,7 +131,9 @@ def up(ctx, **kwargs):
             for provider in uploader.providers:
                 ok_cookies = uploader.check_cookies(provider)
                 if uploader.upload_config.pic_num > 0 and not ok_cookies:
-                    if images := snapshot(uploader, uploader.file, name, uploader.mediainfo):
+                    if images := snapshot_create_upload(
+                        uploader, uploader.file, name, uploader.mediainfo
+                    ):
                         display_info.add(images)
 
                 iprint("Uploading to Nyaa...")

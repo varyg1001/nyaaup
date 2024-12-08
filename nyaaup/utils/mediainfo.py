@@ -21,31 +21,30 @@ CHANNEL_MAP = {
 }
 
 
-def parse_mediainfo(file_path: Path, parse_speed: float = 0.5) -> dict:
+def parse_mediainfo(self, file_path: Path) -> str | None:
     try:
-        mediainfo = MediaInfo.parse(file_path, output="JSON", full=True)
-        info = json.loads(mediainfo)
-        if not info or "media" not in info:
-            raise ValueError("Invalid MediaInfo output")
+        self.mediainfo = _get_mediainfo(file_path)
 
-        tracks = info["media"]["track"]
-
-        # Check if we need detailed parsing
-        needs_reparse = not tracks[0].get("Duration")
-        if not needs_reparse:
-            for track in tracks:
-                if track.get("@type") == "Audio" and not track.get("BitRate"):
-                    needs_reparse = True
-                    break
-
-        if needs_reparse:
-            mediainfo = MediaInfo.parse(file_path, output="JSON", parse_speed=1, full=True)
-            tracks = json.loads(mediainfo)["media"]["track"]
-
-        return tracks
+        if not self.mediainfo[0]["Duration"] or any(
+            m.get("@type", "") in ("Audio", "General") and not m.get("BitRate")
+            for m in self.mediainfo
+        ):
+            self.mediainfo = _get_mediainfo(file_path, 1)
     except Exception as e:
         eprint(f"MediaInfo error: {e}")
         return None
+
+
+def _get_mediainfo(file_path: Path, parse_speed: float = 0.5) -> dict:
+    mediainfo = {}
+    try:
+        mediainfo = json.loads(
+            MediaInfo.parse(file_path, output="JSON", parse_speed=parse_speed, full=True)
+        )
+    except Exception as e:
+        wprint(f"Failed to get mediainfo: {e}")
+
+    return mediainfo.get("media", {}).get("track", {})
 
 
 def get_track_info(data: dict) -> str:

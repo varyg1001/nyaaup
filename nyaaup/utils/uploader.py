@@ -13,11 +13,11 @@ from rich.console import Console
 from rich.traceback import install
 from rich.tree import Tree
 
-from nyaaup.utils import cat_help, get_mal_link, tgpost
+from nyaaup.utils import cat_help, get_mal_link, tg_post
 from nyaaup.utils.logging import eprint, wprint
-from nyaaup.utils.mediainfo import get_description
+from nyaaup.utils.mediainfo import get_description, parse_mediainfo
 from nyaaup.utils.torrent import create_torrent
-from nyaaup.utils.upload import rentry_upload, snapshot
+from nyaaup.utils.upload import rentry_upload, snapshot_create_upload
 from nyaaup.utils.userconfig import Config
 
 install(show_locals=True)
@@ -40,7 +40,7 @@ class UploadConfig:
     text: str | None = None
     tg_token: str | None = None
     tg_id: str | None = None
-    kek_headers: dict | None = None
+    kek_headers: dict[str, str] | None = None
     info_form_config: bool = False
     info: str = ""
 
@@ -148,6 +148,7 @@ class NyaaUploader:
                 proxy=p.get("proxy", ""),
                 credentials=self.config.credentials,
             )
+
             if p.get("add_pub_trackers", False):
                 self.add_pub_trackers = True
 
@@ -184,7 +185,7 @@ class NyaaUploader:
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
         with self.console.status("[bold magenta]Parsing file...") as _:
-            self._parse_mediainfo(self.file)
+            parse_mediainfo(self, self.file)
 
         if not self.mediainfo:
             return None
@@ -212,30 +213,6 @@ class NyaaUploader:
             sub_info=sub_info,
             display_info=display_info,
         )
-
-    def _parse_mediainfo(self, file_path: Path) -> str | None:
-        def _get_mediainfo(file_path: Path, parse_speed: float = 0.5) -> dict:
-            mediainfo = {}
-            try:
-                mediainfo = json.loads(
-                    MediaInfo.parse(file_path, output="JSON", parse_speed=parse_speed, full=True)
-                )
-            except Exception as e:
-                wprint(f"Failed to get mediainfo: {e}")
-
-            return mediainfo.get("media", {}).get("track", {})
-
-        try:
-            self.mediainfo = _get_mediainfo(file_path)
-
-            if not self.mediainfo[0]["Duration"] or any(
-                m.get("@type", "") in ("Audio", "General") and not m.get("BitRate")
-                for m in self.mediainfo
-            ):
-                self.mediainfo = _get_mediainfo(file_path, 1)
-        except Exception as e:
-            eprint(f"MediaInfo error: {e}")
-            return None
 
     def _set_description(
         self,
@@ -385,7 +362,7 @@ class NyaaUploader:
                 f"Nyaa link: {result.url}\n"
                 f'<a href="{result.download_url}">Torrent file</a>'
             )
-            tgpost(self, message)
+            tg_post(self, message)
 
     def _get_category(self, category: str) -> str:
         return {
@@ -490,22 +467,22 @@ class NyaaUploader:
         file_path: Path,
         provider: Provider,
     ):
-        try:
-            images = snapshot(self, file_path, result.name, self.mediainfo)
-            if images:
-                display_info.add(images)
-                for _ in range(5):
-                    if self._edit_torrent(
-                        provider,
-                        result.id,
-                        result.name,
-                        result.url,
-                    ):
-                        return display_info
-                    time.sleep(5)
-                wprint("Failed to add images to torrent after retries")
-        except Exception as e:
-            wprint(f"Image upload failed: {e}")
+        # try:
+        images = snapshot_create_upload(self, file_path, result.name, self.mediainfo)
+        if images:
+            display_info.add(images)
+            for _ in range(5):
+                if self._edit_torrent(
+                    provider,
+                    result.id,
+                    result.name,
+                    result.url,
+                ):
+                    return display_info
+                time.sleep(5)
+            wprint("Failed to add images to torrent after retries")
+        # except Exception as e:
+        #    wprint(f"Image upload failed: {e}")
 
         return display_info
 

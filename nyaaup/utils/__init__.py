@@ -60,7 +60,7 @@ def cat_help() -> None:
     Console().print(categories)
 
 
-def tgpost(config, message: str | None = None) -> None:
+def tg_post(config, message: str | None = None) -> None:
     if message and config.tg_token and config.tg_id:
         with httpx.Client(transport=httpx.HTTPTransport(retries=5)) as client:
             client.post(

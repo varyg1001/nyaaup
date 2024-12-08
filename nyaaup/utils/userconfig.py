@@ -12,7 +12,7 @@ from nyaaup.utils.logging import eprint
 
 class Config:
     def __init__(self):
-        self.cookies = {}
+        self.cookies: dict[str, str] = {}
         self.yaml = YAML()
         self.config_data = {}
         self.credentials = SimpleNamespace(username=None, password=None)
