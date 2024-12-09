@@ -21,29 +21,38 @@ def similar(x: str, y: str) -> float:
     return SequenceMatcher(None, x, y).ratio()
 
 
-def get_mal_link(myanimelist: str, name_to_mal: str, console) -> Anime | None:
-    if myanimelist:
+def get_mal_link(mal_url: str, name_to_mal: str, console: Console) -> Anime | None:
+    if mal_url:
         with console.status("[bold magenta]Getting MyAnimeList info from input link..."):
-            malid = int(str(myanimelist).split("/")[4])
-            return Anime(malid)
+            mal_id = int(str(mal_url).split("/")[4])
+
+            return Anime(mal_id)
 
     with console.status("[bold magenta]Searching in MyAnimeList database..."):
-        data = AnimeSearch(name_to_mal).results[:10]
+        if data := AnimeSearch(name_to_mal).results:
+            data = data[:10]
 
-        for result in data:
-            anime = Anime(result.mal_id)
-            name_in = (name_to_mal or "").casefold()
-            name_en = (anime.title_english or "").casefold()
-            name_ori = (anime.title or "").casefold()
+            for result in data:
+                anime = Anime(result.mal_id)
+                name_in = (name_to_mal or "").casefold()
+                name_en = (anime.title_english or "").casefold()
+                name_ori = (anime.title or "").casefold()
 
-            if (similar(name_en, name_in) >= 0.75) or (similar(name_ori, name_in) >= 0.75):
-                return anime
+                if (similar(name_en, name_in) >= 0.75) or (similar(name_ori, name_in) >= 0.75):
+                    return anime
 
-        return Anime(data[0].mal_id) if data else None
+            data_likely = first_or_none(
+                sorted(data, key=lambda x: similar(x.title, name_to_mal), reverse=True)
+            )
+
+            return Anime(data_likely.mal_id) if data else None
+
+    return None
 
 
-def cat_help() -> None:
+def cat_help(console: Console) -> None:
     categories = Tree("[chartreuse2]Available categories:[white /not bold]")
+
     cats = [
         "Anime - English-translated",
         "Anime - Non-English-translated",
@@ -57,7 +66,7 @@ def cat_help() -> None:
     for num, cat in enumerate(cats, start=1):
         categories.add(f"[{num}] [cornflower_blue not bold]{cat}[white /not bold]")
 
-    Console().print(categories)
+    console.print(categories)
 
 
 def tg_post(config, message: str | None = None) -> None:

@@ -108,7 +108,8 @@ def up(ctx, **kwargs):
                     result.audio_info, result.sub_info
                 )
 
-            uploader.description += "\n\n---\n\n"
+            if uploader.upload_config.pic_num > 0:
+                uploader.description += "\n\n---\n\n"
 
             if uploader.is_anime_category and not uploader.args.skip_myanimelist:
                 name_plus_ = uploader.process_mal_info(

@@ -92,11 +92,11 @@ class NyaaUploader:
 
         if not self.args.category:
             eprint("No selected category!\n")
-            cat_help()
+            cat_help(self.console)
             sys.exit(1)
 
         if self.args.category_help:
-            cat_help()
+            cat_help(self.console)
             sys.exit(1)
 
     def _setup_config(self) -> None:
@@ -133,6 +133,7 @@ class NyaaUploader:
 
     def _setup_providers(self) -> list[Provider]:
         providers = []
+
         for p in self.config.get("providers", []):
             if cred := p.get("credentials"):
                 self.config.load_credentials(cred)
@@ -256,9 +257,11 @@ class NyaaUploader:
                 if result := self._try_upload(provider, torrent_data, name, display_name):
                     return result
             except Exception as e:
+                delay = 2 ** (attempt - 1)
                 wprint(f"Attempt {attempt + 1} failed for {provider.name}: {e}")
-                if attempt == max_retries - 1:
+                if attempt < max_retries:
                     eprint("All upload attempts failed", True)
+                time.sleep(delay)
 
         return None
 
@@ -534,7 +537,17 @@ class NyaaUploader:
 
             self.name_to_mal = name_to_mal
 
-            mal_data: Anime = get_mal_link(self.args.myanimelist, name_to_mal, self.console)
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    mal_data: Anime = get_mal_link(self.args.myanimelist, name_to_mal, self.console)
+                except Exception as e:
+                    delay = 2 ** (attempt - 1)
+                    wprint(f"Attempt {attempt + 1} failed for: {e}")
+                    if attempt < max_retries:
+                        eprint("All myanimelist attempts failed", True)
+                    time.sleep(delay)
+
             if self.args.myanimelist:
                 self.upload_config.info = self.args.myanimelist
             elif mal_data and hasattr(mal_data, "url"):
