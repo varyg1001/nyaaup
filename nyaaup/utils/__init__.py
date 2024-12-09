@@ -6,7 +6,8 @@ from mal import Anime, AnimeSearch
 from rich.console import Console
 from rich.tree import Tree
 
-from nyaaup.utils.collections import first_or_none
+from nyaaup.utils.collections import first_or_none, first
+from nyaaup.utils.logging import wprint
 
 
 class DefaultCommandGroup(cloup.Group):
@@ -41,7 +42,7 @@ def get_mal_link(mal_url: str, name_to_mal: str, console: Console) -> Anime | No
                 if (similar(name_en, name_in) >= 0.75) or (similar(name_ori, name_in) >= 0.75):
                     return anime
 
-            data_likely = first_or_none(
+            data_likely = first(
                 sorted(data, key=lambda x: similar(x.title, name_to_mal), reverse=True)
             )
 
@@ -81,3 +82,5 @@ def tg_post(config, message: str | None = None) -> None:
                     "disable_web_page_preview": True,
                 },
             )
+    else:
+        wprint("Telegram token or chat id not set.")

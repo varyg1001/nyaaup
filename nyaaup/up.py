@@ -9,7 +9,7 @@ from rich.tree import Tree
 
 from nyaaup.utils.logging import iprint
 from nyaaup.utils.upload import snapshot_create_upload
-from nyaaup.utils.uploader import NyaaUploader
+from nyaaup.utils.uploader import Uploader
 
 install(show_locals=True)
 
@@ -83,7 +83,7 @@ install(show_locals=True)
 @cloup.pass_context
 def up(ctx, **kwargs):
     """Upload torrents to Nyaa"""
-    uploader = NyaaUploader(ctx, SimpleNamespace(**kwargs))
+    uploader = Uploader(ctx, SimpleNamespace(**kwargs))
 
     for file_path in uploader.args.path:
         display_info = Tree("[bold white]Information[not bold]")
@@ -92,15 +92,15 @@ def up(ctx, **kwargs):
         uploader.file = ""
         uploader.mediainfo = []
 
-        name_plus = []
-        dual_audio = False
-        multi_audio = False
-        multi_sub = False
+        name_plus: list = []
+        dual_audio: bool = False
+        multi_audio: bool = False
+        multi_sub: bool = False
 
-        name = uploader.get_file_name(file_path)
+        name: str = uploader.get_file_name(file_path)
+        style: str = "red"
+        title: str = "Upload failed"
 
-        style = "red"
-        title = "Upload failed"
         if result := uploader.process_file(file_path, display_info):
             display_info = result.display_info
             if uploader.args.auto:
@@ -138,6 +138,7 @@ def up(ctx, **kwargs):
                         display_info.add(images)
 
                 iprint("Uploading to Nyaa...")
+
                 upload_result = uploader.try_upload_with_retries(display_name, name, provider)
 
                 if upload_result:

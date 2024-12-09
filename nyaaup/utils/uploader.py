@@ -69,7 +69,7 @@ class ProcessResult:
     display_info: Tree
 
 
-class NyaaUploader:
+class Uploader:
     def __init__(self, ctx, args):
         self.ctx = ctx
         self.args = args
@@ -79,7 +79,7 @@ class NyaaUploader:
         self.console = Console()
         self.mediainfo = []
         self.description = ""
-        self.file = ""
+        self.file: Path | str = ""
 
         self._validate_inputs()
         self._setup_config()
@@ -102,6 +102,9 @@ class NyaaUploader:
     def _setup_config(self) -> None:
         self.config = Config()
         self._validate_config()
+        
+        pref = {}
+
         if not (pref := self.config.get("preferences")):
             eprint("No preferences in config!", True)
 
@@ -180,6 +183,10 @@ class NyaaUploader:
             if file_path.is_file()
             else Path(sorted([*file_path.glob("*.mkv"), *file_path.glob("*.mp4")])[0])
         )
+
+        if not self.file:
+            eprint("No video file found!", True)
+
         name = str(file_path.name).removesuffix(".mkv").removesuffix(".mp4")
 
         self.cache_dir = Path(f"{self.config.dirs.user_cache_path}/{name}_files")
@@ -197,8 +204,13 @@ class NyaaUploader:
         video_info, audio_info, sub_info = get_description(self.mediainfo)
         self._set_description(video_info, audio_info, sub_info, self.mediainfo)
 
-        if self.upload_config.mediainfo_enabled:
-            self.upload_config.text = MediaInfo.parse(self.file, output="", full=False).replace(
+        if self.upload_config.mediainfo_enabled:            
+            mediainfo = MediaInfo.parse(self.file, output="", full=False)
+
+            if not mediainfo:
+                eprint("Failed to parse mediainfo", True)
+            
+            self.upload_config.text = mediainfo.replace(
                 str(self.file), str(self.file.name)
             )
             if mediainfo_upload := self._upload_mediainfo():
@@ -449,6 +461,7 @@ class NyaaUploader:
                 return res.status_code == 200
             except Exception:
                 wprint("Failed to verify cookies")
+
                 return False
 
         return False
@@ -470,22 +483,22 @@ class NyaaUploader:
         file_path: Path,
         provider: Provider,
     ):
-        # try:
-        images = snapshot_create_upload(self, file_path, result.name, self.mediainfo)
-        if images:
-            display_info.add(images)
-            for _ in range(5):
-                if self._edit_torrent(
-                    provider,
-                    result.id,
-                    result.name,
-                    result.url,
-                ):
-                    return display_info
-                time.sleep(5)
-            wprint("Failed to add images to torrent after retries")
-        # except Exception as e:
-        #    wprint(f"Image upload failed: {e}")
+        try:
+            images = snapshot_create_upload(self, file_path, result.name, self.mediainfo)
+            if images:
+                display_info.add(images)
+                for _ in range(5):
+                    if self._edit_torrent(
+                        provider,
+                        result.id,
+                        result.name,
+                        result.url,
+                    ):
+                        return display_info
+                    time.sleep(5)
+                wprint("Failed to add images to torrent after retries")
+        except Exception as e:
+           wprint(f"Image upload failed: {e}")
 
         return display_info
 
@@ -525,7 +538,7 @@ class NyaaUploader:
 
         return titles
 
-    def process_mal_info(self, name: str, info_from_config: bool) -> tuple[str, list[str]]:
+    def process_mal_info(self, name: str, info_from_config: bool) -> list[str]:
         """Process MAL info and return information and name additions"""
         name_plus = []
 
@@ -540,7 +553,7 @@ class NyaaUploader:
             max_retries = 3
             for attempt in range(max_retries):
                 try:
-                    mal_data: Anime = get_mal_link(self.args.myanimelist, name_to_mal, self.console)
+                    mal_data: Anime | None = get_mal_link(self.args.myanimelist, name_to_mal, self.console)
                 except Exception as e:
                     delay = 2 ** (attempt - 1)
                     wprint(f"Attempt {attempt + 1} failed for: {e}")
