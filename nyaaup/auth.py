@@ -1,64 +1,65 @@
-from .utils import Config, eprint, wprint
+import sys
+from types import SimpleNamespace
+
+import cloup
+
+from nyaaup.utils.auth import DEFAULT_PROVIDER, AuthConfig, AuthHandler
+from nyaaup.utils.userconfig import Config
 
 
-class Auth:
-    def __init__(self, args, parser):
-        self.args = args
-        self.parser = parser
+@cloup.command()
+@cloup.option(
+    "-c",
+    "--credential",
+    type=str,
+    metavar="USER:PASS",
+    help="Add or replace credential.",
+)
+@cloup.option(
+    "-a",
+    "--announces",
+    type=str,
+    metavar="NAME",
+    help="Add new announces url to config.",
+)
+@cloup.option(
+    "--proxy",
+    type=str,
+    metavar="NAME",
+    help="Add or replace proxy to use for uploading to nyaa site.",
+)
+@cloup.option(
+    "-d",
+    "--domain",
+    type=str,
+    metavar="NAME",
+    help="Add or replace domain name for nyaa site.",
+)
+@cloup.option(
+    "-p",
+    "--provider",
+    type=str,
+    metavar="NAME",
+    default=DEFAULT_PROVIDER,
+    help="Provider name for config.",
+)
+@cloup.pass_context
+def auth(ctx, **kwargs):
+    """Authenticate and configure settings"""
+    if any(x in sys.argv for x in ctx.help_option_names):
+        return
 
-        conf = Config()
-        config = conf.load(False)
+    if len(sys.argv) == 1:
+        print(ctx.get_help())
+        sys.exit(1)
 
-        def_an = "http://nyaa.tracker.wf:7777/announce"
-        provider = None
-        name = self.args.provider or "nyaasi"
-        domain = self.args.domain or "https://nyaa.si"
-        proxy = self.args.proxy or None
-        announces = [self.args.announces] if self.args.announces else []
-        credential = self.args.credential
+    config = Config()
+    auth_config = AuthConfig.from_args(SimpleNamespace(**kwargs))
 
-        if not self.args.announces and not self.args.domain and not self.args.credential:
-            eprint("No arguments provided!", True)
+    handler = AuthHandler(config.config_data, auth_config)
+    handler.validate_inputs()
+    handler.process_credential(config)
+    handler.find_provider()
+    handler.update_provider()
 
-        if credential:
-            conf.get_cred(credential)
-
-        if providers := config.get("providers"):
-            for x in providers:
-                if x.get("name") == name:
-                    provider = x
-                    break
-        else:
-            if not credential:
-                eprint(
-                    "Could not find specified provider and no credential provided!",
-                    True,
-                )
-            config["providers"] = []
-
-        if not provider:
-            wprint("Could not find specified provider in the config!")
-
-            if def_an not in announces:
-                announces.append("http://nyaa.tracker.wf:7777/announce")
-
-            config["providers"].append(
-                {
-                    "name": name,
-                    "domain": domain,
-                    "credentials": credential,
-                    "proxy": proxy,
-                    "announces": announces,
-                }
-            )
-        else:
-            if announces:
-                provider["announces"] += announces
-            if domain:
-                provider["domain"] = domain
-            if credential:
-                provider["credentials"] = credential
-            if proxy:
-                provider["proxy"] = proxy
-
-        conf.update(config)
+    config.update(handler.config)

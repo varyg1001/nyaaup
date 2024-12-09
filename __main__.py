@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from nyaaup.cli import main
+from __init__ import main
 
 if __name__ == "__main__":
     main()

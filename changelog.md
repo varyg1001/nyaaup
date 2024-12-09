@@ -1,3 +1,9 @@
+# nfofiller 5.0.0:
+- Rework files
+- Fix typos
+- Use cloup instead of argparse
+- Make code more separate
+
 # nfofiller 4.2.0:
 - Fixes for image uploading
 - Verify cookies and fall back to normal image upload
