@@ -7,8 +7,7 @@
 
 # Nyaaup
 
-Nyaaup is an auto torrent uploader to [Nyaa sites](https://github.com/nyaadevs/nyaa), mainly for videos.
-Works both on Linux and windows.
+Nyaaup is an auto uploader to [Nyaa sites](https://github.com/nyaadevs/nyaa), mainly for videos.
 
 ## Requirements
 
