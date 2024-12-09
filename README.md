@@ -33,6 +33,11 @@ Run `./install.py` to install the tool and its dependencies
 4. `poetry install`
 5. `nyaaup -h`
 
+### Commands
+
+- up
+- auth
+
 ### Examples usage
 
 ```shell
@@ -103,6 +108,3 @@ Options:
    -p, --provider NAME          Provider name for config.
    -h, --help                   Show this message and exit.
 ```
-
-![img](https://i.kek.sh/crb0nguklZk.png)
-<!---https://i.kek.sh/crb0nguklZk.png--->
