@@ -17,22 +17,22 @@ install(show_locals=True)
 @cloup.command()
 @cloup.option_group(
     "Upload Tags",
-    cloup.option("-ms", "--multi-subs", is_flag=True, help="Add Multi Subs tag to title."),
-    cloup.option("-da", "--dual-audios", is_flag=True, help="Add Dual audios tag to title."),
-    cloup.option("-ma", "--multi-audios", is_flag=True, help="Add Multi audios tag to title."),
+    cloup.option("-ms", "--multi-subs", is_flag=True, help="Use Multi-Subs tag in title."),
+    cloup.option("-da", "--dual-audio", is_flag=True, help="Use Dual-Audio tag in title."),
+    cloup.option("-ma", "--multi-audios", is_flag=True, help="Use Multi-Audios tag in title."),
     cloup.option(
         "-a",
         "--auto",
         is_flag=True,
-        help="Detect multi subs, multi audios and dual audios.",
+        help="Detect Multi-Subs, Multi-Audios or Dual-Audio.",
     ),
 )
 @cloup.option_group(
     "Upload Settings",
-    cloup.option("-an", "--anonymous", is_flag=True, help="Upload torrent as anonymous."),
-    cloup.option("-hi", "--hidden", is_flag=True, help="Upload the torrent as hidden."),
-    cloup.option("-co", "--complete", is_flag=True, help="If the torrnet is a complete batch."),
-    cloup.option("-re", "--remake", is_flag=True, help="If the torrnet is a remake."),
+    cloup.option("-an", "--anonymous", is_flag=True, help="Set upload as anonymous."),
+    cloup.option("-hi", "--hidden", is_flag=True, help="Set upload as hidden."),
+    cloup.option("-co", "--complete", is_flag=True, help="Set upload as complete batch."),
+    cloup.option("-re", "--remake", is_flag=True, help="Set upload as remake."),
     cloup.option("-s", "--skip-upload", is_flag=True, help="Skip torrent upload."),
     cloup.option("-c", "--category", type=str, help="Select a category."),
 )
@@ -42,12 +42,12 @@ install(show_locals=True)
         "-e",
         "--edit-code",
         type=str,
-        help="Use uniq edit code for mediainfo on rentry.co",
+        help="Set edit code for Mediainfo on Rentry.co",
     ),
     cloup.option("-i", "--info", type=str, help="Set information."),
     cloup.option("-n", "--note", type=str, help="Put a note in to the description."),
-    cloup.option("-m", "--myanimelist", type=str, help="MyAnimeList link."),
-    cloup.option("-sm", "--skip-myanimelist", type=str, help="Skip myanimelist."),
+    cloup.option("-m", "--myanimelist", type=str, help="MyAnimeList link to use."),
+    cloup.option("-sm", "--skip-myanimelist", type=str, help="Skip MyAnimeList."),
 )
 @cloup.option_group(
     "Media Settings",
@@ -56,26 +56,26 @@ install(show_locals=True)
         "--pictures-number",
         type=int,
         default=3,
-        help="Number of pictures to upload (default: 3).",
+        help="Number of pictures to use (default: 3).",
     ),
     cloup.option(
         "-pe",
         "--picture-extension",
         type=str,
         default="png",
-        help="Extension of the snapshot to upload.",
+        help="Extension of the pictures.",
     ),
     cloup.option(
         "-M",
         "--no-mediainfo",
         is_flag=True,
-        help="Do not attach mediainfo to the torrent.",
+        help="Do not attach Mediainfo to the torrent.",
     ),
     cloup.option(
         "-o",
         "--overwrite",
         is_flag=True,
-        help="Recreate the .torrent if it already exists.",
+        help="Create torrent file even if exists.",
     ),
 )
 @cloup.option("-ch", "--category-help", is_flag=True, help="Print available categories.")

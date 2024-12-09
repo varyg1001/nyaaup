@@ -1,20 +1,20 @@
 providers:
-- name: nyaasi
-  domain: https://nyaa.si
-  credentials: user:pass
-  announces:
-    - http://nyaa.tracker.wf:7777/announce
+  - name: nyaasi
+    domain: https://nyaa.si
+    credentials: user:pass
+    announces:
+      - http://nyaa.tracker.wf:7777/announce
 
 preferences:
-  real_length: false # if true in description audio and subs len will be the real length and not languages count
+  real_length: false # In description audio and subs len will be the real length and not languages count
   random_snapshots: false # If you want to take random snapshots from the video.
-  trusted: false
-  note: "" # Note to add to the torrent.
-  edit_code:  # If you keep it blank, it will be random.
-  info: mal # This will be put to Information part. ('mal' will put MyAnimeList link in it if can.)
-  mal: true # Use MyAnimeList.net to add anime original name to display name.
-  mediainfo: true # If attach mediainfo to the torrent (provider rentry.co)
-  add_pub_trackers: false # true if you want to add https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt trackers to your torrent
+  trusted: false # If you can upload as trusted.
+  note: "" # Note to use in description.
+  edit_code: # If you keep it blank, it will be random.
+  info: mal # Information in Nyaa. (`mal` will use MyAnimeList link.)
+  mal: true # Use MyAnimeList to add anime original name to display name.
+  mediainfo: true # attach Mediainfo to the torrent by Rentry.co
+  add_pub_trackers: false # if you want to add https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt trackers to your torrent
   keks_key: "" # api key for bigger images and for easier manage
   telegram: false # Send tgpost if possible.
   id: "" # telegram channel id
