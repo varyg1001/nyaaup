@@ -6,7 +6,7 @@ from mal import Anime, AnimeSearch
 from rich.console import Console
 from rich.tree import Tree
 
-from nyaaup.utils.collections import first_or_none, first
+from nyaaup.utils.collections import first, first_or_none
 from nyaaup.utils.logging import wprint
 
 

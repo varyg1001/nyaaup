@@ -102,7 +102,7 @@ class Uploader:
     def _setup_config(self) -> None:
         self.config = Config()
         self._validate_config()
-        
+
         pref = {}
 
         if not (pref := self.config.get("preferences")):
@@ -204,15 +204,13 @@ class Uploader:
         video_info, audio_info, sub_info = get_description(self.mediainfo)
         self._set_description(video_info, audio_info, sub_info, self.mediainfo)
 
-        if self.upload_config.mediainfo_enabled:            
+        if self.upload_config.mediainfo_enabled:
             mediainfo = MediaInfo.parse(self.file, output="", full=False)
 
             if not mediainfo:
                 eprint("Failed to parse mediainfo", True)
-            
-            self.upload_config.text = mediainfo.replace(
-                str(self.file), str(self.file.name)
-            )
+
+            self.upload_config.text = mediainfo.replace(str(self.file), str(self.file.name))
             if mediainfo_upload := self._upload_mediainfo():
                 url = mediainfo_upload["url"]
                 display_info = self._add_media_info_display(
@@ -498,7 +496,7 @@ class Uploader:
                     time.sleep(5)
                 wprint("Failed to add images to torrent after retries")
         except Exception as e:
-           wprint(f"Image upload failed: {e}")
+            wprint(f"Image upload failed: {e}")
 
         return display_info
 
@@ -553,7 +551,9 @@ class Uploader:
             max_retries = 3
             for attempt in range(max_retries):
                 try:
-                    mal_data: Anime | None = get_mal_link(self.args.myanimelist, name_to_mal, self.console)
+                    mal_data: Anime | None = get_mal_link(
+                        self.args.myanimelist, name_to_mal, self.console
+                    )
                 except Exception as e:
                     delay = 2 ** (attempt - 1)
                     wprint(f"Attempt {attempt + 1} failed for: {e}")

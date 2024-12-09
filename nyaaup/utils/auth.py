@@ -1,14 +1,9 @@
-import sys
 from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import Any
 
-import cloup
-from cloup import command, option
-
 from nyaaup.utils.logging import eprint, wprint
 from nyaaup.utils.userconfig import Config
-
 
 DEFAULT_ANNOUNCE = "http://nyaa.tracker.wf:7777/announce"
 DEFAULT_DOMAIN = "https://nyaa.si"
