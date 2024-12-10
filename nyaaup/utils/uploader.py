@@ -116,7 +116,7 @@ class Uploader:
             remake="remake" if self.args.remake else None,
             trusted="trusted" if self.config.get("trusted") else None,
             mediainfo_enabled=not self.args.no_mediainfo and pref.get("mediainfo", True),
-            telegram_enabled=pref.get("telegram", False) and self.args.telegram,
+            telegram_enabled=pref.get("telegram", False) or self.args.telegram,
             random_snapshots=pref.get("random_snapshots", False),
             pic_num=self.args.pictures_number,
             pic_ext=self.args.picture_extension,
