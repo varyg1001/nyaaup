@@ -76,7 +76,7 @@ jobs:
 
       - name: Build
         run: |
-          pyinstaller --icon logo/logo.ico  -F __main__.py -n nyaaup
+          pyinstaller --icon logo/logo.ico -F nyaaup/__init__.py -n nyaaup --hidden-import=mal
 
       - name: Move dist/nyaaup.exe to nyaaup.exe
         run: mv dist/nyaaup.exe nyaaup.exe

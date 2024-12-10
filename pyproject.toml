@@ -32,7 +32,7 @@ aiofiles = "^24.1.0"
 cloup = "^3.0.5"
 
 [tool.poetry.scripts]
-nyaaup = "__init__:main"
+nyaaup = "nyaaup.__init__:main"
 
 [build-system]
 requires = ["poetry-core"]
