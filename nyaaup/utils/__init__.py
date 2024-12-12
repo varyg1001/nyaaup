@@ -71,13 +71,13 @@ def cat_help(console: Console) -> None:
 
 
 def tg_post(config, message: str | None = None) -> None:
-    if message and config.upload_config.tg_token and config.tg_id:
+    if message and config.upload_config.tg_token and config.upload_config.tg_id:
         with httpx.Client(transport=httpx.HTTPTransport(retries=5)) as client:
             client.post(
                 url=f"https://api.telegram.org/bot{config.upload_config.tg_token}/sendMessage",
                 params={
                     "text": message,
-                    "chat_id": config.tg_id,
+                    "chat_id": config.upload_config.tg_id,
                     "parse_mode": "html",
                     "disable_web_page_preview": True,
                 },
