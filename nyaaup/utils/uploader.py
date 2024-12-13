@@ -337,7 +337,6 @@ class Uploader:
         provider: Provider,
         torrent_id: str,
         display_name: str,
-        information: str,
     ) -> bool:
         try:
             response = httpx.post(
@@ -349,7 +348,7 @@ class Uploader:
                     **({"is_complete": (None, "y")} if self.upload_config.complete else {}),
                     **({"is_hidden": (None, "y")} if self.upload_config.hidden else {}),
                     "category": (None, self.upload_config.category),
-                    "information": (None, information),
+                    "information": (None, self.upload_config.info),
                     "description": (None, self.description),
                     "submit": (None, "Save Changes"),
                 },
@@ -487,10 +486,9 @@ class Uploader:
                 display_info.add(images)
                 for _ in range(5):
                     if self._edit_torrent(
-                        provider,
-                        result.id,
-                        result.name,
-                        result.url,
+                        provider=provider,
+                        torrent_id=result.id,
+                        display_name=result.name,
                     ):
                         return display_info
                     time.sleep(5)
