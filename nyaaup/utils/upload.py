@@ -37,7 +37,7 @@ async def _upload_all_images(files, upload_task, progress, config):
     return await asyncio.gather(*tasks)
 
 
-def snapshot_create_upload(config, input_path: Path, name: str, mediainfo: list) -> Tree:
+def snapshot_create_upload(config, input_file: Path, name: str, mediainfo: list) -> Tree:
     images = Tree("[bold white]Images[not bold]")
     num_snapshots = config.upload_config.pic_num + 1
     snapshots: list[Path] = []
@@ -77,7 +77,7 @@ def snapshot_create_upload(config, input_path: Path, name: str, mediainfo: list)
                         "-ss",
                         str(timestamp),
                         "-i",
-                        str(input_path),
+                        str(input_file),
                         "-vf",
                         "scale='max(sar,1)*iw':'max(1/sar,1)*ih'",
                         "-frames:v",

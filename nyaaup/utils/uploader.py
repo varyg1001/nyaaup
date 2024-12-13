@@ -477,11 +477,10 @@ class Uploader:
         self,
         result: UploadResult,
         display_info: Tree,
-        file_path: Path,
         provider: Provider,
     ):
         try:
-            images = snapshot_create_upload(self, file_path, result.name, self.mediainfo)
+            images = snapshot_create_upload(self, self.file, result.name, self.mediainfo)
             if images:
                 display_info.add(images)
                 for _ in range(5):

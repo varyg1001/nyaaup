@@ -156,7 +156,6 @@ def up(ctx, **kwargs):
                         display_info = uploader.handle_image_upload(
                             upload_result,
                             display_info,
-                            file_path,
                             provider,
                         )
 
