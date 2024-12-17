@@ -371,7 +371,7 @@ class Uploader:
         if self.upload_config.tg_token and self.upload_config.tg_id:
             message = (
                 f"\n{result.name}\n\n"
-                f"Nyaa link: {result.url}\n"
+                f"Nyaa link: {result.url}\n\n"
                 f'<a href="{result.download_url}">Torrent file</a>'
             )
             tg_post(self, message)
