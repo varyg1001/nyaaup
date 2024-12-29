@@ -13,7 +13,7 @@ from rich.console import Console
 from rich.traceback import install
 from rich.tree import Tree
 
-from nyaaup.utils import cat_help, get_mal_link, tg_post
+from nyaaup.utils import Category, cat_help, get_mal_link, tg_post
 from nyaaup.utils.logging import eprint, wprint
 from nyaaup.utils.mediainfo import get_description, parse_mediainfo
 from nyaaup.utils.torrent import create_torrent
@@ -64,8 +64,8 @@ class UploadResult:
 @dataclass
 class ProcessResult:
     video_info: str
-    audio_info: list
-    sub_info: list
+    audio_info: list[str]
+    sub_info: list[str]
     display_info: Tree
 
 
@@ -85,6 +85,10 @@ class Uploader:
         self._setup_config()
 
     def _validate_inputs(self):
+        if self.args.category_help:
+            cat_help(self.console)
+            sys.exit(1)
+
         if not self.args.path:
             eprint("No input!\n")
             print(self.ctx.get_help())
@@ -92,10 +96,6 @@ class Uploader:
 
         if not self.args.category:
             eprint("No selected category!\n")
-            cat_help(self.console)
-            sys.exit(1)
-
-        if self.args.category_help:
             cat_help(self.console)
             sys.exit(1)
 
@@ -376,23 +376,15 @@ class Uploader:
             )
             tg_post(self, message)
 
-    def _get_category(self, category: str) -> str:
-        return {
-            "Anime - Anime Music Video": "1_1",
-            "7": "1_1",
-            "Anime - English-translated": "1_2",
-            "1": "1_2",
-            "Anime - Non-English-translated": "1_3",
-            "2": "1_3",
-            "Anime - Raw": "1_4",
-            "3": "1_4",
-            "Live Action - English-Translated": "4_1",
-            "4": "4_1",
-            "Live Action - Non-English-translated": "4_1",
-            "5": "4_1",
-            "Live Action - Raw": "4_4",
-            "6": "4_4",
-        }.get(category, category)
+    def _get_category(self, category: str | Category) -> str:
+        if isinstance(category, Category):
+            return category.id
+
+        for cat in Category:
+            if category in (cat.numeric_id, cat.display_name):
+                return cat.id
+
+        return category
 
     def detect_audio_subs(
         self, audio_info: list[str], sub_info: list[str]

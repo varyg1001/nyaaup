@@ -12,7 +12,7 @@ from rich.tree import Tree
 from tls_client import Session
 from wand.image import Image
 
-from nyaaup.utils.logging import eprint
+from nyaaup.utils.logging import wprint
 
 
 async def _upload_image(image_path: Path, upload_task, progress, config) -> str:
@@ -116,32 +116,37 @@ def snapshot_create_upload(config, input_file: Path, name: str, mediainfo: list)
 
 def rentry_upload(config) -> dict:
     with Session(client_identifier="firefox_120") as session:
-        res = session.get(
-            url="https://rentry.co",
-            headers={
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/120.0",
-                "Origin": "https://rentry.co",
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
-            allow_redirects=True,
-        )
-
-        try:
-            res = session.post(
-                "https://rentry.co/api/new",
-                headers={"Referer": "https://rentry.co"},
-                data={
-                    "csrfmiddlewaretoken": session.cookies["csrftoken"],
-                    "edit_code": config.edit_code if config.edit_code else "",
-                    "text": config.text,
-                    "url": "",
+        max_retries = 5
+        retries = 0
+        while retries < max_retries:
+            res = session.get(
+                url="https://rentry.co",
+                headers={
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/120.0",
+                    "Origin": "https://rentry.co",
+                    "Content-Type": "application/x-www-form-urlencoded",
                 },
+                allow_redirects=True,
             )
 
-            if res.status_code != 200:
-                raise httpx.HTTPError(f"Upload failed with status {res.status_code}")
+            try:
+                res = session.post(
+                    "https://rentry.co/api/new",
+                    headers={"Referer": "https://rentry.co"},
+                    data={
+                        "csrfmiddlewaretoken": session.cookies["csrftoken"],
+                        "edit_code": config.edit_code if config.edit_code else "",
+                        "text": config.text,
+                        "url": "",
+                    },
+                )
 
-            return res.json()
+                if res.status_code == 200:
+                    return res.json()
 
-        except Exception as e:
-            eprint(f"Rentry upload failed: {e}", True)
+            except Exception as e:
+                wprint(f"Rentry upload failed: {e} ({retries}/{max_retries})")
+                retries += 1
+                if retries == max_retries:
+                    wprint(f"Rentry upload failed after {max_retries} retries")
+                    return {}

@@ -59,7 +59,7 @@ def command_header(f):
 @command_header
 @cloup.pass_context
 def main(ctx, **kwargs):
-    """Nyaaup - Auto torrent uploader to Nyaa"""
+    """Nyaaup - Auto uploader to Nyaa"""
     if any(x in sys.argv for x in ctx.help_option_names):
         return
 

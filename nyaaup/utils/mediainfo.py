@@ -12,6 +12,7 @@ AUDIO_CODEC_MAP = {
     "E-AC-3": "DDP",
     "AC-3": "DD",
     "fLaC": "FLAC",
+    "DTS-UHD": "DTS",
 }
 CHANNEL_MAP = {
     "1": "1.0",

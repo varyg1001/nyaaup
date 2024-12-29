@@ -1,24 +1,12 @@
 from pathlib import Path
 
 import httpx
-import humanize
 from rich.progress import (BarColumn, Progress, TaskProgressColumn, TextColumn,
                            TimeRemainingColumn)
-from rich.text import Text
 from torf import Torrent
 
+from nyaaup.utils import CustomTransferSpeedColumn
 from nyaaup.utils.logging import eprint, iprint, wprint
-
-
-class CustomTransferSpeedColumn(TimeRemainingColumn):
-    def render(self, task):
-        speed = task.finished_speed or task.speed
-        if speed is None:
-            return Text("--", style="progress.data.speed")
-        return Text(
-            f"{humanize.naturalsize(int(speed), binary=True)}/s",
-            style="progress.data.speed",
-        )
 
 
 def get_public_trackers(announces: list) -> list:
