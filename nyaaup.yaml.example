@@ -5,6 +5,8 @@ providers:
     announces:
       - http://nyaa.tracker.wf:7777/announce
 
+torrent_creator: torf # torrenttools, torf
+
 preferences:
   real_length: false # In description audio and subs len will be the real length and not languages count
   random_snapshots: false # If you want to take random snapshots from the video.
@@ -15,7 +17,7 @@ preferences:
   mal: true # Use MyAnimeList to add anime original name to display name.
   mediainfo: true # attach Mediainfo to the torrent by Rentry.co
   add_pub_trackers: false # if you want to add https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt trackers to your torrent
-  keks_key: "" # api key for bigger images and for easier manage
+  keksh_key: "" # api key for bigger images and for easier manage
   telegram: false # Send tgpost if possible.
   id: "" # telegram channel id
   token: "" # telegram bot token
