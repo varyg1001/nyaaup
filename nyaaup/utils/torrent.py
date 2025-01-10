@@ -1,11 +1,12 @@
+import subprocess
 from pathlib import Path
 
 import httpx
-from rich.progress import (BarColumn, Progress, TaskProgressColumn, TextColumn,
-                           TimeRemainingColumn)
+from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn, TimeRemainingColumn
 from torf import Torrent
 
 from nyaaup.utils import CustomTransferSpeedColumn
+from nyaaup.utils.collections import as_list
 from nyaaup.utils.logging import eprint, iprint, wprint
 
 
@@ -22,8 +23,58 @@ def get_public_trackers(announces: list) -> list:
         return announces
 
 
-def create_torrent(self, name: str, filename: Path, overwrite: bool) -> bool:
-    torrent_file = Path(f"{self.cache_dir}/{name}.torrent")
+def create_torrent(ctx, name: str, filename: Path, overwrite: bool, torrent_tool: str) -> bool:
+    if torrent_tool == "torrenttools":
+        result = create_torrent_torrenttools(ctx, name, filename, overwrite)
+    else:
+        result = create_torrent_torf(ctx, name, filename, overwrite)
+
+    return result
+
+
+def create_torrent_torrenttools(ctx, name: str, filename: Path, overwrite: bool) -> bool:
+    torrent_file = Path(f"{ctx.cache_dir}/{name}.torrent")
+
+    if torrent_file.exists():
+        if overwrite:
+            wprint("Torrent file exists, removing...")
+            torrent_file.unlink()
+        else:
+            iprint("Using existing torrent file...")
+            return True
+
+    iprint("Creating torrent...", 0)
+
+    if ctx.add_pub_trackers:
+        ctx.announces = get_public_trackers(ctx.announces)
+
+    subprocess.run(
+        [
+            "torrenttools",
+            "create",
+            str(filename),
+            "--no-created-by",
+            "--no-creation-date",
+            "--exclude",
+            r".*\.(ffindex|jpg|nfo|png|torrent|txt|json)$",
+            "--announce",
+            " ".join(as_list(ctx.announces)),
+            "-s",
+            "nyaa.si",
+            "--piece-size",
+            "16M",
+            "--output",
+            str(torrent_file),
+        ],
+        check=True,
+    )
+    print()
+
+    return torrent_file.exists()
+
+
+def create_torrent_torf(ctx, name: str, filename: Path, overwrite: bool) -> bool:
+    torrent_file = Path(f"{ctx.cache_dir}/{name}.torrent")
 
     if torrent_file.is_file():
         if overwrite:
@@ -35,12 +86,12 @@ def create_torrent(self, name: str, filename: Path, overwrite: bool) -> bool:
 
     iprint("Creating torrent...", 0)
 
-    if self.add_pub_trackers:
-        self.announces = get_public_trackers(self.announces)
+    if ctx.add_pub_trackers:
+        ctx.announces = get_public_trackers(ctx.announces)
 
     torrent = Torrent(
         filename,
-        trackers=self.announces,
+        trackers=ctx.announces,
         source="nyaa.si",
         creation_date=None,
         created_by="",

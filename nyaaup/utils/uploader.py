@@ -25,6 +25,7 @@ install(show_locals=True)
 
 @dataclass
 class UploadConfig:
+    torrent_creator: str
     category: str
     anonymous: bool = False
     hidden: bool = False
@@ -122,7 +123,7 @@ class Uploader:
             pic_ext=self.args.picture_extension,
             edit_code=self.args.edit_code or pref.get("edit_code"),
             tg_token=pref.get("token"),
-            tg_id=pref.get("id"),
+            torrent_creator=self.config.get("torrent_creator", "torf"),
             info_form_config=(
                 False if (pref.get("info", "").lower() == "mal") or not pref.get("info") else True
             ),
@@ -131,7 +132,7 @@ class Uploader:
         self.providers = self._setup_providers()
         self.headers = self._get_default_headers()
 
-        if key := pref.get("keks_key"):
+        if key := pref.get("keksh_key"):
             self.upload_config.kek_headers = {"x-kek-auth": key, **self.headers}
 
     def _setup_providers(self) -> list[Provider]:
@@ -198,7 +199,7 @@ class Uploader:
         if not self.mediainfo:
             return None
 
-        if not create_torrent(self, name, file_path, self.args.overwrite):
+        if not create_torrent(self, name, file_path, self.args.overwrite, self.upload_config.torrent_creator):
             return None
 
         video_info, audio_info, sub_info = get_description(self.mediainfo)
