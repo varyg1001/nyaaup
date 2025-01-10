@@ -534,7 +534,7 @@ class Uploader:
             name_to_mal = re.sub(r"[\.|\-]S\d+.*", "", name)
             if name_to_mal == name:
                 name_to_mal = re.sub(r"[\.|\-]\d{4}\..*", "", name)
-            name_to_mal = name_to_mal.replace(".", " ")
+            name_to_mal = name_to_mal.replace(".", " ")[:100]
 
             self.name_to_mal = name_to_mal
 

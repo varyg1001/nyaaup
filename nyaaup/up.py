@@ -47,7 +47,6 @@ install(show_locals=True)
     cloup.option("-i", "--info", type=str, help="Set information."),
     cloup.option("-n", "--note", type=str, help="Put a note in to the description."),
     cloup.option("-m", "--myanimelist", type=str, help="MyAnimeList link to use."),
-    cloup.option("-m", "--myanimelist", type=str, help="MyAnimeList link to use."),
     cloup.option("-t", "--telegram", is_flag=True, help="Post telegram."),
     cloup.option("-sm", "--skip-myanimelist", type=str, help="Skip MyAnimeList."),
 )
