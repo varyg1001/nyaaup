@@ -1,6 +1,5 @@
 import asyncio
 import random
-import subprocess
 from pathlib import Path
 
 import aiofiles
@@ -71,7 +70,7 @@ async def _generate_snapshot(
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
-        stdout, stderr = await process.communicate()
+        _, stderr = await process.communicate()
         if process.returncode != 0:
             raise Exception(f"ffmpeg error: {stderr.decode()}")
 
@@ -145,83 +144,6 @@ def snapshot_create_upload(config, input_file: Path, mediainfo: list) -> "Tree":
                 images.add(f"[not bold cornflower_blue][link={link}]{link}[/link][white /not bold]")
 
     return images
-
-
-def snapshot_create_upload_(config, input_file: Path, mediainfo: list) -> Tree:
-    images = Tree("[bold white]Images[not bold]")
-    num_snapshots = config.upload_config.pic_num + 1
-    snapshots: list[Path] = []
-
-    with Progress(
-        TextColumn("[progress.description]{task.description}[/]"),
-        "•",
-        BarColumn(),
-        MofNCompleteColumn(),
-        TaskProgressColumn(),
-        TextColumn("Time:"),
-        TimeRemainingColumn(elapsed_when_finished=True, compact=True),
-    ) as progress:
-        generate = progress.add_task(
-            "[bold magenta]Generating snapshots[not bold white]",
-            total=config.upload_config.pic_num,
-        )
-
-        for x in range(1, num_snapshots):
-            snap = Path(f"{config.cache_dir}/snapshot_{x}.{config.upload_config.pic_ext}")
-            if not snap.exists():
-                duration = float(mediainfo[0].get("Duration"))
-                interval = duration / (num_snapshots + 1)
-
-                timestamp = (
-                    random.randint(round(interval * 10), round(interval * 10 * num_snapshots)) / 10
-                    if config.upload_config.random_snapshots
-                    else interval * (x + 1)
-                )
-
-                subprocess.run(
-                    [
-                        "ffmpeg",
-                        "-y",
-                        "-v",
-                        "error",
-                        "-ss",
-                        str(timestamp),
-                        "-i",
-                        str(input_file),
-                        "-vf",
-                        "scale='max(sar,1)*iw':'max(1/sar,1)*ih'",
-                        "-frames:v",
-                        "1",
-                        str(snap),
-                    ],
-                    check=True,
-                )
-
-                with Image(filename=snap) as img:
-                    img.depth = 8
-                    img.save(filename=snap)
-
-                if config.upload_config.pic_ext == "png":
-                    oxipng.optimize(snap, level=6)
-
-            snapshots.append(snap)
-            progress.update(generate, advance=1)
-
-        if not config.args.skip_upload:
-            upload = progress.add_task(
-                "[bold magenta]Uploading snapshots[white]",
-                total=config.upload_config.pic_num,
-            )
-
-            # Filter out large files
-            snapshots = [x for x in snapshots if x.stat().st_size < 5 * 1024 * 1024]
-            snapshots_link = asyncio.run(_upload_all_images(snapshots, upload, progress, config))
-            config.description += "\n\n"
-            for link in snapshots_link:
-                config.description += f"![]({link})\n"
-                images.add(f"[not bold cornflower_blue][link={link}]{link}[/link][white /not bold]")
-
-        return images
 
 
 def rentry_upload(config) -> dict:
