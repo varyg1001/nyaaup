@@ -112,7 +112,11 @@ def up(ctx, **kwargs):
             if uploader.upload_config.pic_num > 0:
                 uploader.description += "\n\n---\n\n"
 
-            if uploader.is_anime_category and not uploader.args.skip_myanimelist:
+            if (
+                uploader.is_anime_category
+                and not uploader.args.skip_database
+                and uploader.upload_config.add_name_plus
+            ):
                 name_plus_ = uploader.process_mal_info(
                     name, uploader.upload_config.info_form_config
                 )
@@ -134,7 +138,7 @@ def up(ctx, **kwargs):
                 ok_cookies = uploader.check_cookies(provider)
                 if uploader.upload_config.pic_num > 0 and not ok_cookies:
                     if images := snapshot_create_upload(
-                        uploader, uploader.file, name, uploader.mediainfo
+                        uploader, uploader.file, uploader.mediainfo
                     ):
                         display_info.add(images)
 

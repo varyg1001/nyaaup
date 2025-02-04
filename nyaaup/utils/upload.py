@@ -6,8 +6,14 @@ from pathlib import Path
 import aiofiles
 import httpx
 import oxipng
-from rich.progress import (BarColumn, MofNCompleteColumn, Progress,
-                           TaskProgressColumn, TextColumn, TimeRemainingColumn)
+from rich.progress import (
+    BarColumn,
+    MofNCompleteColumn,
+    Progress,
+    TaskProgressColumn,
+    TextColumn,
+    TimeRemainingColumn,
+)
 from rich.tree import Tree
 from tls_client import Session
 from wand.image import Image
@@ -29,7 +35,7 @@ async def _upload_image(image_path: Path, upload_task, progress, config) -> str:
 
             progress.update(upload_task, advance=1)
 
-            return f'https://i.kek.sh/{result["filename"]}'
+            return f"https://i.kek.sh/{result['filename']}"
 
 
 async def _upload_all_images(files, upload_task, progress, config):
@@ -37,7 +43,111 @@ async def _upload_all_images(files, upload_task, progress, config):
     return await asyncio.gather(*tasks)
 
 
-def snapshot_create_upload(config, input_file: Path, name: str, mediainfo: list) -> Tree:
+async def _generate_snapshot(
+    num: int, config, input_file: Path, generate_task, progress, interval, num_snapshots
+) -> Path:
+    out_path = Path(f"{config.cache_dir}/snapshot_{num}.{config.upload_config.pic_ext}")
+    if not out_path.exists():
+        timestamp = (
+            random.randint(round(interval * 10), round(interval * 10 * num_snapshots)) / 10
+            if config.upload_config.random_snapshots
+            else interval * (num + 1)
+        )
+
+        process = await asyncio.create_subprocess_exec(
+            "ffmpeg",
+            "-y",
+            "-v",
+            "error",
+            "-ss",
+            str(timestamp),
+            "-i",
+            str(input_file),
+            "-vf",
+            "scale='max(sar,1)*iw':'max(1/sar,1)*ih'",
+            "-frames:v",
+            "1",
+            str(out_path),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await process.communicate()
+        if process.returncode != 0:
+            raise Exception(f"ffmpeg error: {stderr.decode()}")
+
+        loop = asyncio.get_running_loop()
+
+        def process_image():
+            with Image(filename=out_path) as img:
+                img.depth = 8
+                img.save(filename=out_path)
+            if config.upload_config.pic_ext == "png":
+                oxipng.optimize(out_path, level=6)
+
+        await loop.run_in_executor(None, process_image)
+
+    progress.update(generate_task, advance=1)
+
+    return out_path
+
+
+async def _generate_all_snapshots(
+    num_snapshots: int, config, input_file: Path, generate_task, progress, interval
+) -> list[Path]:
+    tasks = [
+        _generate_snapshot(x, config, input_file, generate_task, progress, interval, num_snapshots)
+        for x in range(1, num_snapshots)
+    ]
+    return await asyncio.gather(*tasks)
+
+
+def snapshot_create_upload(config, input_file: Path, mediainfo: list) -> "Tree":
+    images = Tree("[bold white]Images[not bold]")
+    num_snapshots = config.upload_config.pic_num + 1
+    snapshots: list[Path] = []
+
+    with Progress(
+        TextColumn("[progress.description]{task.description}[/]"),
+        "•",
+        BarColumn(),
+        MofNCompleteColumn(),
+        TaskProgressColumn(),
+        TextColumn("Time:"),
+        TimeRemainingColumn(elapsed_when_finished=True, compact=True),
+    ) as progress:
+        generate_task = progress.add_task(
+            "[bold magenta]Generating snapshots[not bold white]",
+            total=config.upload_config.pic_num,
+        )
+
+        duration = float(mediainfo[0].get("Duration"))
+        interval = duration / (num_snapshots + 1)
+        
+        snapshots = asyncio.run(
+            _generate_all_snapshots(
+                num_snapshots, config, input_file, generate_task, progress, interval
+            )
+        )
+
+        if not config.args.skip_upload:
+            upload_task = progress.add_task(
+                "[bold magenta]Uploading snapshots[white]",
+                total=config.upload_config.pic_num,
+            )
+
+            snapshots = [snap for snap in snapshots if snap.stat().st_size < 5 * 1024 * 1024]
+            snapshots_link = asyncio.run(
+                _upload_all_images(snapshots, upload_task, progress, config)
+            )
+            config.description += "\n\n"
+            for link in snapshots_link:
+                config.description += f"![]({link})\n"
+                images.add(f"[not bold cornflower_blue][link={link}]{link}[/link][white /not bold]")
+
+    return images
+
+
+def snapshot_create_upload_(config, input_file: Path, mediainfo: list) -> Tree:
     images = Tree("[bold white]Images[not bold]")
     num_snapshots = config.upload_config.pic_num + 1
     snapshots: list[Path] = []
@@ -57,7 +167,7 @@ def snapshot_create_upload(config, input_file: Path, name: str, mediainfo: list)
         )
 
         for x in range(1, num_snapshots):
-            snap = Path(f"{config.cache_dir}/{name}_{x}.{config.upload_config.pic_ext}")
+            snap = Path(f"{config.cache_dir}/snapshot_{x}.{config.upload_config.pic_ext}")
             if not snap.exists():
                 duration = float(mediainfo[0].get("Duration"))
                 interval = duration / (num_snapshots + 1)
