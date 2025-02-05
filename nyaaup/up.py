@@ -134,7 +134,7 @@ def up(ctx, **kwargs):
                 ok_cookies = uploader.check_cookies(provider)
                 if uploader.upload_config.pic_num > 0 and not ok_cookies:
                     if images := snapshot_create_upload(
-                        uploader, uploader.file, uploader.mediainfo
+                        config=uploader, input_file=uploader.file, mediainfo=uploader.mediainfo
                     ):
                         display_info.add(images)
 
