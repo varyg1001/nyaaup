@@ -474,7 +474,9 @@ class Uploader:
         provider: Provider,
     ):
         try:
-            images = snapshot_create_upload(self, self.file, result.name, self.mediainfo)
+            images = snapshot_create_upload(
+                config=self, input_file=result.name, mediainfo=self.mediainfo
+            )
             if images:
                 display_info.add(images)
                 for _ in range(5):
