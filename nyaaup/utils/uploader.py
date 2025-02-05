@@ -475,7 +475,7 @@ class Uploader:
     ):
         try:
             images = snapshot_create_upload(
-                config=self, input_file=result.name, mediainfo=self.mediainfo
+                config=self, input_file=self.file mediainfo=self.mediainfo
             )
             if images:
                 display_info.add(images)
