@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 
 print("\n[*] Installing dependencies")
+subprocess.run(["poetry", "-V"], check=True)
 subprocess.run(["poetry", "install"], check=True)
 
 if platform.system() != "Windows":

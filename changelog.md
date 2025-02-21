@@ -1,3 +1,13 @@
+# nyaaup 5.2.0:
+## Added
+- Watch directory, in config and as an option
+## Changed
+- Poetry v2 is required
+## Fixed
+- False Multi-Subs detection
+- Remove unused dependencies
+- Properly get the sub and audio len
+
 # nyaaup 5.1.0:
 - Support torrenttools
 
