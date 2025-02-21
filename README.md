@@ -12,7 +12,7 @@ Nyaaup is an auto uploader to [Nyaa sites](https://github.com/nyaadevs/nyaa), ma
 ## Requirements
 
 - [Python](https://python.org/) 3.10 to 3.13
-- [Poetry](https://python-poetry.org/) 1.2.0 or newer (to install Python package dependencies)
+- [Poetry](https://python-poetry.org/) 2.0.0 or newer (to install Python package dependencies)
 
 ### Dependencies
 
@@ -62,31 +62,33 @@ Usage: nyaaup up [OPTIONS] [PATH]...
    Upload torrents to Nyaa
 
 Upload Tags:
-   -ms, --multi-subs     Add Multi Subs tag to title.
-   -da, --dual-audios    Add Dual audios tag to title.
-   -ma, --multi-audios   Add Multi audios tag to title.
-   -a, --auto            Detect multi subs, multi audios and dual audios.
+   -ms, --multi-subs     Use Multi-Subs tag in title.
+   -da, --dual-audio     Use Dual-Audio tag in title.
+   -ma, --multi-audios   Use Multi-Audios tag in title.
+   -a, --auto            Detect Multi-Subs, Multi-Audios or Dual-Audio.
 
 Upload Settings:
-   -an, --anonymous      Upload torrent as anonymous.
-   -hi, --hidden         Upload the torrent as hidden.
-   -co, --complete       If the torrent is a complete batch.
-   -re, --remake         If the torrent is a remake.
-   -s, --skip-upload     Skip torrent upload.
-   -c, --category TEXT   Select a category.
+   -an, --anonymous       Set upload as anonymous.
+   -hi, --hidden          Set upload as hidden.
+   -co, --complete        Set upload as complete batch.
+   -re, --remake          Set upload as remake.
+   -s, --skip-upload      Skip torrent upload.
+   -c, --category TEXT    Select a category.
+   -w, --watch-dir TEXT   Path of the watch directory.
 
 Content Information:
    -e, --edit-code TEXT           Set edit code for Mediainfo on Rentry.co
    -i, --info TEXT                Set information.
    -n, --note TEXT                Put a note in to the description.
-   -m, --myanimelist TEXT         MyAnimeList link.
-   -sm, --skip-myanimelist TEXT   Skip myanimelist.
+   -m, --myanimelist TEXT         MyAnimeList link to use.
+   -t, --telegram                 Post to telegram.
+   -sm, --skip-myanimelist TEXT   Skip MyAnimeList.
 
 Media Settings:
-   -p, --pictures-number INTEGER   Number of pictures to upload (default: 3).
-   -pe, --picture-extension TEXT   Extension of the snapshot to upload.
+   -p, --pictures-number INTEGER   Number of pictures to use (default: 3).
+   -pe, --picture-extension TEXT   Extension of the pictures.
    -M, --no-mediainfo              Do not attach Mediainfo to the torrent.
-   -o, --overwrite                 Recreate the .torrent if it already exists.
+   -o, --overwrite                 Create torrent file even if exists.
 
 Other options:
    -ch, --category-help   Print available categories.
