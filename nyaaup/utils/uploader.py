@@ -1,5 +1,6 @@
 import json
 import re
+import shutil
 import sys
 import time
 from dataclasses import dataclass
@@ -44,6 +45,7 @@ class UploadConfig:
     kek_headers: dict[str, str] | None = None
     info_form_config: bool = False
     info: str = ""
+    watch_dir: str | None = None
 
 
 @dataclass
@@ -64,9 +66,8 @@ class UploadResult:
 
 @dataclass
 class ProcessResult:
-    video_info: str
-    audio_info: list[str]
-    sub_info: list[str]
+    audio_len: int
+    sub_len: int
     display_info: Tree
 
 
@@ -80,7 +81,7 @@ class Uploader:
         self.console = Console()
         self.mediainfo = []
         self.description = ""
-        self.file: Path | str = ""
+        self.file = ""
 
         self._validate_inputs()
         self._setup_config()
@@ -119,6 +120,7 @@ class Uploader:
             mediainfo_enabled=not self.args.no_mediainfo and pref.get("mediainfo", True),
             telegram_enabled=self.args.telegram or pref.get("telegram", False),
             tg_id=pref.get("id"),
+            watch_dir=dir_P if (dir_P := pref.get("watch_dir")) else None,
             random_snapshots=pref.get("random_snapshots", False),
             pic_num=self.args.pictures_number,
             pic_ext=self.args.picture_extension,
@@ -189,7 +191,7 @@ class Uploader:
         if not self.file:
             eprint("No video file found!", True)
 
-        name = str(file_path.name).removesuffix(".mkv").removesuffix(".mp4")
+        name = self.get_file_name(file_path)
 
         self.cache_dir = Path(f"{self.config.dirs.user_cache_path}/{name}_files")
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -200,11 +202,22 @@ class Uploader:
         if not self.mediainfo:
             return None
 
-        if not create_torrent(self, name, file_path, self.args.overwrite, self.upload_config.torrent_creator):
+        if not create_torrent(
+            self, name, file_path, self.args.overwrite, self.upload_config.torrent_creator
+        ):
             return None
 
-        video_info, audio_info, sub_info = get_description(self.mediainfo)
-        self._set_description(video_info, audio_info, sub_info, self.mediainfo)
+        video_info, audio_info, audio_len, sub_info, sub_len = get_description(self.mediainfo)
+
+        real_length = self.config.get("preferences", {}).get("real_length", False)
+        self._set_description(
+            video_info,
+            audio_info,
+            len(audio_info) if real_length else audio_len,
+            sub_info,
+            len(sub_info) if real_length else sub_len,
+            self.mediainfo,
+        )
 
         if self.upload_config.mediainfo_enabled:
             mediainfo = MediaInfo.parse(self.file, output="", full=False)
@@ -221,9 +234,8 @@ class Uploader:
                 self.description += f"\n[Full MediaInfo]({url})"
 
         return ProcessResult(
-            video_info=video_info,
-            audio_info=audio_info,
-            sub_info=sub_info,
+            audio_len=audio_len,
+            sub_len=sub_len,
             display_info=display_info,
         )
 
@@ -231,7 +243,9 @@ class Uploader:
         self,
         video_info: str,
         audio_info: list[str],
+        audio_len: int,
         sub_info: list[str],
+        sub_len: int,
         mediainfo: list,
     ) -> None:
         if note := (self.args.note or self.config.get("preferences", {}).get("note")):
@@ -243,8 +257,8 @@ class Uploader:
         self.description += (
             f"`Tech Specs:`\n"
             f"* `Video:` {video_info}\n"
-            f"* `Audios ({len(audio_info)}):` {' │ '.join(audio_info)}\n"
-            f"* `Subtitles ({len(sub_info)}):` {' │ '.join(sub_info) if sub_info else '**N/A**'}\n"
+            f"* `Audios ({audio_len}):` {' │ '.join(audio_info)}\n"
+            f"* `Subtitles ({sub_len}):` {' │ '.join(sub_info) if sub_info else '**N/A**'}\n"
             f"* `Chapters:` **{chapter_str}**\n"
             f"* `Duration:` **~{duration_str}**\n"
         )
@@ -388,48 +402,13 @@ class Uploader:
 
         return category
 
-    def detect_audio_subs(
-        self, audio_info: list[str], sub_info: list[str]
-    ) -> tuple[bool, bool, bool]:
-        audio_len = len(audio_info)
-        sub_len = len(sub_info)
-
-        if self.config.get("preferences", {}).get("real_length", False):
-            if sub_len > 1:
-                try:
-                    sub_len = len(
-                        {x.split("**")[1] for x in sub_info if "**" in x and len(x.split("**")) > 1}
-                    )
-                except (IndexError, Exception) as e:
-                    wprint(f"Error processing subtitle info: {e}")
-                    sub_len = len(sub_info)
-
-            if audio_len > 1:
-                try:
-                    audio_len = len(
-                        {
-                            x.split("**")[1]
-                            for x in audio_info
-                            if "**" in x and len(x.split("**")) > 1
-                        }
-                    )
-                except (IndexError, Exception) as e:
-                    wprint(f"Error processing audio info: {e}")
-                    audio_len = len(audio_info)
-
-        return (
-            audio_len == 2,  # dual_audio
-            audio_len > 2,  # multi_audio
-            sub_len > 1,  # multi_sub
-        )
-
     def format_display_name(self, name: str, name_plus: list[str]) -> str:
         name_nyaa = name.replace(".", " ")
         if channel := re.search(r"[A-Z]{3}[2|5|7] [0|1]", name_nyaa):
             c = channel[0]
             name_nyaa = name_nyaa.replace(c, c.replace(" ", "."))
 
-        return f'{name_nyaa} ({", ".join(name_plus)})' if name_plus else name_nyaa
+        return f"{name_nyaa} ({', '.join(name_plus)})" if name_plus else name_nyaa
 
     def _add_media_info_display(self, display_info: Tree, mediainfo_url: str, edit_code: str):
         medlink = Tree(
@@ -463,8 +442,11 @@ class Uploader:
             if key not in self.config:
                 eprint(f"Missing {key} in config!", True)
 
-        pref = self.config["preferences"]
-        if not pref.get("mediainfo") and not self.args.no_mediainfo:
+        if (
+            (pref := self.config.get("preferences"))
+            and not pref.get("mediainfo")
+            and not self.args.no_mediainfo
+        ):
             wprint("MediaInfo disabled in config")
 
     def handle_image_upload(
@@ -505,6 +487,14 @@ class Uploader:
         display_info.add(info)
 
         return display_info
+
+    def copy_to_watch_dir(self, file_path: Path, watch_dir: Path) -> bool:
+        name = self.get_file_name(file_path)
+        torrent_file = Path(f"{self.cache_dir}/{name}.torrent")
+
+        shutil.copy(torrent_file, watch_dir)
+
+        return (watch_dir / torrent_file.name).exists()
 
     @property
     def is_anime_category(self) -> bool:

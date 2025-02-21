@@ -7,7 +7,7 @@ from rich.panel import Panel
 from rich.traceback import install
 from rich.tree import Tree
 
-from nyaaup.utils.logging import iprint
+from nyaaup.utils.logging import eprint, iprint
 from nyaaup.utils.upload import snapshot_create_upload
 from nyaaup.utils.uploader import Uploader
 
@@ -35,6 +35,7 @@ install(show_locals=True)
     cloup.option("-re", "--remake", is_flag=True, help="Set upload as remake."),
     cloup.option("-s", "--skip-upload", is_flag=True, help="Skip torrent upload."),
     cloup.option("-c", "--category", type=str, help="Select a category."),
+    cloup.option("-w", "--watch-dir", type=str, help="Path of the watch directory."),
 )
 @cloup.option_group(
     "Content Information",
@@ -47,7 +48,7 @@ install(show_locals=True)
     cloup.option("-i", "--info", type=str, help="Set information."),
     cloup.option("-n", "--note", type=str, help="Put a note in to the description."),
     cloup.option("-m", "--myanimelist", type=str, help="MyAnimeList link to use."),
-    cloup.option("-t", "--telegram", is_flag=True, help="Post telegram."),
+    cloup.option("-t", "--telegram", is_flag=True, help="Post to telegram."),
     cloup.option("-sm", "--skip-myanimelist", type=str, help="Skip MyAnimeList."),
 )
 @cloup.option_group(
@@ -105,9 +106,9 @@ def up(ctx, **kwargs):
         if result := uploader.process_file(file_path, display_info):
             display_info = result.display_info
             if uploader.args.auto:
-                dual_audio, multi_audio, multi_sub = uploader.detect_audio_subs(
-                    result.audio_info, result.sub_info
-                )
+                dual_audio = result.audio_len == 2
+                multi_audio = result.audio_len > 2
+                multi_sub = result.sub_len > 1
 
             if uploader.upload_config.pic_num > 0:
                 uploader.description += "\n\n---\n\n"
@@ -148,6 +149,20 @@ def up(ctx, **kwargs):
                         and not uploader.upload_config.hidden
                     ):
                         uploader.send_notification(upload_result)
+                    watch_dir = uploader.args.watch_dir or uploader.upload_config.watch_dir
+
+                    if watch_dir:
+                        try:
+                            watch_dir = Path(watch_dir)
+                        except Exception as e:
+                            eprint(f"Failed to load watch directory: {e}")
+
+                        if uploader.copy_to_watch_dir(file_path, watch_dir):
+                            display_info.add(
+                                "[bold white]Successfully copied to watch directory[white]"
+                            )
+                        else:
+                            display_info.add("[bold white]Failed to copy to watch directory[white]")
 
                     display_info = uploader.display_success(display_info, upload_result, provider)
 

@@ -81,10 +81,12 @@ def get_return(lang: str, track_name: str | None = None) -> str:
         return f"**{lang}**"
 
 
-def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
+def get_description(mediainfo: list) -> tuple[str, list[str], int, list[str], int]:
     video_info = ""
     audio_info: list[str] = []
-    subtitles_info: list[str] = []
+    audio_len = set()
+    subtitle_info: list[str] = []
+    subtitle_len = set()
 
     video_t_num = 0
 
@@ -106,7 +108,9 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
                 codec = codec_.split("/")[1] + " "
             elif codec_ := info.get("Format"):
                 codec = codec_
-            level = f'**{info.get("Format_Profile")}@L{info.get("Format_Level")}**'
+
+            level = f"**{info.get('Format_Profile')}@L{info.get('Format_Level')}**"
+
             if "None" in level:
                 level = ""
             else:
@@ -117,8 +121,8 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
                     x
                     for x in [
                         f"**{codec}{level}**",
-                        f'**{info.get("Width")}x{info.get("Height")}**' + v_bitrate,
-                        f'**{info.get("FrameRate_String")}**',
+                        f"**{info.get('Width')}x{info.get('Height')}**" + v_bitrate,
+                        f"**{info.get('FrameRate_String')}**",
                     ]
                     if x
                 ]
@@ -127,9 +131,10 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
             video_t_num += 1
 
         elif info["@type"] == "Audio":
+            audio_len.add(info.get("Language", ""))
             a_bitrate = ""
             try:
-                a_bitrate = f" @ {round(float(info['BitRate'])/1000)} kbps"
+                a_bitrate = f" @ {round(float(info['BitRate']) / 1000)} kbps"
             except KeyError:
                 wprint("Couldn't get audio bitrate!")
             atmos = "JOC" in info.get("Format_AdditionalFeatures", "")
@@ -140,9 +145,9 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
                         x
                         for x in [
                             get_track_info(info),
-                            f'{AUDIO_CODEC_MAP.get(info["Format"], info["Format"])}'
-                            + f'{CHANNEL_MAP.get(info.get("Channels", ""), "?")}'
-                            + f'{" Atmos" if atmos else ""}'
+                            f"{AUDIO_CODEC_MAP.get(info['Format'], info['Format'])}"
+                            + f"{CHANNEL_MAP.get(info.get('Channels', ''), '?')}"
+                            + f"{' Atmos' if atmos else ''}"
                             + a_bitrate,
                         ]
                         if x
@@ -151,13 +156,14 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
             )
 
         elif info["@type"] == "Text":
-            subtitles_info.append(
+            subtitle_len.add(info.get("Language", ""))
+            subtitle_info.append(
                 ", ".join(
                     [
                         x
                         for x in [
                             get_track_info(info),
-                            f'{SUB_CODEC_MAP.get(info["Format"], info["Format"])}',
+                            f"{SUB_CODEC_MAP.get(info['Format'], info['Format'])}",
                         ]
                         if x
                     ]
@@ -170,7 +176,7 @@ def get_description(mediainfo: list) -> tuple[str, list[str], list[str]]:
     if not audio_info:
         eprint("No audio tracks found!", True)
 
-    if not subtitles_info:
+    if not subtitle_info:
         wprint("No subtitle tracks found")
 
-    return video_info, audio_info, subtitles_info
+    return video_info, audio_info, len(audio_len), subtitle_info, len(subtitle_len)

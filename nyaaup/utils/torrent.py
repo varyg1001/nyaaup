@@ -2,7 +2,8 @@ import subprocess
 from pathlib import Path
 
 import httpx
-from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn, TimeRemainingColumn
+from rich.progress import (BarColumn, Progress, TaskProgressColumn, TextColumn,
+                           TimeRemainingColumn)
 from torf import Torrent
 
 from nyaaup.utils import CustomTransferSpeedColumn

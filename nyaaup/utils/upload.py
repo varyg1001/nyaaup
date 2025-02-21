@@ -5,14 +5,8 @@ from pathlib import Path
 import aiofiles
 import httpx
 import oxipng
-from rich.progress import (
-    BarColumn,
-    MofNCompleteColumn,
-    Progress,
-    TaskProgressColumn,
-    TextColumn,
-    TimeRemainingColumn,
-)
+from rich.progress import (BarColumn, MofNCompleteColumn, Progress,
+                           TaskProgressColumn, TextColumn, TimeRemainingColumn)
 from rich.tree import Tree
 from tls_client import Session
 from wand.image import Image
@@ -121,7 +115,7 @@ def snapshot_create_upload(config, input_file: Path, mediainfo: list) -> "Tree":
 
         duration = float(mediainfo[0].get("Duration"))
         interval = duration / (num_snapshots + 1)
-        
+
         snapshots = asyncio.run(
             _generate_all_snapshots(
                 num_snapshots, config, input_file, generate_task, progress, interval

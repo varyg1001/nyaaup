@@ -8,6 +8,7 @@ providers:
 torrent_creator: torf # torrenttools, torf
 
 preferences:
+  watch_dir: "" # Watch directory for torrents, the file will be copied here.
   real_length: false # In description audio and subs len will be the real length and not languages count
   random_snapshots: false # If you want to take random snapshots from the video.
   trusted: false # If you can upload as trusted.
