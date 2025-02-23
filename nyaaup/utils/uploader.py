@@ -541,7 +541,8 @@ class Uploader:
                     delay = 2 ** (attempt - 1)
                     wprint(f"Attempt {attempt + 1} failed for: {e}")
                     if attempt < max_retries:
-                        eprint("All myanimelist attempts failed", True)
+                        eprint("All myanimelist attempts failed")
+                        return name_plus
                     time.sleep(delay)
 
             if self.args.myanimelist:
