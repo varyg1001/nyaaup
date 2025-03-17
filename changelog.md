@@ -1,3 +1,10 @@
+# nyaaup 5.3.0:
+## Added
+- Advert option so if note needed won't interfere with it
+## Fixed
+- Too many new line before images
+
+
 # nyaaup 5.2.0:
 ## Added
 - Watch directory, in config and as an option
