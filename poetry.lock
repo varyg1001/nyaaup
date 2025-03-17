@@ -189,14 +189,14 @@ colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
 name = "cloup"
-version = "3.0.6"
+version = "3.0.7"
 description = "Adds features to Click: option groups, constraints, subcommand sections and help themes."
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "cloup-3.0.6-py2.py3-none-any.whl", hash = "sha256:ce46566204318e32b3e02d97d5e89bcaa9d9c3d0b8f94d1d060bc8b7a6be9179"},
-    {file = "cloup-3.0.6.tar.gz", hash = "sha256:7a43e1b611b9f1e9cb3e1e0e02247154cb530df3d909fa184e377cdee6834b98"},
+    {file = "cloup-3.0.7-py2.py3-none-any.whl", hash = "sha256:d3a431cf1e14d8835fe85608e02cc6ff7216f0a39e30d5e28618aa938003ddb4"},
+    {file = "cloup-3.0.7.tar.gz", hash = "sha256:c852e0a0541aa433c6ab31a9b8b503f63d9881e91ddaf0384d6927965f2b421c"},
 ]
 
 [package.dependencies]
@@ -923,14 +923,14 @@ files = [
 
 [[package]]
 name = "setuptools"
-version = "75.8.0"
+version = "76.0.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "setuptools-75.8.0-py3-none-any.whl", hash = "sha256:e3982f444617239225d675215d51f6ba05f845d4eec313da4418fdbb56fb27e3"},
-    {file = "setuptools-75.8.0.tar.gz", hash = "sha256:c5afc8f407c626b8313a86e10311dd3f661c6cd9c09d4bf8c15c0e11f9f2b0e6"},
+    {file = "setuptools-76.0.0-py3-none-any.whl", hash = "sha256:199466a166ff664970d0ee145839f5582cb9bca7a0a3a2e795b6a9cb2308e9c6"},
+    {file = "setuptools-76.0.0.tar.gz", hash = "sha256:43b4ee60e10b0d0ee98ad11918e114c70701bc6051662a9a675a0496c1a158f4"},
 ]
 
 [package.extras]
@@ -1001,33 +1001,33 @@ files = [
 
 [[package]]
 name = "tls-client2"
-version = "1.0.4"
+version = "1.0.5"
 description = "Advanced Python HTTP Client."
 optional = false
 python-versions = "*"
 groups = ["main"]
 files = [
-    {file = "tls_client2-1.0.4-py3-none-any.whl", hash = "sha256:80999b93aee7952af90ba5951b0cec4fd3444be727414e20a9cd7c80aae9b9fa"},
-    {file = "tls_client2-1.0.4.tar.gz", hash = "sha256:bca35fc63428d6747f47de56f7a723c424a401d2e40b27a276da7879fd45bb44"},
+    {file = "tls_client2-1.0.5-py3-none-any.whl", hash = "sha256:ce3c0036b37b332d5ed7ce1f71ac8940d5e14551974d83d09ade058bcbe56239"},
+    {file = "tls_client2-1.0.5.tar.gz", hash = "sha256:83a33ad2db8d7209befc5511e63cf13fc240e02b201eff398ca7c4677177eacb"},
 ]
 
 [[package]]
 name = "torf"
-version = "4.2.7"
+version = "4.3.0"
 description = "Python 3 module for creating and parsing torrent files and magnet URIs"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "torf-4.2.7-py3-none-any.whl", hash = "sha256:a15e31ee7f9c04104bf6253bf383f69ad9b42b8207faeb791d096212af460ccf"},
-    {file = "torf-4.2.7.tar.gz", hash = "sha256:c2e1e2171ce03ffc9303ddbc50d7f73e419d9a1af22a07edb029b7c0cf7293d9"},
+    {file = "torf-4.3.0-py3-none-any.whl", hash = "sha256:57a5bb7f021668370d2a9f4062dbba9dbcf48142297adce87aeaabce5a28be6c"},
+    {file = "torf-4.3.0.tar.gz", hash = "sha256:6d2a87268dbd41ef5039faf11cbf805575fe17c9d1dff2eb0e42fec6879f2eff"},
 ]
 
 [package.dependencies]
 flatbencode = "==0.2.*"
 
 [package.extras]
-dev = ["coverage", "flake8", "isort", "pytest", "pytest-cov", "pytest-httpserver", "pytest-mock", "pytest-xdist", "ruff", "tox"]
+dev = ["coverage", "flake8", "isort", "mypy", "pytest", "pytest-cov", "pytest-httpserver", "pytest-mock", "pytest-xdist", "ruff", "tox"]
 
 [[package]]
 name = "typing-extensions"
