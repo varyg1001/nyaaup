@@ -132,7 +132,6 @@ def snapshot_create_upload(config, input_file: Path, mediainfo: list) -> "Tree":
             snapshots_link = asyncio.run(
                 _upload_all_images(snapshots, upload_task, progress, config)
             )
-            config.description += "\n\n"
             for link in snapshots_link:
                 config.description += f"![]({link})\n"
                 images.add(f"[not bold cornflower_blue][link={link}]{link}[/link][white /not bold]")

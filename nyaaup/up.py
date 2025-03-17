@@ -24,7 +24,7 @@ install(show_locals=True)
         "-a",
         "--auto",
         is_flag=True,
-        help="Detect Multi-Subs, Multi-Audios or Dual-Audio.",
+        help="Auto mark Multi-Subs, Multi-Audios or Dual-Audio.",
     ),
 )
 @cloup.option_group(
@@ -35,7 +35,7 @@ install(show_locals=True)
     cloup.option("-re", "--remake", is_flag=True, help="Set upload as remake."),
     cloup.option("-s", "--skip-upload", is_flag=True, help="Skip torrent upload."),
     cloup.option("-c", "--category", type=str, help="Select a category."),
-    cloup.option("-w", "--watch-dir", type=str, help="Path of the watch directory."),
+    cloup.option("-w", "--watch-dir", type=str, metavar="DIR", help="Path of the watch directory."),
 )
 @cloup.option_group(
     "Content Information",
@@ -47,9 +47,10 @@ install(show_locals=True)
     ),
     cloup.option("-i", "--info", type=str, help="Set information."),
     cloup.option("-n", "--note", type=str, help="Put a note in to the description."),
-    cloup.option("-m", "--myanimelist", type=str, help="MyAnimeList link to use."),
+    cloup.option("-ad", "--advert", type=str, help="Put advert in to the description."),
+    cloup.option("-m", "--myanimelist", type=str, metavar="URL", help="MyAnimeList link to use."),
     cloup.option("-t", "--telegram", is_flag=True, help="Post to telegram."),
-    cloup.option("-sm", "--skip-myanimelist", type=str, help="Skip MyAnimeList."),
+    cloup.option("-sm", "--skip-myanimelist", is_flag=True, help="Skip MyAnimeList."),
 )
 @cloup.option_group(
     "Media Settings",
@@ -58,6 +59,7 @@ install(show_locals=True)
         "--pictures-number",
         type=int,
         default=3,
+        metavar="EXTENSION",
         help="Number of pictures to use (default: 3).",
     ),
     cloup.option(
@@ -65,6 +67,7 @@ install(show_locals=True)
         "--picture-extension",
         type=str,
         default="png",
+        metavar="NUM",
         help="Extension of the pictures.",
     ),
     cloup.option(

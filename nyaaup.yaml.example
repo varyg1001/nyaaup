@@ -11,14 +11,14 @@ preferences:
   watch_dir: "" # Watch directory for torrents, the file will be copied here.
   real_length: false # In description audio and subs len will be the real length and not languages count
   random_snapshots: false # If you want to take random snapshots from the video.
-  trusted: false # If you can upload as trusted.
-  note: "" # Note to use in description.
+  trusted: false # If you can upload as trusted will be marked as trusted.
+  advert: "" # Advert to put in description.
   edit_code: # If you keep it blank, it will be random.
   info: mal # Information in Nyaa. (`mal` will use MyAnimeList link.)
   mal: true # Use MyAnimeList to add anime original name to display name.
   mediainfo: true # attach Mediainfo to the torrent by Rentry.co
   add_pub_trackers: false # if you want to add https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt trackers to your torrent
   keksh_key: "" # api key for bigger images and for easier manage
-  telegram: false # Send tgpost if possible.
+  telegram: false # Send a telegram post if possible.
   id: "" # telegram channel id
   token: "" # telegram bot token

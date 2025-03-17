@@ -25,30 +25,6 @@ install(show_locals=True)
 
 
 @dataclass
-class UploadConfig:
-    torrent_creator: str
-    category: str
-    anonymous: bool = False
-    hidden: bool = False
-    complete: bool = False
-    remake: bool = False
-    trusted: bool = False
-    mediainfo_enabled: bool = True
-    telegram_enabled: bool = False
-    random_snapshots: bool = False
-    pic_num: int = 3
-    pic_ext: str = "png"
-    edit_code: str | None = None
-    text: str | None = None
-    tg_token: str | None = None
-    tg_id: str | None = None
-    kek_headers: dict[str, str] | None = None
-    info_form_config: bool = False
-    info: str = ""
-    watch_dir: str | None = None
-
-
-@dataclass
 class Provider:
     name: str
     domain: str
@@ -110,7 +86,7 @@ class Uploader:
         if not (pref := self.config.get("preferences")):
             eprint("No preferences in config!", True)
 
-        self.upload_config = UploadConfig(
+        self.upload_config = SimpleNamespace(
             category=self._get_category(self.args.category),
             anonymous="anonymous" if self.args.anonymous else None,
             hidden="hidden" if self.args.hidden else None,
@@ -130,10 +106,19 @@ class Uploader:
             info_form_config=(
                 False if (pref.get("info", "").lower() == "mal") or not pref.get("info") else True
             ),
+            kek_headers={}
         )
 
         self.providers = self._setup_providers()
-        self.headers = self._get_default_headers()
+        self.headers = {
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:136.0) Gecko/20100101 Firefox/136.0",
+            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "accept-language": "en-US,en;q=0.9",
+            "dnt": "1",
+            "sec-fetch-dest": "document",
+            "sec-fetch-mode": "navigate",
+            "upgrade-insecure-requests": "1",
+        }
 
         if key := pref.get("keksh_key"):
             self.upload_config.kek_headers = {"x-kek-auth": key, **self.headers}
@@ -167,17 +152,6 @@ class Uploader:
 
         return providers
 
-    def _get_default_headers(self) -> dict[str, str]:
-        return {
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "accept-language": "en-US,en;q=0.9",
-            "dnt": "1",
-            "sec-fetch-dest": "document",
-            "sec-fetch-mode": "navigate",
-            "upgrade-insecure-requests": "1",
-        }
-
     def process_file(self, file_path: Path, display_info: Tree) -> ProcessResult | None:
         if not file_path.exists():
             eprint(f"Input path not found: {file_path}", True)
@@ -208,8 +182,8 @@ class Uploader:
             return None
 
         video_info, audio_info, audio_len, sub_info, sub_len = get_description(self.mediainfo)
-
         real_length = self.config.get("preferences", {}).get("real_length", False)
+
         self._set_description(
             video_info,
             audio_info,
@@ -248,8 +222,11 @@ class Uploader:
         sub_len: int,
         mediainfo: list,
     ) -> None:
-        if note := (self.args.note or self.config.get("preferences", {}).get("note")):
+        if note := self.args.note:
             self.description += f"{note}\n\n---\n\n"
+
+        if advert := (self.args.advert or self.config.get("preferences", {}).get("advert")):
+            self.description += f"{advert}\n\n---\n\n"
 
         chapter_str = ["No", "Yes"][bool(mediainfo[0].get("MenuCount", False))]
         duration_str = mediainfo[0].get("Duration_String3", "?")
