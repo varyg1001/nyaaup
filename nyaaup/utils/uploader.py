@@ -106,7 +106,7 @@ class Uploader:
             info_form_config=(
                 False if (pref.get("info", "").lower() == "mal") or not pref.get("info") else True
             ),
-            kek_headers={}
+            kek_headers={},
         )
 
         self.providers = self._setup_providers()
