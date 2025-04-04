@@ -121,9 +121,10 @@ def up(ctx, **kwargs):
                     name, uploader.upload_config.info_form_config
                 )
                 name_plus.extend(name_plus_)
-                display_info.add(
-                    f"[bold white]MAL link: [cornflower_blue not bold]{uploader.upload_config.info}[white]"
-                )
+                if hasattr(uploader.upload_config, "info"):
+                    display_info.add(
+                        f"[bold white]MAL link: [cornflower_blue not bold]{uploader.upload_config.info}[white]"
+                    )
 
             if dual_audio:
                 name_plus.append("Dual-Audio")
