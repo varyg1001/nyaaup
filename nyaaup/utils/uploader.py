@@ -107,6 +107,7 @@ class Uploader:
                 False if (pref.get("info", "").lower() == "mal") or not pref.get("info") else True
             ),
             kek_headers={},
+            info="",
         )
 
         self.providers = self._setup_providers()

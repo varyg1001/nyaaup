@@ -71,9 +71,9 @@ def get_track_info(data: dict) -> str:
 
 def get_return(lang: str, track_name: str | None = None) -> str:
     if track_name:
-        if track_name in {"CC", "SDH", "Forced", "Dubtitle"}:
+        if track_name in {"CC", "SDH", "Forced", "Dubtitle", "Machine Generated"}:
             return f"**{lang}** [{track_name}]"
-        if r := re.search(r"(.*) \((CC|SDH|Forced|Dubtitle)\)", track_name):
+        if r := re.search(r"(.*) \((CC|SDH|Forced|Dubtitle|Machine Generated)\)", track_name):
             return f"**{lang}** ({r[1]}) [{r[2]}]"
         else:
             return f"**{lang}** ({track_name})"
