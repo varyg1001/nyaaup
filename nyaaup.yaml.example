@@ -6,19 +6,18 @@ providers:
       - http://nyaa.tracker.wf:7777/announce
 
 torrent_creator: torf # torrenttools, torf
-
-preferences:
-  watch_dir: "" # Watch directory for torrents, the file will be copied here.
-  real_length: false # In description audio and subs len will be the real length and not languages count
-  random_snapshots: false # If you want to take random snapshots from the video.
-  trusted: false # If you can upload as trusted will be marked as trusted.
-  advert: "" # Advert to put in description.
-  edit_code: # If you keep it blank, it will be random.
-  info: mal # Information in Nyaa. (`mal` will use MyAnimeList link.)
-  mal: true # Use MyAnimeList to add anime original name to display name.
-  mediainfo: true # attach Mediainfo to the torrent by Rentry.co
-  add_pub_trackers: false # if you want to add https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt trackers to your torrent
-  keksh_key: "" # api key for bigger images and for easier manage
-  telegram: false # Send a telegram post if possible.
-  id: "" # telegram channel id
-  token: "" # telegram bot token
+watch_dir: # Watch directory for torrents, the file will be copied here.
+add_pub_trackers: false # if you want to add https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt trackers to your torrent
+trusted: false # If you can upload as trusted will be marked as trusted.
+info: mal # Information in Nyaa, can be myanimeList or anilist to place the link or custom text
+name_plus: true # Add original or english title to display name (from mal or anilist).
+advert: # Advert to put in description.
+real_length: false # In description audio and subs len will be the real length and not languages count
+random_snapshots: false # If you want to take random snapshots from the video.
+edit_code: # Edit code for Rentry.co, it will be random by default
+mediainfo: true # attach Mediainfo to the torrent by Rentry.co
+keksh_key: # api key for bigger images and for easier manage
+telegram:
+  use: false # Send a telegram post if possible.
+  id:  # telegram channel id
+  token: # telegram bot token

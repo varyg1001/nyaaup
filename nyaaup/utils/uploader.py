@@ -489,25 +489,30 @@ class Uploader:
             if (
                 self.is_non_english_category
                 and mal_data.title_english
-                and mal_data.title_english.casefold() not in self.name_to_mal.casefold()
+                and mal_data.title_english.casefold() not in self.extracted_name.casefold()
             ):
                 titles.append(mal_data.title_english)
-            elif mal_data.title and mal_data.title.casefold() not in self.name_to_mal.casefold():
+            elif mal_data.title and mal_data.title.casefold() not in self.extracted_name.casefold():
                 titles.append(mal_data.title)
 
         return titles
 
+    def extract_name_from_filename(self, file_name: str) -> str:
+        name = re.sub(r"[\.|\-]S\d+.*", "", file_name)
+        if name == file_name:
+            name = re.sub(r"[\.|\-]\d{4}\..*", "", file_name)
+        name = name.replace(".", " ")[:100]
+        
+        self.extracted_name = name
+
+        return name
+    
     def process_mal_info(self, name: str, info_from_config: bool) -> list[str]:
         """Process MAL info and return information and name additions"""
         name_plus = []
 
         if not info_from_config and self.is_anime_category and not self.args.skip_myanimelist:
-            name_to_mal = re.sub(r"[\.|\-]S\d+.*", "", name)
-            if name_to_mal == name:
-                name_to_mal = re.sub(r"[\.|\-]\d{4}\..*", "", name)
-            name_to_mal = name_to_mal.replace(".", " ")[:100]
-
-            self.name_to_mal = name_to_mal
+            name_to_mal = self.extract_name_from_filename(name)
 
             max_retries = 3
             for attempt in range(max_retries):

@@ -48,9 +48,11 @@ install(show_locals=True)
     cloup.option("-i", "--info", type=str, help="Set information."),
     cloup.option("-n", "--note", type=str, help="Put a note in to the description."),
     cloup.option("-ad", "--advert", type=str, help="Put advert in to the description."),
-    cloup.option("-m", "--myanimelist", type=str, metavar="URL", help="MyAnimeList link to use."),
     cloup.option("-t", "--telegram", is_flag=True, help="Post to telegram."),
+    cloup.option("-m", "--myanimelist", type=str, metavar="URL", help="MyAnimeList link to use."),
     cloup.option("-sm", "--skip-myanimelist", is_flag=True, help="Skip MyAnimeList."),
+    cloup.option("-ai", "--anilist", type=str, metavar="URL", help="MyAnimeList link to use."),
+    cloup.option("-sa", "--skip-anilist", is_flag=True, help="Skip MyAnimeList."),
 )
 @cloup.option_group(
     "Media Settings",
