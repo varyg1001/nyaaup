@@ -303,7 +303,12 @@ class Uploader:
                 proxies={"all://": provider.proxy} if provider.proxy else None,
             )
 
-            result = response.json()
+            try:
+                result = response.json()
+            except json.JSONDecodeError:
+                eprint(f"Upload failed: {response.text}")
+                return None
+
             if errors := result.get("errors"):
                 self._handle_upload_errors(errors)
                 raise Exception("Upload failed")
@@ -493,7 +498,17 @@ class Uploader:
             ):
                 titles.append(mal_data.title_english)
             elif mal_data.title and mal_data.title.casefold() not in self.name_to_mal.casefold():
-                titles.append(mal_data.title)
+                if len(mal_data.title) > 85:
+                    if (
+                        mal_data.title_synonyms
+                        and len(mal_data.title_synonyms[0]) < 85
+                        and mal_data.title_synonyms[0].casefold() not in self.name_to_mal.casefold()
+                    ):
+                        titles.append(mal_data.title_synonyms[0])
+                    else:
+                        titles.append(mal_data.title[80:])
+                else:
+                    titles.append(mal_data.title)
 
         return titles
 
