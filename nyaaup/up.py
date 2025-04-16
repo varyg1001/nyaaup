@@ -17,6 +17,7 @@ install(show_locals=True)
 @cloup.command()
 @cloup.option_group(
     "Upload Tags",
+    cloup.option("-u", "--uncensored", is_flag=True, help="Use Uncensored tag in title."),
     cloup.option("-ms", "--multi-subs", is_flag=True, help="Use Multi-Subs tag in title."),
     cloup.option("-da", "--dual-audio", is_flag=True, help="Use Dual-Audio tag in title."),
     cloup.option("-ma", "--multi-audios", is_flag=True, help="Use Multi-Audios tag in title."),
@@ -97,7 +98,7 @@ def up(ctx, **kwargs):
         uploader.file = ""
         uploader.mediainfo = []
 
-        name_plus: list = []
+        name_plus: list[str] = []
         dual_audio: bool = False
         multi_audio: bool = False
         multi_sub: bool = False
@@ -117,10 +118,9 @@ def up(ctx, **kwargs):
                 uploader.description += "\n\n---\n\n"
 
             if uploader.is_anime_category and not uploader.args.skip_myanimelist:
-                name_plus_ = uploader.process_mal_info(
-                    name, uploader.upload_config.info_form_config
+                name_plus.extend(
+                    uploader.process_mal_info(name, uploader.upload_config.info_form_config)
                 )
-                name_plus.extend(name_plus_)
                 if uploader.upload_config.info:
                     display_info.add(
                         f"[bold white]MAL link: [cornflower_blue not bold]{uploader.upload_config.info}[white]"
@@ -132,6 +132,8 @@ def up(ctx, **kwargs):
                 name_plus.append("Multi-Audio")
             if multi_sub:
                 name_plus.append("Multi-Subs")
+            if uploader.args.uncensored:
+                name_plus.append("Uncensored")
 
             display_name = uploader.format_display_name(name, name_plus)
 
