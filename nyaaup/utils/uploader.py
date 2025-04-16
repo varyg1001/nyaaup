@@ -6,6 +6,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 
 import httpx
 from mal import Anime
@@ -224,7 +225,7 @@ class Uploader:
         mediainfo: list,
     ) -> None:
         if note := self.args.note:
-            self.description += f"{note}\n\n---\n\n"
+            self.description += f">{note}\n\n---\n\n"
 
         if advert := (self.args.advert or self.config.get("preferences", {}).get("advert")):
             self.description += f"{advert}\n\n---\n\n"
@@ -272,64 +273,61 @@ class Uploader:
     def _try_upload(
         self, provider: Provider, torrent_data: bytes, name: str, display_name: str
     ) -> UploadResult | None:
+        response = httpx.post(
+            f"{provider.domain}/api/v2/upload",
+            files={
+                "torrent": (
+                    f"{name}.torrent",
+                    torrent_data,
+                    "application/x-bittorrent",
+                ),
+                "torrent_data": (
+                    None,
+                    json.dumps(
+                        {
+                            "name": display_name,
+                            "category": self.upload_config.category,
+                            "description": self.description,
+                            "anonymous": self.upload_config.anonymous,
+                            "hidden": self.upload_config.hidden,
+                            "complete": self.upload_config.complete,
+                            "remake": self.upload_config.remake,
+                            "trusted": self.upload_config.trusted,
+                            "information": self.upload_config.info,
+                        }
+                    ),
+                ),
+            },
+            auth=(provider.credentials.username, provider.credentials.password),
+            headers=self.headers,
+            proxies={"all://": provider.proxy} if provider.proxy else None,
+        )
+
         try:
-            response = httpx.post(
-                f"{provider.domain}/api/v2/upload",
-                files={
-                    "torrent": (
-                        f"{name}.torrent",
-                        torrent_data,
-                        "application/x-bittorrent",
-                    ),
-                    "torrent_data": (
-                        None,
-                        json.dumps(
-                            {
-                                "name": display_name,
-                                "category": self.upload_config.category,
-                                "description": self.description,
-                                "anonymous": self.upload_config.anonymous,
-                                "hidden": self.upload_config.hidden,
-                                "complete": self.upload_config.complete,
-                                "remake": self.upload_config.remake,
-                                "trusted": self.upload_config.trusted,
-                                "information": self.upload_config.info,
-                            }
-                        ),
-                    ),
-                },
-                auth=(provider.credentials.username, provider.credentials.password),
-                headers=self.headers,
-                proxies={"all://": provider.proxy} if provider.proxy else None,
-            )
-
-            try:
-                result = response.json()
-            except json.JSONDecodeError:
-                eprint(f"Upload failed: {response.text}")
-                return None
-
-            if errors := result.get("errors"):
-                self._handle_upload_errors(errors)
-                raise Exception("Upload failed")
-
-            return UploadResult(
-                url=result["url"],
-                id=result["id"],
-                download_url=self._get_download_url(result["url"], result["id"]),
-                name=display_name,
-            )
-
-        except Exception as e:
-            eprint(f"Upload failed: {e}")
+            result = response.json()
+        except json.JSONDecodeError:
+            eprint(f"Upload failed: {response.text}")
             return None
 
-    def _handle_upload_errors(self, errors: dict) -> None:
+        if errors := result.get("errors"):
+            self._handle_upload_errors(errors)
+            raise Exception("Upload failed")
+
+        return UploadResult(
+            url=result["url"],
+            id=result["id"],
+            download_url=self._get_download_url(result["url"]),
+            name=display_name,
+        )
+
+    def _handle_upload_errors(self, errors: dict[str, Any] | str | list[str]) -> None:
         if isinstance(errors, str):
-            eprint(errors)
+            eprint(f"Failed to upload: {errors}")
+        elif isinstance(errors, list):
+            eprint(f"Failed to upload: {errors[0]}", True)
         else:
             info = next(iter(errors))
-            eprint(f"{info} error: {errors[info][0]}", True)
+            eprint(f"Failed to upload with {info} error: {errors[info][0]}", True)
 
     def _edit_torrent(
         self,
@@ -363,8 +361,12 @@ class Uploader:
             eprint(f"Failed to edit torrent: {e}")
             return False
 
-    def _get_download_url(self, page_url: str, torrent_id: str) -> str:
-        return page_url.replace(f"view/{torrent_id}", f"download/{torrent_id}.torrent")
+    def _get_download_url(self, page_url: str) -> str:
+        return re.sub(
+            r"view/(\d+)",
+            r"download/\1.torrent",
+            page_url,
+        )
 
     def send_notification(self, result: UploadResult) -> None:
         if self.upload_config.tg_token and self.upload_config.tg_id:
@@ -488,7 +490,7 @@ class Uploader:
         return self.upload_config.category in {"1_3", "1_4"}
 
     def _get_mal_titles(self, mal_data: Anime) -> list[str]:
-        titles = []
+        titles: list[str] = []
 
         if hasattr(self, "name_to_mal"):
             if (
@@ -514,7 +516,7 @@ class Uploader:
 
     def process_mal_info(self, name: str, info_from_config: bool) -> list[str]:
         """Process MAL info and return information and name additions"""
-        name_plus = []
+        name_plus: list[str] = []
 
         if not info_from_config and self.is_anime_category and not self.args.skip_myanimelist:
             name_to_mal = re.sub(r"[\.|\-]S\d+.*", "", name)
@@ -536,6 +538,7 @@ class Uploader:
                     if attempt < max_retries:
                         eprint("All myanimelist attempts failed")
                         return name_plus
+
                     time.sleep(delay)
 
             if self.args.myanimelist:
