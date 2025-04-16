@@ -410,7 +410,16 @@ class Uploader:
                 res = httpx.get(
                     f"{provider.domain}/profile",
                     cookies=self.config.cookies,
-                    headers=self.headers,
+                    headers={
+                        **self.headers,
+                        "cache-control": "no-cache",
+                        "pragma": "no-cache",
+                        "priority": "u=0, i",
+                        "sec-ch-ua-mobile": "?0",
+                        "sec-fetch-site": "same-origin",
+                        "sec-fetch-user": "?1",
+                        "sec-gpc": "1",
+                    },
                     proxy=provider.proxy,
                 )
                 return res.status_code == 200
