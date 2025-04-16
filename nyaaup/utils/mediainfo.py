@@ -177,6 +177,6 @@ def get_description(mediainfo: list) -> tuple[str, list[str], int, list[str], in
         eprint("No audio tracks found!", True)
 
     if not subtitle_info:
-        wprint("No subtitle tracks found")
+        wprint("No subtitle tracks found\n")
 
     return video_info, audio_info, len(audio_len), subtitle_info, len(subtitle_len)

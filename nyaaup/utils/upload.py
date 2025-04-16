@@ -1,6 +1,7 @@
 import asyncio
 import random
 from pathlib import Path
+from types import SimpleNamespace
 
 import aiofiles
 import httpx
@@ -94,7 +95,7 @@ async def _generate_all_snapshots(
     return await asyncio.gather(*tasks)
 
 
-def snapshot_create_upload(config, input_file: Path, mediainfo: list) -> "Tree":
+def snapshot_create_upload(config: SimpleNamespace, input_file: Path, mediainfo: list) -> "Tree":
     images = Tree("[bold white]Images[not bold]")
     num_snapshots = config.upload_config.pic_num + 1
     snapshots: list[Path] = []
@@ -139,16 +140,17 @@ def snapshot_create_upload(config, input_file: Path, mediainfo: list) -> "Tree":
     return images
 
 
-def rentry_upload(config) -> dict:
+def rentry_upload(config: SimpleNamespace) -> dict:
+    base_url = "https://rentry.co"
     with Session(client_identifier="firefox_120") as session:
         max_retries = 5
         retries = 0
         while retries < max_retries:
             res = session.get(
-                url="https://rentry.co",
+                url=base_url,
                 headers={
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/120.0",
-                    "Origin": "https://rentry.co",
+                    "Origin": base_url,
                     "Content-Type": "application/x-www-form-urlencoded",
                 },
                 allow_redirects=True,
@@ -156,8 +158,8 @@ def rentry_upload(config) -> dict:
 
             try:
                 res = session.post(
-                    "https://rentry.co/api/new",
-                    headers={"Referer": "https://rentry.co"},
+                    f"{base_url}/api/new",
+                    headers={"Referer": base_url},
                     data={
                         "csrfmiddlewaretoken": session.cookies["csrftoken"],
                         "edit_code": config.edit_code if config.edit_code else "",
