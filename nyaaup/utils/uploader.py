@@ -140,7 +140,7 @@ class Uploader:
             provider = Provider(
                 name=p.get("name", ""),
                 domain=domain,
-                proxy=p.get("proxy", ""),
+                proxy=p.get("proxy", None),
                 credentials=self.config.credentials,
             )
 

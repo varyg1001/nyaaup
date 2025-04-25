@@ -22,19 +22,24 @@ install(show_locals=True)
     cloup.option("-da", "--dual-audio", is_flag=True, help="Use Dual-Audio tag in title."),
     cloup.option("-ma", "--multi-audios", is_flag=True, help="Use Multi-Audios tag in title."),
     cloup.option(
-        "-a",
-        "--auto",
+        "-a/-na",
+        "--auto/--no-auto",
         is_flag=True,
-        help="Auto mark Multi-Subs, Multi-Audios or Dual-Audio.",
+        default=True,
+        help="Auto detect Multi-Subs, Multi-Audios or Dual-Audio. (default: True)",
     ),
 )
 @cloup.option_group(
     "Upload Settings",
-    cloup.option("-an", "--anonymous", is_flag=True, help="Set upload as anonymous."),
-    cloup.option("-hi", "--hidden", is_flag=True, help="Set upload as hidden."),
-    cloup.option("-co", "--complete", is_flag=True, help="Set upload as complete batch."),
-    cloup.option("-re", "--remake", is_flag=True, help="Set upload as remake."),
-    cloup.option("-s", "--skip-upload", is_flag=True, help="Skip torrent upload."),
+    cloup.option(
+        "-an", "--anonymous", is_flag=True, default=False, help="Set upload as anonymous."
+    ),
+    cloup.option("-hi", "--hidden", is_flag=True, default=False, help="Set upload as hidden."),
+    cloup.option(
+        "-co", "--complete", is_flag=True, default=False, help="Set upload as complete batch."
+    ),
+    cloup.option("-re", "--remake", is_flag=True, default=False, help="Set upload as remake."),
+    cloup.option("-s", "--skip-upload", is_flag=True, default=False, help="Skip torrent upload."),
     cloup.option("-c", "--category", type=str, help="Select a category."),
     cloup.option("-w", "--watch-dir", type=str, metavar="DIR", help="Path of the watch directory."),
 )
@@ -50,8 +55,10 @@ install(show_locals=True)
     cloup.option("-n", "--note", type=str, help="Put a note in to the description."),
     cloup.option("-ad", "--advert", type=str, help="Put advert in to the description."),
     cloup.option("-m", "--myanimelist", type=str, metavar="URL", help="MyAnimeList link to use."),
-    cloup.option("-t", "--telegram", is_flag=True, help="Post to telegram."),
-    cloup.option("-sm", "--skip-myanimelist", is_flag=True, help="Skip MyAnimeList."),
+    cloup.option("-t", "--telegram", is_flag=True, default=False, help="Post to telegram."),
+    cloup.option(
+        "-sm", "--skip-myanimelist", is_flag=True, default=False, help="Skip MyAnimeList."
+    ),
 )
 @cloup.option_group(
     "Media Settings",
@@ -75,13 +82,15 @@ install(show_locals=True)
         "-M",
         "--no-mediainfo",
         is_flag=True,
+        default=False,
         help="Do not attach Mediainfo to the torrent.",
     ),
     cloup.option(
-        "-o",
-        "--overwrite",
+        "-o/-no",
+        "--overwrite/--no-overwrite",
         is_flag=True,
-        help="Create torrent file even if exists.",
+        default=True,
+        help="Create torrent file even if exists. (default: True)",
     ),
 )
 @cloup.option("-ch", "--category-help", is_flag=True, help="Print available categories.")
