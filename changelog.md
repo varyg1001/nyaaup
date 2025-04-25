@@ -1,9 +1,16 @@
+# nyaaup 5.4.0:
+## Added
+- Uncensored tag option
+## Fixed
+- Try to skip too long MAL titles
+## Changed
+- Overwrite and auto tag detection options is true by default
+
 # nyaaup 5.3.0:
 ## Added
 - Advert option so if note needed won't interfere with it
 ## Fixed
 - Too many new line before images
-
 
 # nyaaup 5.2.0:
 ## Added
@@ -13,7 +20,7 @@
 ## Fixed
 - False Multi-Subs detection
 - Remove unused dependencies
-- Properly get the sub and audio len
+- Properly get the sub and audio length
 
 # nyaaup 5.1.0:
 - Support torrenttools
