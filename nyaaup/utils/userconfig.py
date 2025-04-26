@@ -18,11 +18,14 @@ class Config:
         self.credentials = SimpleNamespace(username=None, password=None)
 
         self._dirs = PlatformDirs(appname="nyaaup", appauthor=False)
+        self._dirs.user_config_path.mkdir(parents=True, exist_ok=True)
         self.config_path = Path(self._dirs.user_config_path / "nyaaup.yaml")
         self.cookies_path = Path(self._dirs.user_config_path / "cookies.txt")
 
         self._load()
-        self._get_cookies()
+
+        if self.cookies_path.exists():
+            self._get_cookies()
 
     @property
     def dirs(self):
@@ -30,16 +33,15 @@ class Config:
 
     def _get_cookies(self):
         """Load cookies from file if it exists"""
-        if self.cookies_path.exists():
-            data = self.cookies_path.read_text().splitlines()
-            for x in data:
-                if (
-                    x
-                    and not x.startswith("#")
-                    and (values := x.split("\t"))
-                    and values[-2] != "__ddg9__"
-                ):
-                    self.cookies[values[-2]] = values[-1]
+        data = self.cookies_path.read_text().splitlines()
+        for x in data:
+            if (
+                x
+                and not x.startswith("#")
+                and (values := x.split("\t"))
+                and values[-2] != "__ddg9__"
+            ):
+                self.cookies[values[-2]] = values[-1]
 
     def _create(self) -> None:
         """Create default config file"""
