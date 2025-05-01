@@ -36,13 +36,13 @@ class CustomTransferSpeedColumn(TimeRemainingColumn):
 
 
 class Category(Enum):
-    ANIME_MUSIC_VIDEO = ("1_1", "Anime - Anime Music Video", "7")
     ANIME_ENGLISH = ("1_2", "Anime - English-translated", "1")
     ANIME_NON_ENGLISH = ("1_3", "Anime - Non-English-translated", "2")
     ANIME_RAW = ("1_4", "Anime - Raw", "3")
     LIVE_ENGLISH = ("4_1", "Live Action - English-Translated", "4")
     LIVE_NON_ENGLISH = ("4_3", "Live Action - Non-English-translated", "5")
     LIVE_RAW = ("4_4", "Live Action - Raw", "6")
+    ANIME_MUSIC_VIDEO = ("1_1", "Anime - Anime Music Video", "7")
 
     def __init__(self, id: str, display_name: str, numeric_id: str):
         self.id = id

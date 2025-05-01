@@ -73,8 +73,8 @@ class Uploader:
             print(self.ctx.get_help())
             sys.exit(1)
 
-        if not self.args.category:
-            eprint("No selected category!\n")
+        if not self.args.category or not self._get_category(self.args.category):
+            eprint("Invalid category!\n")
             cat_help(self.console)
             sys.exit(1)
 
@@ -377,7 +377,7 @@ class Uploader:
             )
             tg_post(self, message)
 
-    def _get_category(self, category: str | Category) -> str:
+    def _get_category(self, category: str | Category) -> str | None:
         if isinstance(category, Category):
             return category.id
 
@@ -385,7 +385,7 @@ class Uploader:
             if category in (cat.numeric_id, cat.display_name):
                 return cat.id
 
-        return category
+        return None
 
     def format_display_name(self, name: str, name_plus: list[str]) -> str:
         name_nyaa = name.replace(".", " ")
