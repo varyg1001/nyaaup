@@ -20,32 +20,13 @@ Nyaaup is an auto uploader to [Nyaa sites](https://github.com/nyaadevs/nyaa), ma
 pip install nyaaup
 ```
 
-#### source
+#### from source
 
 1. `git clone https://github.com/varyg1001/nyaaup`
 2. `cd nyaaup`
 3. `poetry config virtualenvs.in-project true` (optional, but recommended)
 4. `poetry install` or `python install.py`
 5. `nyaaup -h`
-
-### Commands
-
-- up
-- auth
-
-### Examples usage
-
-```shell
-nyaaup auth -c user:pass
-```
-
-```shell
-nyaaup -p 5 -c 1 -a -m https://myanimelist.net/anime/50652/ /path/example.mkv
-```
-
-```shell
-nyaaup up -sm -c 1 /path/example_folder
-```
 
 ### Usage
 
@@ -110,4 +91,18 @@ Other options:
    -co, --cookie path   Cookies file from nyaa. (Cookies must be in the standard Netscape cookies file format)
    -h, --help           Show this message and exit.
 
+```
+
+### Example commands
+
+```shell
+nyaaup auth -c user:pass
+```
+
+```shell
+nyaaup -p 5 -c 1 -a -m https://myanimelist.net/anime/58935 /path/example.mkv
+```
+
+```shell
+nyaaup up -sm -c 1 /path/example_folder
 ```
