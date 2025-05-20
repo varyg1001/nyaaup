@@ -12,7 +12,7 @@ from nyaaup.auth import auth
 from nyaaup.up import up
 from nyaaup.utils import DefaultCommandGroup
 
-__version__ = "5.5.0"
+__version__ = "5.5.1"
 
 console = Console()
 
