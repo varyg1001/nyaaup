@@ -74,4 +74,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{
+          gh release upload ${{ github.ref_name }} dist/* --repo ${{ github.repository }}
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@v1.12.3
+        with:
+          password: ${{ secrets.PYPI_TOKEN }}
