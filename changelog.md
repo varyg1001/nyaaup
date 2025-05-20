@@ -1,3 +1,11 @@
+# nyaaup 5.5.1:
+## Fixed
+- Some fix
+
+# nyaaup 5.5.0:
+## Added
+- Cookies support for auth
+
 # nyaaup 5.4.0:
 ## Added
 - Uncensored tag option

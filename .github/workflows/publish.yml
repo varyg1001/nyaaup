@@ -1,6 +1,11 @@
 name: Publish to PyPI and GitHub Release
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release Tag (e.g., v1.0.0). Defaults to version from changelog.md if not provided."
+        required: false
 
 permissions:
   contents: write
@@ -11,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       hashes: ${{ steps.hash.outputs.hashes }}
+      version: ${{ steps.get-changelog-info.outputs.version }}
 
     steps:
       - name: Checkout repository
@@ -20,6 +26,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - name: Fetch version from changelog
+        id: get-changelog-info
+        run: |
+          PACKAGE_VERSION=$(head -n 1 changelog.md | awk '{print $NF}' | sed 's/://')
+          echo "version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
 
       - name: Install build tool
         run: python -m pip install --upgrade build
@@ -70,11 +82,28 @@ jobs:
           name: dist
           path: dist/
 
-      - name: Upload to GitHub Release
+      - name: Create or Update GitHub Release and Upload Assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ github.ref_name }} dist/* --repo ${{ github.repository }}
+          RELEASE_TAG="${{ github.event.inputs.tag || needs.build.outputs.version }}"
+
+          if [ -z "$RELEASE_TAG" ]; then
+            echo "Error: Could not determine release tag. Please provide an input tag or ensure version is in changelog.md."
+            exit 1
+          fi
+
+          RELEASE_NAME="Release $RELEASE_TAG"
+
+          if gh release view "$RELEASE_TAG" --repo ${{ github.repository }}; then
+            gh release upload "$RELEASE_TAG" dist/* --repo ${{ github.repository }} --clobber
+          else
+            gh release create "$RELEASE_TAG" \
+              --repo ${{ github.repository }} \
+              --title "$RELEASE_NAME" \
+              --target ${{ github.sha }} \
+              dist/*
+          fi
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@v1.12.3
