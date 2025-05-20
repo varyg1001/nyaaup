@@ -1,7 +1,6 @@
 name: Publish to PyPI and GitHub Release
 
-on:
-  workflow_dispatch
+on: workflow_dispatch
 
 permissions:
   contents: write
@@ -55,7 +54,7 @@ jobs:
       upload-assets: true
       compile-generator: true
 
-  publish:  # ← aligned correctly here
+  publish:
     name: Publish to PyPI and GitHub
     if: startsWith(github.ref, 'refs/tags/')
     needs: [build, provenance]
