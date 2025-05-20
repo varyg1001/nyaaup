@@ -1,12 +1,6 @@
 name: Publish to PyPI and GitHub Release
 
-on:
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Tag to publish (e.g. v1.0.0)"
-        required: true
-        default: "v1.0.0"
+on: workflow_dispatch
 
 permissions:
   contents: write
@@ -70,11 +64,6 @@ jobs:
       url: https://pypi.org/project/nyaaup/
 
     steps:
-      - name: Debug inputs and refs
-        run: |
-          echo "Tag input: ${{ github.event.inputs.tag }}"
-          echo "GitHub ref: ${{ github.ref }}"
-
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -85,7 +74,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ github.event.inputs.tag }} dist/* --repo ${{ github.repository }}
+          gh release upload ${{ github.ref_name }} dist/* --repo ${{ github.repository }}
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@v1.12.3
