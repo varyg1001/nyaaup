@@ -30,6 +30,7 @@ dependencies = [
 
 [project.urls]
 homepage = "https://github.com/varyg1001/nyaaup"
+Changelog = "https://github.com/varyg1001/nyaaup/blob/main/changelog.md"
 
 [project.optional-dependencies]
 dev = [

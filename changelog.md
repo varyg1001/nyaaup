@@ -44,7 +44,7 @@
 - Verify cookies and fall back to normal image upload
 
 # nyaaup 4.1.0:
-- Use async function for imagse upload
+- Use async function for images upload
 - Fixes
 
 # nyaaup 4.0.0:

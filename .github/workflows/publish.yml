@@ -17,6 +17,7 @@ jobs:
     outputs:
       hashes: ${{ steps.hash.outputs.hashes }}
       version: ${{ steps.get-changelog-info.outputs.version }}
+      changelog: ${{ steps.get-changelog-info.outputs.changelog }}
 
     steps:
       - name: Checkout repository
@@ -27,11 +28,16 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Fetch version from changelog
+      - name: Fetch changelog and version
         id: get-changelog-info
         run: |
           PACKAGE_VERSION=$(head -n 1 changelog.md | awk '{print $NF}' | sed 's/://')
+          CHANGELOG_ENTRY=$(awk '/^# nyaaup / { if (found) exit; else if (NR==1) found=1 } found' changelog.md | sed '/^# nyaaup /d')
+
           echo "version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG_ENTRY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Install build tool
         run: python -m pip install --upgrade build
@@ -87,6 +93,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           RELEASE_TAG="${{ github.event.inputs.tag || needs.build.outputs.version }}"
+          RELEASE_CHANGELOG="${{ needs.build.outputs.changelog }}"
 
           if [ -z "$RELEASE_TAG" ]; then
             echo "Error: Could not determine release tag. Please provide an input tag or ensure version is in changelog.md."
@@ -95,12 +102,15 @@ jobs:
 
           RELEASE_NAME="Release $RELEASE_TAG"
 
+          echo "$RELEASE_CHANGELOG" > release_notes.txt
+
           if gh release view "$RELEASE_TAG" --repo ${{ github.repository }}; then
             gh release upload "$RELEASE_TAG" dist/* --repo ${{ github.repository }} --clobber
           else
             gh release create "$RELEASE_TAG" \
               --repo ${{ github.repository }} \
               --title "$RELEASE_NAME" \
+              --notes-file release_notes.txt \
               --target ${{ github.sha }} \
               dist/*
           fi
