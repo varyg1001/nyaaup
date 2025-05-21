@@ -1,13 +1,13 @@
-import sys
 import shutil
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 
 import cloup
 
 from nyaaup.utils.auth import DEFAULT_PROVIDER, AuthConfig, AuthHandler
-from nyaaup.utils.userconfig import Config
 from nyaaup.utils.logging import iprint, wprint
+from nyaaup.utils.userconfig import Config
 
 
 @cloup.command()
@@ -75,7 +75,7 @@ def auth(ctx, **kwargs):
             wprint("Cookie file already exists.")
         shutil.copy(args.cookie, config.cookies_path)
         iprint("Cookie file copied to config directory.", 0, 0)
-    
+
     if args.credential:
         auth_config = AuthConfig.from_args(args)
 

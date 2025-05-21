@@ -1,8 +1,5 @@
 name: Build
 
-env:
-  RELEASE_VERSION:
-
 on:
   workflow_dispatch
 
