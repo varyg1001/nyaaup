@@ -4,19 +4,18 @@ from enum import Enum
 import cloup
 import httpx
 import humanize
-from mal import Anime, AnimeSearch
 from rich.console import Console
 from rich.progress import TimeRemainingColumn
 from rich.text import Text
 from rich.tree import Tree
 
-from nyaaup.utils.collections import first, first_or_none
+from nyaaup.utils.collections import first_or_none
 from nyaaup.utils.logging import wprint
 
 
 class DefaultCommandGroup(cloup.Group):
     def parse_args(self, ctx, args):
-        if "-h" not in args and "--help" not in args:
+        if not any(x in args for x in ["-h", "-v", "--help", "--version"]):
             first_arg = first_or_none(x for x in args if not x.startswith("-"))
             if first_arg not in self.list_commands(ctx):
                 args.insert(0, "up")
@@ -52,35 +51,6 @@ class Category(Enum):
 
 def similar(x: str, y: str) -> float:
     return SequenceMatcher(None, x, y).ratio()
-
-
-def get_mal_link(mal_url: str, name_to_mal: str, console: Console) -> Anime | None:
-    if mal_url:
-        with console.status("[bold magenta]Getting MyAnimeList info from input link..."):
-            mal_id = int(str(mal_url).split("/")[4])
-
-            return Anime(mal_id)
-
-    with console.status("[bold magenta]Searching in MyAnimeList database..."):
-        if data := AnimeSearch(name_to_mal).results:
-            data = data[:10]
-
-            for result in data:
-                anime = Anime(result.mal_id)
-                name_in = (name_to_mal or "").casefold()
-                name_en = (anime.title_english or "").casefold()
-                name_ori = (anime.title or "").casefold()
-
-                if (similar(name_en, name_in) >= 0.75) or (similar(name_ori, name_in) >= 0.75):
-                    return anime
-
-            data_likely = first(
-                sorted(data, key=lambda x: similar(x.title, name_to_mal), reverse=True)
-            )
-
-            return Anime(data_likely.mal_id) if data else None
-
-    return None
 
 
 def cat_help(console: Console) -> None:
