@@ -1,32 +1,30 @@
 [project]
 name = "nyaaup"
-version = "5.5.1"
+version = "5.6.0"
 description = "Auto uploader to Nyaa"
 requires-python = ">=3.10,<3.14"
-authors = [
-    { name = "varyg" },
-]
+authors = [{ name = "varyg" }]
 license = { file = "LICENSE" }
 readme = "README.md"
 dependencies = [
     "mal-api>=0.5.2,<0.6.0",
     "torf>=4.0.4,<5.0.0",
-    "pymediainfo>=5.1.0,<6.0.0",
+    "pymediainfo>=7.0.0,<8.0.0",
     "langcodes>=3.3.0,<4.0.0",
     "wand>=0.6.10,<0.7.0",
-    "platformdirs>=2.5.2,<3.0.0",
-    "rich>=12.6.0,<13.0.0",
+    "platformdirs>=4.0.0,<5.0.0",
+    "rich>=13.0.0,<14.0.0",
     "humanize>=4.4.0,<5.0.0",
     "pymal>=0.6,<0.7",
-    "ruamel-yaml>=0.17.21,<0.18.0",
+    "ruamel-yaml>=0.18.0,<0.19.0",
     "language-data>=1.1,<2.0",
     "click>=8.1.3,<9.0.0",
-    "pyoxipng>=8.0.0,<9.0.0",
-    "httpx>=0.26.0,<0.27.0",
+    "pyoxipng>=9.0.0,<10.0.0",
+    "httpx>=0.27.0,<0.28.0",
     "tls-client2>=1.0.3,<2.0.0",
     "typing-extensions>=4.11.0,<5.0.0",
     "aiofiles>=24.1.0,<25.0.0",
-    "cloup>=3.0.5,<4.0.0"
+    "cloup>=3.0.5,<4.0.0",
 ]
 
 [project.urls]
@@ -34,10 +32,7 @@ homepage = "https://github.com/varyg1001/nyaaup"
 Changelog = "https://github.com/varyg1001/nyaaup/blob/main/changelog.md"
 
 [project.optional-dependencies]
-dev = [
-    "isort>=5.9.2,<6.0.0",
-    "ruff>=0.1.14,<0.2.0"
-]
+dev = ["isort>=5.9.2,<6.0.0", "ruff>=0.1.14,<0.2.0"]
 
 [project.scripts]
 nyaaup = "nyaaup.__init__:main"
@@ -75,15 +70,14 @@ exclude = [
     "site-packages",
     "venv",
 ]
-line-length = 100
+line-length = 90
 indent-width = 4
 target-version = "py311"
 
 [tool.ruff.lint]
-select = ["E4", "E7", "E9", "F"]
-ignore = []
-fixable = ["ALL"]
-unfixable = []
+select = ["E4", "E7", "E9", "F", "B"]
+ignore = ["E501"]
+unfixable = ["B"]
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 [tool.ruff.format]
@@ -93,3 +87,15 @@ skip-magic-trailing-comma = false
 line-ending = "auto"
 docstring-code-format = false
 docstring-code-line-length = "dynamic"
+
+[tool.vulture]
+exclude = [".venv", "build", "dist"]
+min_confidence = 100
+paths = ["."]
+
+[tool.isort]
+balanced_wrapping = true
+include_trailing_comma = true
+line_length = 90
+lines_after_imports = 2
+multi_line_output = 5
