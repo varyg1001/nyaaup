@@ -5,6 +5,7 @@ from typing import Any
 from nyaaup.utils.logging import eprint, wprint
 from nyaaup.utils.userconfig import Config
 
+
 DEFAULT_ANNOUNCE = "http://nyaa.tracker.wf:7777/announce"
 DEFAULT_DOMAIN = "https://nyaa.si"
 DEFAULT_PROVIDER = "nyaasi"
@@ -43,7 +44,9 @@ class AuthHandler:
     def validate_inputs(self) -> None:
         """Validate command inputs"""
         if not (
-            self.auth_config.announces or self.auth_config.domain or self.auth_config.credential
+            self.auth_config.announces
+            or self.auth_config.domain
+            or self.auth_config.credential
         ):
             eprint("No arguments provided!", fatal="exit")
 

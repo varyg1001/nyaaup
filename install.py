@@ -5,6 +5,7 @@ import platform
 import subprocess
 from pathlib import Path
 
+
 print("\n[*] Installing dependencies")
 subprocess.run(["poetry", "-V"], check=True)
 subprocess.run(["poetry", "install"], check=True)
@@ -17,5 +18,7 @@ if platform.system() != "Windows":
     (d / "nyaaup").unlink(missing_ok=True)
     (d / "nyaaup").symlink_to(Path(".venv/bin/nyaaup").resolve())
 
-    if not any(Path(x).resolve() == d.resolve() for x in os.environ["PATH"].split(os.pathsep)):
+    if not any(
+        Path(x).resolve() == d.resolve() for x in os.environ["PATH"].split(os.pathsep)
+    ):
         print(f"[!] WARNING: {d} is not in PATH.")

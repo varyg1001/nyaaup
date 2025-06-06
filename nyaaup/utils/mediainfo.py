@@ -7,6 +7,7 @@ from pymediainfo import MediaInfo
 
 from nyaaup.utils.logging import eprint, wprint
 
+
 SUB_CODEC_MAP = {"UTF-8": "SRT"}
 AUDIO_CODEC_MAP = {
     "E-AC-3": "DDP",

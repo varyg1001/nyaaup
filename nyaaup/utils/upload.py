@@ -6,8 +6,10 @@ from types import SimpleNamespace
 import aiofiles
 import httpx
 import oxipng
-from rich.progress import (BarColumn, MofNCompleteColumn, Progress,
-                           TaskProgressColumn, TextColumn, TimeRemainingColumn)
+from rich.progress import (
+    BarColumn, MofNCompleteColumn, Progress,
+    TaskProgressColumn, TextColumn, TimeRemainingColumn,
+)
 from rich.tree import Tree
 from tls_client import Session
 from wand.image import Image
@@ -43,7 +45,8 @@ async def _generate_snapshot(
     out_path = Path(f"{config.cache_dir}/snapshot_{num}.{config.upload_config.pic_ext}")
     if not out_path.exists():
         timestamp = (
-            random.randint(round(interval * 10), round(interval * 10 * num_snapshots)) / 10
+            random.randint(round(interval * 10), round(interval * 10 * num_snapshots))
+            / 10
             if config.upload_config.random_snapshots
             else interval * (num + 1)
         )
@@ -89,13 +92,17 @@ async def _generate_all_snapshots(
     num_snapshots: int, config, input_file: Path, generate_task, progress, interval
 ) -> list[Path]:
     tasks = [
-        _generate_snapshot(x, config, input_file, generate_task, progress, interval, num_snapshots)
+        _generate_snapshot(
+            x, config, input_file, generate_task, progress, interval, num_snapshots
+        )
         for x in range(1, num_snapshots)
     ]
     return await asyncio.gather(*tasks)
 
 
-def snapshot_create_upload(config: SimpleNamespace, input_file: Path, mediainfo: list) -> "Tree":
+def snapshot_create_upload(
+    config: SimpleNamespace, input_file: Path, mediainfo: list
+) -> "Tree":
     images = Tree("[bold white]Images[not bold]")
     num_snapshots = config.upload_config.pic_num + 1
     snapshots: list[Path] = []
@@ -129,13 +136,17 @@ def snapshot_create_upload(config: SimpleNamespace, input_file: Path, mediainfo:
                 total=config.upload_config.pic_num,
             )
 
-            snapshots = [snap for snap in snapshots if snap.stat().st_size < 5 * 1024 * 1024]
+            snapshots = [
+                snap for snap in snapshots if snap.stat().st_size < 5 * 1024 * 1024
+            ]
             snapshots_link = asyncio.run(
                 _upload_all_images(snapshots, upload_task, progress, config)
             )
             for link in snapshots_link:
                 config.description += f"![]({link})\n"
-                images.add(f"[not bold cornflower_blue][link={link}]{link}[/link][white /not bold]")
+                images.add(
+                    f"[not bold cornflower_blue][link={link}]{link}[/link][white /not bold]"
+                )
 
     return images
 

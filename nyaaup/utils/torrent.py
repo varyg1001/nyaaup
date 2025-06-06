@@ -2,8 +2,9 @@ import subprocess
 from pathlib import Path
 
 import httpx
-from rich.progress import (BarColumn, Progress, TaskProgressColumn, TextColumn,
-                           TimeRemainingColumn)
+from rich.progress import (
+    BarColumn, Progress, TaskProgressColumn, TextColumn, TimeRemainingColumn,
+)
 from torf import Torrent
 
 from nyaaup.utils import CustomTransferSpeedColumn
@@ -24,7 +25,9 @@ def get_public_trackers(announces: list) -> list:
         return announces
 
 
-def create_torrent(ctx, name: str, filename: Path, overwrite: bool, torrent_tool: str) -> bool:
+def create_torrent(
+    ctx, name: str, filename: Path, overwrite: bool, torrent_tool: str
+) -> bool:
     if torrent_tool == "torrenttools":
         result = create_torrent_torrenttools(ctx, name, filename, overwrite)
     else:
@@ -125,7 +128,9 @@ def create_torrent_torf(ctx, name: str, filename: Path, overwrite: bool) -> bool
                 total=pieces_total * torrent.piece_size,
             )
 
-        create = progress.add_task(description="[bold magenta]Creating torrent[not bold white]")
+        create = progress.add_task(
+            description="[bold magenta]Creating torrent[not bold white]"
+        )
         torrent.generate(callback=update_progress, interval=1)
         torrent.write(torrent_file)
 

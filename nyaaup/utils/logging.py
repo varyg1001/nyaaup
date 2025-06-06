@@ -28,7 +28,9 @@ def eprint(text: str, fatal: bool = False, exit_code: int = 1) -> None | NoRetur
 
 
 def iprint(text: str, up: int = 1, down: int = 1) -> None:
-    _get_console().print(Padding(f"[bold green]{text}[white]", (up, 0, down, 0), expand=False))
+    _get_console().print(
+        Padding(f"[bold green]{text}[white]", (up, 0, down, 0), expand=False)
+    )
 
 
 def wprint(text: str) -> None:
