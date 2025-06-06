@@ -1,3 +1,10 @@
+# nyaaup 5.6.0:
+## Added
+- Support Anilist
+- version option
+## Changed
+- mal specific options changed to general ones
+
 # nyaaup 5.5.1:
 ## Fixed
 - Some fix
