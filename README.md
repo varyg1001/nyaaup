@@ -54,13 +54,14 @@ Upload Settings:
    -w, --watch-dir DIR   Path of the watch directory.
 
 Content Information:
-   -e, --edit-code TEXT      Set edit code for Mediainfo on Rentry.co
-   -i, --info TEXT           Set information.
-   -n, --note TEXT           Put a note in to the description.
-   -ad, --advert TEXT        Put advert in to the description.
-   -m, --myanimelist URL     MyAnimeList link to use.
-   -t, --telegram            Post to telegram.
-   -sm, --skip-myanimelist   Skip MyAnimeList.
+   -e, --edit-code TEXT                   Set edit code for Mediainfo on Rentry.co
+   -i, --info TEXT                        Set information.
+   -n, --note TEXT                        Put a note in to the description.
+   -ad, --advert TEXT                     Put advert in to the description.
+   -t, --telegram                         Post to telegram.
+   -l, --link URL                         Link to set anime manually.
+   -sl, --skip-database                   Skip anime database.
+   -d, --database [myanimelist|anilist]   Anime database to use for info. (Default: myanimelist)
 
 Media Settings:
    -p, --pictures-number EXTENSION         Number of pictures to use (default: 3).
@@ -90,7 +91,6 @@ Config File:
 Other options:
    -co, --cookie path   Cookies file from nyaa. (Cookies must be in the standard Netscape cookies file format)
    -h, --help           Show this message and exit.
-
 ```
 
 ### Example commands
