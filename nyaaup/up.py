@@ -7,9 +7,11 @@ from rich.panel import Panel
 from rich.traceback import install
 from rich.tree import Tree
 
+from nyaaup.utils.databases import process_anilist_info, process_mal_info
 from nyaaup.utils.logging import eprint, iprint
 from nyaaup.utils.upload import snapshot_create_upload
 from nyaaup.utils.uploader import Uploader
+
 
 install(show_locals=True)
 
@@ -18,9 +20,15 @@ install(show_locals=True)
 @cloup.option_group(
     "Upload Tags",
     cloup.option("-u", "--uncensored", is_flag=True, help="Use Uncensored tag in title."),
-    cloup.option("-ms", "--multi-subs", is_flag=True, help="Use Multi-Subs tag in title."),
-    cloup.option("-da", "--dual-audio", is_flag=True, help="Use Dual-Audio tag in title."),
-    cloup.option("-ma", "--multi-audios", is_flag=True, help="Use Multi-Audios tag in title."),
+    cloup.option(
+        "-ms", "--multi-subs", is_flag=True, help="Use Multi-Subs tag in title."
+    ),
+    cloup.option(
+        "-da", "--dual-audio", is_flag=True, help="Use Dual-Audio tag in title."
+    ),
+    cloup.option(
+        "-ma", "--multi-audios", is_flag=True, help="Use Multi-Audios tag in title."
+    ),
     cloup.option(
         "-a/-na",
         "--auto/--no-auto",
@@ -34,14 +42,26 @@ install(show_locals=True)
     cloup.option(
         "-an", "--anonymous", is_flag=True, default=False, help="Set upload as anonymous."
     ),
-    cloup.option("-hi", "--hidden", is_flag=True, default=False, help="Set upload as hidden."),
     cloup.option(
-        "-co", "--complete", is_flag=True, default=False, help="Set upload as complete batch."
+        "-hi", "--hidden", is_flag=True, default=False, help="Set upload as hidden."
     ),
-    cloup.option("-re", "--remake", is_flag=True, default=False, help="Set upload as remake."),
-    cloup.option("-s", "--skip-upload", is_flag=True, default=False, help="Skip torrent upload."),
+    cloup.option(
+        "-co",
+        "--complete",
+        is_flag=True,
+        default=False,
+        help="Set upload as complete batch.",
+    ),
+    cloup.option(
+        "-re", "--remake", is_flag=True, default=False, help="Set upload as remake."
+    ),
+    cloup.option(
+        "-s", "--skip-upload", is_flag=True, default=False, help="Skip torrent upload."
+    ),
     cloup.option("-c", "--category", type=str, help="Select a category."),
-    cloup.option("-w", "--watch-dir", type=str, metavar="DIR", help="Path of the watch directory."),
+    cloup.option(
+        "-w", "--watch-dir", type=str, metavar="DIR", help="Path of the watch directory."
+    ),
 )
 @cloup.option_group(
     "Content Information",
@@ -54,10 +74,19 @@ install(show_locals=True)
     cloup.option("-i", "--info", type=str, help="Set information."),
     cloup.option("-n", "--note", type=str, help="Put a note in to the description."),
     cloup.option("-ad", "--advert", type=str, help="Put advert in to the description."),
-    cloup.option("-m", "--myanimelist", type=str, metavar="URL", help="MyAnimeList link to use."),
-    cloup.option("-t", "--telegram", is_flag=True, default=False, help="Post to telegram."),
     cloup.option(
-        "-sm", "--skip-myanimelist", is_flag=True, default=False, help="Skip MyAnimeList."
+        "-t", "--telegram", is_flag=True, default=False, help="Post to telegram."
+    ),
+    cloup.option(
+        "-l", "--link", type=str, metavar="URL", help="Link to set anime manually."
+    ),
+    cloup.option("-sl", "--skip-database", is_flag=True, help="Skip anime database."),
+    cloup.option(
+        "-d",
+        "--database",
+        default=None,
+        type=cloup.Choice(["myanimelist", "anilist"], case_sensitive=False),
+        help="Anime database to use for info. (Default: myanimelist)",
     ),
 )
 @cloup.option_group(
@@ -126,13 +155,23 @@ def up(ctx, **kwargs):
             if uploader.upload_config.pic_num > 0:
                 uploader.description += "\n\n---\n\n"
 
-            if uploader.is_anime_category and not uploader.args.skip_myanimelist:
-                name_plus.extend(
-                    uploader.process_mal_info(name, uploader.upload_config.info_form_config)
-                )
+            if uploader.is_anime_category and not uploader.args.skip_database:
+                if (
+                    not uploader.upload_config.info_form_config
+                    and uploader.is_anime_category
+                ):
+                    if uploader.upload_config.database == "myanimelist" and (
+                        mal_title := process_mal_info(uploader, name)
+                    ):
+                        name_plus.append(mal_title)
+                    elif uploader.upload_config.database == "anilist" and (
+                        anilist_title := process_anilist_info(uploader, name)
+                    ):
+                        name_plus.append(anilist_title)
+
                 if uploader.upload_config.info:
                     display_info.add(
-                        f"[bold white]MAL link: [cornflower_blue not bold]{uploader.upload_config.info}[white]"
+                        f"[bold white]Database link: [cornflower_blue not bold]{uploader.upload_config.info}[white]"
                     )
 
             if dual_audio:
@@ -150,13 +189,17 @@ def up(ctx, **kwargs):
                 ok_cookies = uploader.check_cookies(provider)
                 if uploader.upload_config.pic_num > 0 and not ok_cookies:
                     if images := snapshot_create_upload(
-                        config=uploader, input_file=uploader.file, mediainfo=uploader.mediainfo
+                        config=uploader,
+                        input_file=uploader.file,
+                        mediainfo=uploader.mediainfo,
                     ):
                         display_info.add(images)
 
                 iprint("Uploading to Nyaa...")
 
-                upload_result = uploader.try_upload_with_retries(display_name, name, provider)
+                upload_result = uploader.try_upload_with_retries(
+                    display_name, name, provider
+                )
 
                 if upload_result:
                     if (
@@ -164,7 +207,9 @@ def up(ctx, **kwargs):
                         and not uploader.upload_config.hidden
                     ):
                         uploader.send_notification(upload_result)
-                    watch_dir = uploader.args.watch_dir or uploader.upload_config.watch_dir
+                    watch_dir = (
+                        uploader.args.watch_dir or uploader.upload_config.watch_dir
+                    )
 
                     if watch_dir:
                         try:
@@ -177,9 +222,13 @@ def up(ctx, **kwargs):
                                 "[bold white]Successfully copied to watch directory[white]"
                             )
                         else:
-                            display_info.add("[bold white]Failed to copy to watch directory[white]")
+                            display_info.add(
+                                "[bold white]Failed to copy to watch directory[white]"
+                            )
 
-                    display_info = uploader.display_success(display_info, upload_result, provider)
+                    display_info = uploader.display_success(
+                        display_info, upload_result, provider
+                    )
 
                     if ok_cookies and uploader.upload_config.pic_num > 0:
                         display_info = uploader.handle_image_upload(
