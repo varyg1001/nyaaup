@@ -12,7 +12,8 @@ from nyaaup.auth import auth
 from nyaaup.up import up
 from nyaaup.utils import DefaultCommandGroup
 
-__version__ = "5.5.1"
+
+__version__ = "5.6.0"
 
 console = Console()
 
@@ -55,6 +56,11 @@ def command_header(f):
 @cloup.group(
     cls=DefaultCommandGroup,
     context_settings=CONTEXT_SETTINGS,
+)
+@cloup.version_option(
+    prog_name="nyaaup",
+    version=__version__,
+    message="%(prog)s v%(version)s",
 )
 @command_header
 @cloup.pass_context
