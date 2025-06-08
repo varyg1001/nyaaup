@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Release Tag (e.g., v1.0.0). Defaults to version from changelog.md if not provided.
+        description: Release Tag (e.g., v1.0.0). Defaults to version from CHANGELOG.md if not provided.
         required: false
 
 permissions:
@@ -31,8 +31,8 @@ jobs:
       - name: Fetch changelog and version
         id: get-changelog-info
         run: |
-          PACKAGE_VERSION=$(head -n 1 changelog.md | awk '{print $NF}' | sed 's/://')
-          CHANGELOG_ENTRY=$(awk '/^# nyaaup / { if (found) exit; else if (NR==1) found=1 } found' changelog.md | sed '/^# nyaaup /d')
+          PACKAGE_VERSION=$(head -n 1 CHANGELOG.md | awk '{print $NF}' | sed 's/://')
+          CHANGELOG_ENTRY=$(awk '/^# nyaaup / { if (found) exit; else if (NR==1) found=1 } found' CHANGELOG.md | sed '/^# nyaaup /d')
 
           echo "version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
@@ -96,7 +96,7 @@ jobs:
           RELEASE_CHANGELOG="${{ needs.build.outputs.changelog }}"
 
           if [ -z "$RELEASE_TAG" ]; then
-            echo "Error: Could not determine release tag. Please provide an input tag or ensure version is in changelog.md."
+            echo "Error: Could not determine release tag. Please provide an input tag or ensure version is in CHANGELOG.md."
             exit 1
           fi
 
@@ -118,4 +118,4 @@ jobs:
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@v1.12.3
         with:
-          password: ${{ secrets.PYPI_TOKEN }}
+          attestations: true

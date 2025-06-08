@@ -1,9 +1,9 @@
 # nyaaup 5.6.0:
 ## Added
 - Support Anilist
-- version option
+- Version option
 ## Changed
-- mal specific options changed to general ones
+- MAL specific options changed to general ones
 
 # nyaaup 5.5.1:
 ## Fixed
@@ -52,8 +52,9 @@
 
 # nyaaup 4.1.0:
 - Use async function for images upload
-- Fixes
 
 # nyaaup 4.0.0:
-- Add optimize image upload
-- change config to only ask for domain
+## Added
+- Optimize image upload
+## Changed
+- Change config to only ask for domain
