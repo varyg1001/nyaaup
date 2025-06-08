@@ -31,7 +31,7 @@ class Config:
     def dirs(self):
         return self._dirs
 
-    def _get_cookies(self):
+    def _get_cookies(self) -> None:
         """Load cookies from file if it exists"""
         data = self.cookies_path.read_text().splitlines()
         for x in data:

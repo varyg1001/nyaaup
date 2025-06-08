@@ -64,7 +64,7 @@ def command_header(f):
 )
 @command_header
 @cloup.pass_context
-def main(ctx, **kwargs):
+def main(ctx: Context, **kwargs):
     """Nyaaup - Auto uploader to Nyaa"""
     if any(x in sys.argv for x in ctx.help_option_names):
         return

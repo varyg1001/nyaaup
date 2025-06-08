@@ -2,6 +2,7 @@ import asyncio
 import random
 from pathlib import Path
 from types import SimpleNamespace
+from typing import TYPE_CHECKING, Any
 
 import aiofiles
 import httpx
@@ -15,6 +16,10 @@ from tls_client import Session
 from wand.image import Image
 
 from nyaaup.utils.logging import wprint
+
+
+if TYPE_CHECKING:
+    from nyaaup.utils.uploader import Uploader
 
 
 async def _upload_image(image_path: Path, upload_task, progress, config) -> str:
@@ -40,14 +45,22 @@ async def _upload_all_images(files, upload_task, progress, config):
 
 
 async def _generate_snapshot(
-    num: int, config, input_file: Path, generate_task, progress, interval, num_snapshots
+    num: int,
+    uploader: "Uploader",
+    input_file: Path,
+    generate_task,
+    progress,
+    interval,
+    num_snapshots,
 ) -> Path:
-    out_path = Path(f"{config.cache_dir}/snapshot_{num}.{config.upload_config.pic_ext}")
+    out_path = Path(
+        f"{uploader.cache_dir}/snapshot_{num}.{uploader.upload_config.pic_ext}"
+    )
     if not out_path.exists():
         timestamp = (
             random.randint(round(interval * 10), round(interval * 10 * num_snapshots))
             / 10
-            if config.upload_config.random_snapshots
+            if uploader.upload_config.random_snapshots
             else interval * (num + 1)
         )
 
@@ -78,7 +91,7 @@ async def _generate_snapshot(
             with Image(filename=out_path) as img:
                 img.depth = 8
                 img.save(filename=out_path)
-            if config.upload_config.pic_ext == "png":
+            if uploader.upload_config.pic_ext == "png":
                 oxipng.optimize(out_path, level=6)
 
         await loop.run_in_executor(None, process_image)
@@ -89,11 +102,16 @@ async def _generate_snapshot(
 
 
 async def _generate_all_snapshots(
-    num_snapshots: int, config, input_file: Path, generate_task, progress, interval
+    num_snapshots: int,
+    uploader: "Uploader",
+    input_file: Path,
+    generate_task,
+    progress,
+    interval,
 ) -> list[Path]:
     tasks = [
         _generate_snapshot(
-            x, config, input_file, generate_task, progress, interval, num_snapshots
+            x, uploader, input_file, generate_task, progress, interval, num_snapshots
         )
         for x in range(1, num_snapshots)
     ]
@@ -101,7 +119,7 @@ async def _generate_all_snapshots(
 
 
 def snapshot_create_upload(
-    config: SimpleNamespace, input_file: Path, mediainfo: list
+    config: SimpleNamespace, input_file: Path, mediainfo: list[dict[str, str | int]]
 ) -> "Tree":
     images = Tree("[bold white]Images[not bold]")
     num_snapshots = config.upload_config.pic_num + 1
@@ -151,7 +169,7 @@ def snapshot_create_upload(
     return images
 
 
-def rentry_upload(config: SimpleNamespace) -> dict:
+def rentry_upload(config: SimpleNamespace) -> dict[Any, Any] | None:
     base_url = "https://rentry.co"
     with Session(client_identifier="firefox_120") as session:
         max_retries = 5
@@ -180,7 +198,11 @@ def rentry_upload(config: SimpleNamespace) -> dict:
                 )
 
                 if res.status_code == 200:
-                    return res.json()
+                    try:
+                        return res.json()
+                    except ValueError:
+                        wprint("Rentry upload failed: Invalid JSON response")
+                        return {}
 
             except Exception as e:
                 wprint(f"Rentry upload failed: {e} ({retries}/{max_retries})")
