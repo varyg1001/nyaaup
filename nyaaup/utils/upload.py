@@ -160,8 +160,21 @@ def snapshot_create_upload(
             snapshots_link = asyncio.run(
                 _upload_all_images(snapshots, upload_task, progress, config)
             )
-            for link in snapshots_link:
-                config.description += f"![]({link})\n"
+
+            columns = 0
+            num_images = len(snapshots_link)
+            for potential_cols in (5, 4, 3, 2):
+                if num_images % potential_cols == 0:
+                    columns = potential_cols
+                    break
+
+            for num, link in enumerate(snapshots_link, start=1):
+                config.description += f"| [![]({link})]({link}) "
+                if num == columns:
+                    config.description += f"\n{'|---' * columns}|\n"
+                elif num % columns == 0:
+                    config.description += "\n"
+
                 images.add(
                     f"[not bold cornflower_blue][link={link}]{link}[/link][white /not bold]"
                 )
