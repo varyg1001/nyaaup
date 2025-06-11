@@ -31,8 +31,11 @@ jobs:
       - name: Fetch changelog and version
         id: get-changelog-info
         run: |
-          PACKAGE_VERSION=$(head -n 1 CHANGELOG.md | awk '{print $NF}' | sed 's/://')
-          CHANGELOG_ENTRY=$(awk '/^# nyaaup / { if (found) exit; else if (NR==1) found=1 } found' CHANGELOG.md | sed '/^# nyaaup /d')
+          VERSION_LINE=$(grep -m1 -E '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md)
+          PACKAGE_VERSION=$(echo "$VERSION_LINE" | sed -E 's/^## \[([0-9]+\.[0-9]+\.[0-9]+)\].*/\1/')
+
+          # Extract the changelog section corresponding to the version
+          CHANGELOG_ENTRY=$(awk "/^## \\[$PACKAGE_VERSION\\]/ {found=1; next} /^## \\[/ {if (found) exit} found" CHANGELOG.md)
 
           echo "version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
