@@ -217,7 +217,9 @@ def process_anilist_info(uploader: Uploader, name: str) -> str:
         title = _get_anilist_title(uploader, anilist_data, search_name)
         if title is not None:
             return title
+        else:
+            wprint("Failed to get AniList title")
     else:
-        wprint("Failed to get AniList title")
+        wprint("Failed to get AniList data")
 
     return ""

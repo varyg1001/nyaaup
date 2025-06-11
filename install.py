@@ -2,13 +2,16 @@
 
 import os
 import platform
+import shutil
 import subprocess
 from pathlib import Path
 
 
+if not shutil.which("uv"):
+    subprocess.run(["pip", "install", "uv"])
+
 print("\n[*] Installing dependencies")
-subprocess.run(["poetry", "-V"], check=True)
-subprocess.run(["poetry", "install"], check=True)
+subprocess.run(["uv", "sync", "--frozen", "--link-mode=copy"], check=True)
 
 if platform.system() != "Windows":
     d = Path("~/.local/bin").expanduser()
