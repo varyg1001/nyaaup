@@ -5,7 +5,7 @@ Nyaaup is an auto uploader to [Nyaa sites](https://github.com/nyaadevs/nyaa), ma
 ## Requirements
 
 - [Python](https://python.org/) 3.10 to 3.13
-- [Poetry](https://python-poetry.org/) 2.0.0 or newer (to install Python package dependencies)
+- [UV](https://docs.astral.sh/uv/) (to install Python package dependencies)
 
 ### Dependencies
 
@@ -23,10 +23,9 @@ pip install nyaaup
 #### from source
 
 1. `git clone https://github.com/varyg1001/nyaaup`
-2. `cd nyaaup`
-3. `poetry config virtualenvs.in-project true` (optional, but recommended)
-4. `poetry install` or `python install.py`
-5. `nyaaup -h`
+1. `cd nyaaup`
+1. `python install.py` or `uv sync --frozen`
+1. `nyaaup -h`
 
 ### Usage
 
