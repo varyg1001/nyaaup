@@ -80,6 +80,9 @@ jobs:
     name: Publish to PyPI and GitHub
     needs: [build, provenance]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
     environment:
       name: pypi
       url: https://pypi.org/project/nyaaup/
