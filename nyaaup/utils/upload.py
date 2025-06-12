@@ -184,14 +184,16 @@ def snapshot_create_upload(
 
 def rentry_upload(config: SimpleNamespace) -> dict[Any, Any] | None:
     base_url = "https://rentry.co"
-    with Session(client_identifier="firefox_120") as session:
+    with Session(
+        client_identifier="firefox_135", random_tls_extension_order=True
+    ) as session:
         max_retries = 5
         retries = 0
         while retries < max_retries:
             res = session.get(
                 url=base_url,
                 headers={
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/120.0",
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/135.0",
                     "Origin": base_url,
                     "Content-Type": "application/x-www-form-urlencoded",
                 },

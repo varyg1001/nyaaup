@@ -411,7 +411,7 @@ requires-dist = [
     { name = "rich", specifier = ">=13.0.0,<14.0.0" },
     { name = "ruamel-yaml", specifier = ">=0.18.0,<0.19.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.14,<0.2.0" },
-    { name = "tls-client2", specifier = ">=1.0.3,<2.0.0" },
+    { name = "tls-client2", specifier = ">=1.1.0,<2.0.0" },
     { name = "torf", specifier = ">=4.0.4,<5.0.0" },
     { name = "typing-extensions", specifier = ">=4.11.0,<5.0.0" },
     { name = "wand", specifier = ">=0.6.10,<0.7.0" },
