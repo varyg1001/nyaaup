@@ -466,6 +466,13 @@ class Uploader:
                 cookies=self.config.cookies,
                 headers={
                     **self.headers,
+                    "cache-control": "no-cache",
+                    "pragma": "no-cache",
+                    "priority": "u=0, i",
+                    "sec-ch-ua-mobile": "?0",
+                    "sec-fetch-site": "same-origin",
+                    "sec-fetch-user": "?1",
+                    "sec-gpc": "1",
                     "origin": provider.domain,
                     "referer": f"{provider.domain}/view/{torrent_id}/edit",
                 },
