@@ -476,6 +476,7 @@ class Uploader:
                     "origin": provider.domain,
                     "referer": f"{provider.domain}/view/{torrent_id}/edit",
                 },
+                proxies={"all://": provider.proxy} if provider.proxy else None,
             )
             return response.status_code == 302
         except Exception as e:
