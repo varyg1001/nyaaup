@@ -32,6 +32,7 @@ def get_anilist_link(anilist_url: str, search_name: str) -> dict[str, str | int]
                             romaji
                             english
                         }
+                        synonyms
                     }
                 }
             """,
@@ -43,12 +44,13 @@ def get_anilist_link(anilist_url: str, search_name: str) -> dict[str, str | int]
                 query ($search: String) {
                     Page(perPage: 10) {
                         media(search: $search, type: ANIME) {
-                        idMal
-                        siteUrl
-                        title {
-                            romaji
-                            english
-                        }
+                            idMal
+                            siteUrl
+                            title {
+                                romaji
+                                english
+                            }
+                            synonyms
                         }
                     }
                 }
@@ -75,9 +77,14 @@ def get_anilist_link(anilist_url: str, search_name: str) -> dict[str, str | int]
                 name_in = (search_name or "").casefold()
                 name_en = (result.get("title", {}).get("english") or "").casefold()
                 name_ori = (result.get("title", {}).get("romaji") or "").casefold()
+                name_synonyms = result.get("synonyms", [])
 
-                if (similar(name_en, name_in) >= 0.75) or (
-                    similar(name_ori, name_in) >= 0.75
+                if (
+                    (similar(name_en, name_in) >= 0.75)
+                    or (similar(name_ori, name_in) >= 0.75)
+                    or any(
+                        x for x in name_synonyms if similar(x.casefold(), name_in) >= 0.75
+                    )
                 ):
                     return result
 
