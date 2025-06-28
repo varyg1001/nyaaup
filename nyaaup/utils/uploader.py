@@ -12,18 +12,14 @@ import cloup
 import httpx
 from pymediainfo import MediaInfo
 from rich.console import Console
-from rich.traceback import install
 from rich.tree import Tree
 
 from nyaaup.utils import Category, cat_help, tg_post
 from nyaaup.utils.logging import eprint, wprint
 from nyaaup.utils.mediainfo import get_description, parse_mediainfo
 from nyaaup.utils.torrent import create_torrent
-from nyaaup.utils.upload import rentry_upload, snapshot_create_upload
+from nyaaup.utils.upload import get_snapshot_tree, rentry_upload
 from nyaaup.utils.userconfig import Config
-
-
-install(show_locals=True)
 
 
 @dataclass
@@ -60,6 +56,7 @@ class Uploader:
         self.mediainfo = []
         self.description: str = ""
         self.file: str | Path = ""
+        self.cache_dir: str | Path = ""
 
         self._validate_inputs()
         self._setup_config()
@@ -244,8 +241,10 @@ class Uploader:
         provider: Provider,
     ):
         try:
-            images = snapshot_create_upload(
-                config=self, input_file=self.file, mediainfo=self.mediainfo
+            images = get_snapshot_tree(
+                uploader=self,
+                input_file=self.file,
+                duration=float(self.mediainfo[0].get("Duration")),
             )
             if images:
                 display_info.add(images)

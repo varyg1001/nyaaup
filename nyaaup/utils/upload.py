@@ -21,46 +21,50 @@ from nyaaup.utils.logging import wprint
 if TYPE_CHECKING:
     from nyaaup.utils.uploader import Uploader
 
+MAX_SIZE = 5 * 1024 * 1024  # 5 MB
 
-async def _upload_image(image_path: Path, upload_task, progress, config) -> str:
+
+async def _upload_image(image_path: Path, upload_task, progress, upload_config) -> str:
     async with aiofiles.open(image_path, "rb") as file:
         content = await file.read()
         async with httpx.AsyncClient() as client:
             res = await client.post(
                 url="https://kek.sh/api/v1/posts",
-                headers=config.upload_config.kek_headers,
+                headers=upload_config.kek_headers,
                 files={"file": content},
             )
 
-            result = res.json()
+            if res.status_code == 200:
+                result = res.json()
 
-            progress.update(upload_task, advance=1)
+                progress.update(upload_task, advance=1)
 
-            return f"https://i.kek.sh/{result['filename']}"
+                return f"https://i.kek.sh/{result['filename']}"
+
+            return ""
 
 
-async def _upload_all_images(files, upload_task, progress, config):
-    tasks = [_upload_image(file, upload_task, progress, config) for file in files]
+async def _upload_all_images(files, **kwargs):
+    tasks = [_upload_image(file, **kwargs) for file in files]
     return await asyncio.gather(*tasks)
 
 
 async def _generate_snapshot(
     num: int,
-    uploader: "Uploader",
+    upload_config: SimpleNamespace,
     input_file: Path,
+    cache_dir,
     generate_task,
-    progress,
     interval,
+    progress,
     num_snapshots,
 ) -> Path:
-    out_path = Path(
-        f"{uploader.cache_dir}/snapshot_{num}.{uploader.upload_config.pic_ext}"
-    )
+    out_path = Path(f"{cache_dir}/snapshot_{num}.{upload_config.pic_ext}")
     if not out_path.exists():
         timestamp = (
             random.randint(round(interval * 10), round(interval * 10 * num_snapshots))
             / 10
-            if uploader.upload_config.random_snapshots
+            if upload_config.random_snapshots
             else interval * (num + 1)
         )
 
@@ -91,7 +95,7 @@ async def _generate_snapshot(
             with Image(filename=out_path) as img:
                 img.depth = 8
                 img.save(filename=out_path)
-            if uploader.upload_config.pic_ext == "png":
+            if upload_config.pic_ext == "png":
                 oxipng.optimize(out_path, level=6)
 
         await loop.run_in_executor(None, process_image)
@@ -103,26 +107,29 @@ async def _generate_snapshot(
 
 async def _generate_all_snapshots(
     num_snapshots: int,
-    uploader: "Uploader",
-    input_file: Path,
-    generate_task,
-    progress,
-    interval,
+    **kwargs,
 ) -> list[Path]:
     tasks = [
-        _generate_snapshot(
-            x, uploader, input_file, generate_task, progress, interval, num_snapshots
-        )
+        _generate_snapshot(x, num_snapshots=num_snapshots, **kwargs)
         for x in range(1, num_snapshots)
     ]
     return await asyncio.gather(*tasks)
 
 
-def snapshot_create_upload(
-    config: SimpleNamespace, input_file: Path, mediainfo: list[dict[str, str | int]]
-) -> "Tree":
-    images = Tree("[bold white]Images[not bold]")
-    num_snapshots = config.upload_config.pic_num + 1
+def _get_snapshot_links(
+    upload_config: SimpleNamespace | None = None,
+    cache_dir: Path | str = "",
+    input_file: Path | str = "",
+    duration: float | int = 0,
+) -> list[str]:
+    if not input_file or not duration or not upload_config:
+        return []
+
+    if isinstance(input_file, str):
+        input_file = Path(input_file)
+
+    images: list[str] = []
+    num_snapshots = upload_config.pic_num + 1
     snapshots: list[Path] = []
 
     with Progress(
@@ -136,48 +143,82 @@ def snapshot_create_upload(
     ) as progress:
         generate_task = progress.add_task(
             "[bold magenta]Generating snapshots[not bold white]",
-            total=config.upload_config.pic_num,
+            total=num_snapshots,
         )
 
-        duration = float(mediainfo[0].get("Duration"))
-        interval = duration / (num_snapshots + 1)
+        interval = duration / (num_snapshots + 2)
 
         snapshots = asyncio.run(
             _generate_all_snapshots(
-                num_snapshots, config, input_file, generate_task, progress, interval
+                num_snapshots=num_snapshots + 1,
+                upload_config=upload_config,
+                cache_dir=cache_dir,
+                input_file=input_file,
+                generate_task=generate_task,
+                progress=progress,
+                interval=interval,
             )
         )
 
-        if not config.args.skip_upload:
-            upload_task = progress.add_task(
-                "[bold magenta]Uploading snapshots[white]",
-                total=config.upload_config.pic_num,
+        # try to prevent black images and too big files if no kek headers
+        path_sizes = [(path, path.stat().st_size) for path in snapshots]
+        smallest = min(path_sizes, key=lambda p: p[1])
+
+        snapshots = [
+            snap
+            for snap, size in path_sizes
+            if (snap != smallest[0])
+            and (upload_config.kek_headers or size < MAX_SIZE)
+        ]
+
+        if not snapshots:
+            return images
+
+        upload_task = progress.add_task(
+            "[bold magenta]Uploading snapshots[white]",
+            total=len(snapshots),
+        )
+
+        images = asyncio.run(
+            _upload_all_images(
+                snapshots,
+                upload_task=upload_task,
+                progress=progress,
+                upload_config=upload_config,
             )
+        )
 
-            snapshots = [
-                snap for snap in snapshots if snap.stat().st_size < 5 * 1024 * 1024
-            ]
-            snapshots_link = asyncio.run(
-                _upload_all_images(snapshots, upload_task, progress, config)
-            )
+    return images
 
-            columns = 0
-            num_images = len(snapshots_link)
-            for potential_cols in (5, 4, 3, 2):
-                if num_images % potential_cols == 0:
-                    columns = potential_cols
-                    break
 
-            for num, link in enumerate(snapshots_link, start=1):
-                config.description += f"| [![]({link})]({link}) "
-                if num == columns:
-                    config.description += f"\n{'|---' * columns}|\n"
-                elif num % columns == 0:
-                    config.description += "\n"
+def get_snapshot_tree(
+    uploader: "Uploader",
+    input_file: Path | str = "",
+    duration: float | int = 0,
+) -> "Tree":
+    images = Tree("[bold white]Images[not bold]")
 
-                images.add(
-                    f"[not bold cornflower_blue][link={link}]{link}[/link][white /not bold]"
-                )
+    snapshot_links = _get_snapshot_links(
+        uploader.upload_config, uploader.cache_dir, input_file, duration
+    )
+
+    num_images = len(snapshot_links)
+    columns = 0
+    for potential_cols in (5, 4, 3, 2):
+        if num_images % potential_cols == 0:
+            columns = potential_cols
+            break
+
+    for num, link in enumerate(snapshot_links, start=1):
+        uploader.description += f"| [![]({link})]({link}) "
+        if num == columns:
+            uploader.description += f"\n{'|---' * columns}|\n"
+        elif num % columns == 0:
+            uploader.description += "\n"
+
+        images.add(
+            f"[not bold cornflower_blue][link={link}]{link}[/link][white /not bold]"
+        )
 
     return images
 
@@ -225,3 +266,5 @@ def rentry_upload(config: SimpleNamespace) -> dict[Any, Any] | None:
                 if retries == max_retries:
                     wprint(f"Rentry upload failed after {max_retries} retries")
                     return {}
+
+        return None

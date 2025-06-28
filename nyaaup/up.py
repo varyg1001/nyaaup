@@ -4,16 +4,12 @@ from types import SimpleNamespace
 import cloup
 from rich import print as rich_print
 from rich.panel import Panel
-from rich.traceback import install
 from rich.tree import Tree
 
 from nyaaup.utils.databases import process_anilist_info, process_mal_info
 from nyaaup.utils.logging import eprint, iprint
-from nyaaup.utils.upload import snapshot_create_upload
+from nyaaup.utils.upload import get_snapshot_tree
 from nyaaup.utils.uploader import Uploader
-
-
-install(show_locals=True)
 
 
 @cloup.command()
@@ -187,11 +183,15 @@ def up(ctx, **kwargs):
 
             for provider in uploader.providers:
                 ok_cookies = uploader.check_cookies(provider)
-                if uploader.upload_config.pic_num > 0 and not ok_cookies:
-                    if images := snapshot_create_upload(
-                        config=uploader,
+                if (
+                    uploader.upload_config.pic_num > 0
+                    and not ok_cookies
+                    and not uploader.args.skip_upload
+                ):
+                    if images := get_snapshot_tree(
+                        uploader=uploader,
                         input_file=uploader.file,
-                        mediainfo=uploader.mediainfo,
+                        duration=float(uploader.mediainfo[0].get("Duration")),
                     ):
                         display_info.add(images)
 
