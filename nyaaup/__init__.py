@@ -7,15 +7,18 @@ from types import SimpleNamespace
 import cloup
 from cloup import Context, HelpFormatter, HelpTheme, Style
 from rich.console import Console
+from rich.traceback import install
 
 from nyaaup.auth import auth
 from nyaaup.up import up
 from nyaaup.utils import DefaultCommandGroup
 
 
-__version__ = "6.0.1"
+__version__ = "6.1.0"
 
 console = Console()
+
+install(show_locals=True)
 
 CONTEXT_SETTINGS = Context.settings(
     help_option_names=["-h", "--help"],
