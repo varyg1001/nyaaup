@@ -6,7 +6,7 @@ from mal import Anime, AnimeSearch
 from rich.console import Console
 
 from nyaaup.utils import similar
-from nyaaup.utils.collections import first, first_or_none
+from nyaaup.utils.collections import first, first_or_else, first_or_none
 from nyaaup.utils.logging import eprint, wprint
 from nyaaup.utils.uploader import Uploader
 
@@ -70,7 +70,7 @@ def get_anilist_link(anilist_url: str, search_name: str) -> dict[str, str | int]
         return {}
 
     if anilist_url:
-        return res.get("data", {}).get("media")
+        return res.get("data", {}).get("Media")
     else:
         if data := res.get("data", {}).get("Page", {}).get("media", []):
             for result in data:
@@ -87,6 +87,8 @@ def get_anilist_link(anilist_url: str, search_name: str) -> dict[str, str | int]
                     )
                 ):
                     return result
+
+            return first_or_else(data, {})
 
     return {}
 

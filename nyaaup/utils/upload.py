@@ -167,8 +167,7 @@ def _get_snapshot_links(
         snapshots = [
             snap
             for snap, size in path_sizes
-            if (snap != smallest[0])
-            and (upload_config.kek_headers or size < MAX_SIZE)
+            if (snap != smallest[0]) and (upload_config.kek_headers or size < MAX_SIZE)
         ]
 
         if not snapshots:
