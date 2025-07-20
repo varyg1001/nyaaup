@@ -47,7 +47,7 @@ class Config:
         """Create default config file"""
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(
-            Path(__file__).resolve().parent.parent.with_name("nyaaup.yaml.example"),
+            Path(__file__).resolve().parent.with_name("nyaaup.yaml.example"),
             self.config_path,
         )
         eprint(f"Config file doesn't exist, created at: {self.config_path}", fatal=True)

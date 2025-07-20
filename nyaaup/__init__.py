@@ -14,7 +14,7 @@ from nyaaup.up import up
 from nyaaup.utils import DefaultCommandGroup
 
 
-__version__ = "6.1.1"
+__version__ = "6.1.2"
 
 console = Console()
 
