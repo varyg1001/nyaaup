@@ -141,7 +141,7 @@ def _get_anilist_title(
     elif title.get("romaji"):
         if title.get("romaji").casefold() not in search_name.casefold():
             if len(title.get("romaji")) > 85:
-                return title.get("romaji")[80:]
+                return title.get("romaji")[:80]
             else:
                 return title.get("romaji")
         else:
