@@ -3,19 +3,19 @@
 
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.7
+    rev: v0.14.10
     hooks:
       - id: ruff
         args: [--fix]
       - id: ruff-format
 
   - repo: https://github.com/pycqa/isort
-    rev: 6.0.0
+    rev: 7.0.0
     hooks:
       - id: isort
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-added-large-files
         name: pre-commit-hooks/check-added-large-files
@@ -42,9 +42,6 @@ repos:
         name: pre-commit-hooks/end-of-file-fixer
       - id: fix-byte-order-marker
         name: pre-commit-hooks/fix-byte-order-marker
-      - id: fix-encoding-pragma
-        name: pre-commit-hooks/fix-encoding-pragma
-        args: [--remove]
       - id: mixed-line-ending
         name: pre-commit-hooks/mixed-line-ending
         args: [--fix=lf]
@@ -53,10 +50,10 @@ repos:
         args: [--markdown-linebreak-ext=md]
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.19.1
+    rev: v3.21.2
     hooks:
       - id: pyupgrade
-        args: [--py311-plus, --keep-runtime-typing]
+        args: [--py310-plus, --keep-runtime-typing]
 
   - repo: https://github.com/jendrikseipp/vulture
     rev: v2.14
@@ -64,7 +61,7 @@ repos:
       - id: vulture
 
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.35.1
+    rev: v1.37.1
     hooks:
       - id: yamllint
 
