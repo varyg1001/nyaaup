@@ -1,3 +1,4 @@
+import math
 import subprocess
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -34,7 +35,7 @@ def create_torrent(
     uploader: "Uploader", name: str, filename: Path, overwrite: bool, torrent_tool: str
 ) -> bool:
     if torrent_tool == "torrenttools":
-        result = create_torrent_torrenttools(uploader, name, filename, overwrite)
+        result: bool = create_torrent_torrenttools(uploader, name, filename, overwrite)
     else:
         result = create_torrent_torf(uploader, name, filename, overwrite)
 
@@ -102,12 +103,24 @@ def create_torrent_torf(
     if uploader.add_pub_trackers:
         uploader.announces = get_public_trackers(uploader.announces)
 
+    piece_size: int = 2**18
+
+    if filename.is_file():
+        total_bytes: int = filename.stat().st_size
+    else:
+        total_bytes = sum(f.stat().st_size for f in filename.rglob("*") if f.is_file())
+
+    target_pieces = 1500
+    exponent = max(18, min(24, round(math.log2(total_bytes / target_pieces))))
+    piece_size = 2**exponent
+
     torrent = Torrent(
         filename,
         trackers=uploader.announces,
         source="nyaa.si",
         creation_date=None,
-        created_by="",
+        created_by=None,
+        piece_size=piece_size,
         exclude_regexs=[r".*\.(ffindex|jpg|nfo|png|torrent|txt|json)$"],
     )
 
