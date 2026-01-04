@@ -71,8 +71,6 @@ def create_torrent_torrenttools(
             r".*\.(ffindex|jpg|nfo|png|torrent|txt|json)$",
             "--announce",
             " ".join(as_list(uploader.announces)),
-            "-s",
-            "nyaa.si",
             "--piece-size",
             "16M",
             "--output",
@@ -117,7 +115,6 @@ def create_torrent_torf(
     torrent = Torrent(
         filename,
         trackers=uploader.announces,
-        source="nyaa.si",
         creation_date=None,
         created_by=None,
         piece_size=piece_size,
