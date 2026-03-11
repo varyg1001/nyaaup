@@ -8,7 +8,6 @@ from pymediainfo import MediaInfo
 
 from nyaaup.utils.logging import eprint, wprint
 
-
 if TYPE_CHECKING:
     from nyaaup.utils.uploader import Uploader
 

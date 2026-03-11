@@ -9,44 +9,25 @@ repos:
         args: [--fix]
       - id: ruff-format
 
-  - repo: https://github.com/pycqa/isort
-    rev: 7.0.0
-    hooks:
-      - id: isort
-
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
       - id: check-added-large-files
-        name: pre-commit-hooks/check-added-large-files
       - id: check-executables-have-shebangs
-        name: pre-commit-hooks/check-executables-have-shebangs
       - id: check-json
-        name: pre-commit-hooks/check-json
       - id: check-merge-conflict
-        name: pre-commit-hooks/check-merge-conflict
         args: [--assume-in-merge]
       - id: check-shebang-scripts-are-executable
-        name: pre-commit-hooks/check-shebang-scripts-are-executable
       - id: check-symlinks
-        name: pre-commit-hooks/check-symlinks
       - id: check-toml
-        name: pre-commit-hooks/check-toml
       - id: check-xml
-        name: pre-commit-hooks/check-xml
       - id: check-yaml
-        name: pre-commit-hooks/check-yaml
       - id: destroyed-symlinks
-        name: pre-commit-hooks/destroyed-symlinks
       - id: end-of-file-fixer
-        name: pre-commit-hooks/end-of-file-fixer
       - id: fix-byte-order-marker
-        name: pre-commit-hooks/fix-byte-order-marker
       - id: mixed-line-ending
-        name: pre-commit-hooks/mixed-line-ending
         args: [--fix=lf]
       - id: trailing-whitespace
-        name: pre-commit-hooks/trailing-whitespace
         args: [--markdown-linebreak-ext=md]
 
   - repo: https://github.com/asottile/pyupgrade
@@ -70,3 +51,9 @@ repos:
     hooks:
       - id: yesqa
         name: yesqa
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+      - id: codespell
+        name: codespell - fix common typos

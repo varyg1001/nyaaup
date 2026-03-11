@@ -6,7 +6,6 @@ import shutil
 import subprocess
 from pathlib import Path
 
-
 if not shutil.which("uv"):
     subprocess.run(["pip", "install", "uv"])
 

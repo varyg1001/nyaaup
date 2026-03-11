@@ -41,7 +41,7 @@ Upload Tags:
    -ms, --multi-subs             Use Multi-Subs tag in title.
    -da, --dual-audio             Use Dual-Audio tag in title.
    -ma, --multi-audios           Use Multi-Audios tag in title.
-   -a, --auto / -na, --no-auto   Auto detect Multi-Subs, Multi-Audios or Dual-Audio. (default: True)
+   -a, --auto / -na, --no-auto   Auto detect Multi-Subs, Multi-Audios or Dual-Audio. (Default: True)
 
 Upload Settings:
    -an, --anonymous      Set upload as anonymous.
@@ -63,10 +63,10 @@ Content Information:
    -d, --database [myanimelist|anilist]   Anime database to use for info. (Default: myanimelist)
 
 Media Settings:
-   -p, --pictures-number EXTENSION         Number of pictures to use (default: 3).
+   -p, --pictures-number EXTENSION         Number of pictures to use (Default: 3).
    -pe, --picture-extension NUM            Extension of the pictures.
    -M, --no-mediainfo                      Do not attach Mediainfo to the torrent.
-   -o, --overwrite / -no, --no-overwrite   Create torrent file even if exists. (default: True)
+   -o, --overwrite / -no, --no-overwrite   Create torrent file even if exists. (Default: True)
 
 Other options:
    -ch, --category-help   Print available categories.

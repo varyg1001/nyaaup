@@ -5,14 +5,17 @@ from typing import TYPE_CHECKING
 
 import httpx
 from rich.progress import (
-    BarColumn, Progress, TaskProgressColumn, TextColumn, TimeRemainingColumn,
+    BarColumn,
+    Progress,
+    TaskProgressColumn,
+    TextColumn,
+    TimeRemainingColumn,
 )
 from torf import Torrent
 
 from nyaaup.utils import CustomTransferSpeedColumn
 from nyaaup.utils.collections import as_list
 from nyaaup.utils.logging import eprint, iprint, wprint
-
 
 if TYPE_CHECKING:
     from nyaaup.utils.uploader import Uploader

@@ -8,15 +8,18 @@ import aiofiles
 import httpx
 import oxipng
 from rich.progress import (
-    BarColumn, MofNCompleteColumn, Progress,
-    TaskProgressColumn, TextColumn, TimeRemainingColumn,
+    BarColumn,
+    MofNCompleteColumn,
+    Progress,
+    TaskProgressColumn,
+    TextColumn,
+    TimeRemainingColumn,
 )
 from rich.tree import Tree
 from tls_client import Session
 from wand.image import Image
 
 from nyaaup.utils.logging import wprint
-
 
 if TYPE_CHECKING:
     from nyaaup.utils.uploader import Uploader

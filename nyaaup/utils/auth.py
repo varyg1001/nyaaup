@@ -5,7 +5,6 @@ from typing import Any
 from nyaaup.utils.logging import eprint, wprint
 from nyaaup.utils.userconfig import Config
 
-
 DEFAULT_ANNOUNCE = "http://nyaa.tracker.wf:7777/announce"
 DEFAULT_DOMAIN = "https://nyaa.si"
 DEFAULT_PROVIDER = "nyaasi"
