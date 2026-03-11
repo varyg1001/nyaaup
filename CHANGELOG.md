@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.2.0] - 2026-03-11
+
+### Fixed
+
+- Anilist title length in display name
+- Use video duration for snapshots to prevent failed inaccurate timestamp
+
+### Changed
+
+- Remove source from torrent file
+
+### Added
+
+- Dynamic piece_size for torf
+
 ## [6.1.2] - 2025-07-20
 
 ### Fixed
