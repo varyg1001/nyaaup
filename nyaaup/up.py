@@ -6,6 +6,7 @@ from rich import print as rich_print
 from rich.panel import Panel
 from rich.tree import Tree
 
+from nyaaup.utils.collections import first_or_none
 from nyaaup.utils.databases import process_anilist_info, process_mal_info
 from nyaaup.utils.logging import eprint, iprint
 from nyaaup.utils.upload import get_snapshot_tree
@@ -30,7 +31,7 @@ from nyaaup.utils.uploader import Uploader
         "--auto/--no-auto",
         is_flag=True,
         default=True,
-        help="Auto detect Multi-Subs, Multi-Audios or Dual-Audio. (default: True)",
+        help="Auto detect Multi-Subs, Multi-Audios or Dual-Audio. (Default: True)",
     ),
 )
 @cloup.option_group(
@@ -93,7 +94,7 @@ from nyaaup.utils.uploader import Uploader
         type=int,
         default=3,
         metavar="EXTENSION",
-        help="Number of pictures to use (default: 3).",
+        help="Number of pictures to use (Default: 3).",
     ),
     cloup.option(
         "-pe",
@@ -115,7 +116,7 @@ from nyaaup.utils.uploader import Uploader
         "--overwrite/--no-overwrite",
         is_flag=True,
         default=True,
-        help="Create torrent file even if exists. (default: True)",
+        help="Create torrent file even if exists. (Default: True)",
     ),
 )
 @cloup.option("-ch", "--category-help", is_flag=True, help="Print available categories.")
@@ -182,6 +183,13 @@ def up(ctx, **kwargs):
             display_name = uploader.format_display_name(name, name_plus)
 
             for provider in uploader.providers:
+                if video := first_or_none(
+                    [x for x in uploader.mediainfo if x["@type"] == "Video"]
+                ):
+                    duration = float(video.get("Duration"))
+                else:
+                    duration = float(uploader.mediainfo[0].get("Duration"))
+
                 ok_cookies = uploader.check_cookies(provider)
                 if (
                     uploader.upload_config.pic_num > 0
@@ -191,7 +199,7 @@ def up(ctx, **kwargs):
                     if images := get_snapshot_tree(
                         uploader=uploader,
                         input_file=uploader.file,
-                        duration=float(uploader.mediainfo[0].get("Duration")),
+                        duration=duration,
                     ):
                         display_info.add(images)
 
@@ -232,9 +240,7 @@ def up(ctx, **kwargs):
 
                     if ok_cookies and uploader.upload_config.pic_num > 0:
                         display_info = uploader.handle_image_upload(
-                            upload_result,
-                            display_info,
-                            provider,
+                            upload_result, display_info, provider, duration
                         )
 
                     style = "bold green"

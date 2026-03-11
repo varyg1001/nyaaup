@@ -239,12 +239,13 @@ class Uploader:
         result: UploadResult,
         display_info: Tree,
         provider: Provider,
+        duration: float,
     ):
         try:
             images = get_snapshot_tree(
                 uploader=self,
                 input_file=self.file,
-                duration=float(self.mediainfo[0].get("Duration")),
+                duration=duration,
             )
             if images:
                 display_info.add(images)
