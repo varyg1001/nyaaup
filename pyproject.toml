@@ -1,6 +1,6 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["uv_build>=0.11.3,<0.12"]
+build-backend = "uv_build"
 
 [project]
 name = "nyaaup"
@@ -15,7 +15,6 @@ dependencies = [
     "torf>=4.0.4,<5.0.0",
     "pymediainfo>=7.0.0,<8.0.0",
     "langcodes>=3.3.0,<4.0.0",
-    "wand>=0.6.10,<0.7.0",
     "platformdirs>=4.0.0,<5.0.0",
     "rich>=13.0.0,<14.0.0",
     "humanize>=4.4.0,<5.0.0",
@@ -99,3 +98,10 @@ include_trailing_comma = true
 line_length = 90
 lines_after_imports = 2
 multi_line_output = 5
+
+[tool.uv]
+default-groups = "all"
+
+[tool.uv.build-backend]
+module-root = "."
+module-name = "nyaaup"
