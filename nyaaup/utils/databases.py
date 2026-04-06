@@ -173,7 +173,7 @@ def _get_mal_title(uploader: Uploader, mal_data: Anime, search_name: str) -> str
     return ""
 
 
-def process_mal_info(uploader: Uploader, name: str) -> str:
+def process_mal_info(uploader: Uploader, name: str, max_retries: int = 3) -> str:
     """Process MAL info and return information and name additions"""
     search_name: str = extract_name_from_filename(name)
 
@@ -185,7 +185,7 @@ def process_mal_info(uploader: Uploader, name: str) -> str:
         except Exception as e:
             delay = 2 ** (attempt - 1)
             wprint(f"Attempt {attempt + 1} failed for: {e}")
-            if attempt == max_retries:
+            if attempt == max_retries - 1:
                 eprint("All MyAnimeList attempts failed")
                 return ""
 

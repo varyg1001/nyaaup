@@ -1,5 +1,6 @@
 import asyncio
 import random
+import time
 from pathlib import Path
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
@@ -17,7 +18,6 @@ from rich.progress import (
 )
 from rich.tree import Tree
 from tls_client import Session
-from wand.image import Image
 
 from nyaaup.utils.logging import wprint
 
@@ -27,28 +27,45 @@ if TYPE_CHECKING:
 MAX_SIZE = 5 * 1024 * 1024  # 5 MB
 
 
-async def _upload_image(image_path: Path, upload_task, progress, upload_config) -> str:
-    async with aiofiles.open(image_path, "rb") as file:
-        content = await file.read()
-        async with httpx.AsyncClient() as client:
-            res = await client.post(
-                url="https://kek.sh/api/v1/posts",
-                headers=upload_config.kek_headers,
-                files={"file": content},
-            )
+async def _upload_image(
+    image_path: Path,
+    client: httpx.AsyncClient,
+    upload_task,
+    progress,
+    upload_config,
+) -> str:
+    try:
+        async with aiofiles.open(image_path, "rb") as f:
+            file_content = await f.read()
 
-            if res.status_code == 200:
-                result = res.json()
+        res = await client.post(
+            url="https://kek.sh/api/v1/posts",
+            headers=upload_config.kek_headers,
+            files={"file": (image_path.name, file_content)},
+            timeout=30.0,
+        )
 
-                progress.update(upload_task, advance=1)
+        if res.status_code == 200:
+            result = res.json()
+            progress.update(upload_task, advance=1)
+            return f"https://i.kek.sh/{result['filename']}"
 
-                return f"https://i.kek.sh/{result['filename']}"
+        return ""
 
-            return ""
+    except Exception as e:
+        # Catch connection errors or file read errors
+        print(f"Error uploading {image_path.name}: {e}")
+        return ""
 
 
-async def _upload_all_images(files, **kwargs):
-    tasks = [_upload_image(file, **kwargs) for file in files]
+async def _upload_all_images(files, client, limit=5, **kwargs):
+    semaphore = asyncio.Semaphore(limit)
+
+    async def sem_upload(file):
+        async with semaphore:
+            return await _upload_image(file, client=client, **kwargs)
+
+    tasks = [sem_upload(file) for file in files]
     return await asyncio.gather(*tasks)
 
 
@@ -76,12 +93,16 @@ async def _generate_snapshot(
             "-y",
             "-v",
             "error",
+            "-discard",
+            "nokey",
             "-ss",
             str(timestamp),
             "-i",
             str(input_file),
             "-vf",
             "scale='max(sar,1)*iw':'max(1/sar,1)*ih'",
+            "-pix_fmt",
+            "rgb24",
             "-frames:v",
             "1",
             str(out_path),
@@ -95,11 +116,8 @@ async def _generate_snapshot(
         loop = asyncio.get_running_loop()
 
         def process_image():
-            with Image(filename=out_path) as img:
-                img.depth = 8
-                img.save(filename=out_path)
             if upload_config.pic_ext == "png":
-                oxipng.optimize(out_path, level=6)
+                oxipng.optimize(out_path, level=4)
 
         await loop.run_in_executor(None, process_image)
 
@@ -119,7 +137,7 @@ async def _generate_all_snapshots(
     return await asyncio.gather(*tasks)
 
 
-def _get_snapshot_links(
+async def _get_snapshot_links(
     upload_config: SimpleNamespace | None = None,
     cache_dir: Path | str = "",
     input_file: Path | str = "",
@@ -151,16 +169,14 @@ def _get_snapshot_links(
 
         interval = duration / (num_snapshots + 2)
 
-        snapshots = asyncio.run(
-            _generate_all_snapshots(
-                num_snapshots=num_snapshots + 1,
-                upload_config=upload_config,
-                cache_dir=cache_dir,
-                input_file=input_file,
-                generate_task=generate_task,
-                progress=progress,
-                interval=interval,
-            )
+        snapshots = await _generate_all_snapshots(
+            num_snapshots=num_snapshots + 1,
+            upload_config=upload_config,
+            cache_dir=cache_dir,
+            input_file=input_file,
+            generate_task=generate_task,
+            progress=progress,
+            interval=interval,
         )
 
         # try to prevent black images and too big files if no kek headers
@@ -181,26 +197,26 @@ def _get_snapshot_links(
             total=len(snapshots),
         )
 
-        images = asyncio.run(
-            _upload_all_images(
+        async with httpx.AsyncClient() as client:
+            images = await _upload_all_images(
                 snapshots,
+                client=client,
                 upload_task=upload_task,
                 progress=progress,
                 upload_config=upload_config,
             )
-        )
 
     return images
 
 
-def get_snapshot_tree(
+async def get_snapshot_tree(
     uploader: "Uploader",
     input_file: Path | str = "",
     duration: float | int = 0,
 ) -> "Tree":
     images = Tree("[bold white]Images[not bold]")
 
-    snapshot_links = _get_snapshot_links(
+    snapshot_links = await _get_snapshot_links(
         uploader.upload_config, uploader.cache_dir, input_file, duration
     )
 
@@ -225,14 +241,12 @@ def get_snapshot_tree(
     return images
 
 
-def rentry_upload(config: SimpleNamespace) -> dict[Any, Any] | None:
+def rentry_upload(config: SimpleNamespace, max_retries: int = 3) -> dict[Any, Any] | None:
     base_url = "https://rentry.co"
     with Session(
         client_identifier="firefox_135", random_tls_extension_order=True
     ) as session:
-        max_retries = 5
-        retries = 0
-        while retries < max_retries:
+        for attempt in range(max_retries):
             res = session.get(
                 url=base_url,
                 headers={
@@ -263,10 +277,10 @@ def rentry_upload(config: SimpleNamespace) -> dict[Any, Any] | None:
                         return {}
 
             except Exception as e:
-                wprint(f"Rentry upload failed: {e} ({retries}/{max_retries})")
-                retries += 1
-                if retries == max_retries:
-                    wprint(f"Rentry upload failed after {max_retries} retries")
-                    return {}
+                delay = 2 ** (attempt - 1)
+                wprint(f"Attempt {attempt + 1} failed for Rentry upload: {e}")
+                if attempt == max_retries - 1:
+                    wprint("Rentry upload failed!")
+                time.sleep(delay)
 
         return None

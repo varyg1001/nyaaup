@@ -1,3 +1,4 @@
+import asyncio
 import json
 import re
 import shutil
@@ -182,12 +183,14 @@ class Uploader:
             try:
                 if result := self._try_upload(provider, torrent_data, name, display_name):
                     return result
-            except Exception as e:
+            except httpx.HTTPError as e:
                 delay = 2 ** (attempt - 1)
                 wprint(f"Attempt {attempt + 1} failed for {provider.name}: {e}")
-                if attempt < max_retries:
+                if attempt == max_retries - 1:
                     eprint("All upload attempts failed", True)
                 time.sleep(delay)
+            except Exception as e:
+                eprint(f"Unexpected error: {e}")
 
         return None
 
@@ -242,10 +245,12 @@ class Uploader:
         duration: float,
     ):
         try:
-            images = get_snapshot_tree(
-                uploader=self,
-                input_file=self.file,
-                duration=duration,
+            images = asyncio.run(
+                get_snapshot_tree(
+                    uploader=self,
+                    input_file=self.file,
+                    duration=duration,
+                )
             )
             if images:
                 display_info.add(images)

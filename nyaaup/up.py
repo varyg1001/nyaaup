@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -8,7 +9,7 @@ from rich.tree import Tree
 
 from nyaaup.utils.collections import first_or_none
 from nyaaup.utils.databases import process_anilist_info, process_mal_info
-from nyaaup.utils.logging import eprint, iprint
+from nyaaup.utils.logging import eprint, iprint, wprint
 from nyaaup.utils.upload import get_snapshot_tree
 from nyaaup.utils.uploader import Uploader
 
@@ -196,12 +197,18 @@ def up(ctx, **kwargs):
                     and not ok_cookies
                     and not uploader.args.skip_upload
                 ):
-                    if images := get_snapshot_tree(
-                        uploader=uploader,
-                        input_file=uploader.file,
-                        duration=duration,
-                    ):
-                        display_info.add(images)
+                    try:
+                        if images := asyncio.run(
+                            get_snapshot_tree(
+                                uploader=uploader,
+                                input_file=uploader.file,
+                                duration=duration,
+                            )
+                        ):
+                            display_info.add(images)
+                    except Exception as e:
+                        wprint("Failed to upload images: ", e)
+                        uploader.upload_config.pic_num = 0
 
                 iprint("Uploading to Nyaa...")
 
