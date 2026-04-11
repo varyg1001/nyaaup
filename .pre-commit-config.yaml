@@ -3,7 +3,7 @@
 
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.10
+    rev: v0.15.10
     hooks:
       - id: ruff
         args: [--fix]
@@ -37,12 +37,12 @@ repos:
         args: [--py310-plus, --keep-runtime-typing]
 
   - repo: https://github.com/jendrikseipp/vulture
-    rev: v2.14
+    rev: v2.16
     hooks:
       - id: vulture
 
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.37.1
+    rev: v1.38.0
     hooks:
       - id: yamllint
 
@@ -53,7 +53,7 @@ repos:
         name: yesqa
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.1
+    rev: v2.4.2
     hooks:
       - id: codespell
         name: codespell - fix common typos
