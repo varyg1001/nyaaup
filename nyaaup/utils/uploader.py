@@ -1,5 +1,4 @@
 import asyncio
-import json
 import re
 import shutil
 import sys
@@ -10,7 +9,8 @@ from types import SimpleNamespace
 from typing import Any
 
 import cloup
-import httpx
+import niquests
+import orjson
 from pymediainfo import MediaInfo
 from rich.console import Console
 from rich.tree import Tree
@@ -18,7 +18,7 @@ from rich.tree import Tree
 from nyaaup.utils import Category, cat_help, tg_post
 from nyaaup.utils.logging import eprint, wprint
 from nyaaup.utils.mediainfo import get_description, parse_mediainfo
-from nyaaup.utils.torrent import create_torrent
+from nyaaup.utils.torrent import create_torrent, get_public_trackers
 from nyaaup.utils.upload import get_snapshot_tree, rentry_upload
 from nyaaup.utils.userconfig import Config
 
@@ -89,13 +89,18 @@ class Uploader:
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
         with self.console.status("[bold magenta]Parsing file...") as _:
-            parse_mediainfo(self, self.file)
+            self.mediainfo = parse_mediainfo(self.file)
 
         if not self.mediainfo:
             return None
 
         if not create_torrent(
-            self, name, file_path, self.args.overwrite, self.upload_config.torrent_creator
+            name,
+            file_path,
+            self.cache_dir,
+            self.announces,
+            self.args.overwrite,
+            self.upload_config.torrent_creator,
         ):
             return None
 
@@ -183,7 +188,7 @@ class Uploader:
             try:
                 if result := self._try_upload(provider, torrent_data, name, display_name):
                     return result
-            except httpx.HTTPError as e:
+            except niquests.RequestException as e:
                 delay = 2 ** (attempt - 1)
                 wprint(f"Attempt {attempt + 1} failed for {provider.name}: {e}")
                 if attempt == max_retries - 1:
@@ -214,7 +219,7 @@ class Uploader:
     def check_cookies(self, provider: Provider) -> bool:
         if self.config.cookies:
             try:
-                res = httpx.get(
+                res = niquests.get(
                     f"{provider.domain}/profile",
                     cookies=self.config.cookies,
                     headers={
@@ -289,7 +294,8 @@ class Uploader:
 
         return (watch_dir / torrent_file.name).exists()
 
-    def get_file_name(self, file_path: Path) -> str:
+    @staticmethod
+    def get_file_name(file_path: Path) -> str:
         if file_path.is_file():
             return str(file_path.name).removesuffix(".mkv").removesuffix(".mp4")
 
@@ -312,12 +318,16 @@ class Uploader:
 
     def _setup_config(self) -> None:
         self.config = Config()
-        self._validate_config()
 
-        pref = {}
+        required = ["preferences", "providers"]
+        for key in required:
+            if key not in self.config:
+                eprint(f"Missing {key!r} in config!", True)
 
-        if not (pref := self.config.get("preferences")):
-            eprint("No preferences in config!", True)
+        pref: dict[str, Any] = self.config["preferences"]
+
+        if not pref.get("mediainfo") and not self.args.no_mediainfo:
+            wprint("MediaInfo disabled in config")
 
         self.upload_config = SimpleNamespace(
             category=self._get_category(self.args.category),
@@ -355,6 +365,9 @@ class Uploader:
                 self.upload_config.database = "anilist"
 
         self.providers = self._setup_providers()
+        if self.add_pub_trackers:
+            self.announces = list(dict.fromkeys(self.announces + get_public_trackers()))
+
         self.headers = {
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:136.0) Gecko/20100101 Firefox/136.0",
             "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -365,39 +378,42 @@ class Uploader:
             "upgrade-insecure-requests": "1",
         }
 
-        if key := pref.get("keksh_key"):
-            self.upload_config.kek_headers = {"x-kek-auth": key, **self.headers}
+        self.upload_config.kek_headers = {
+            **({"x-kek-auth": key} if (key := pref.get("keksh_key")) else {}),
+            **self.headers,
+        }
 
     def _setup_providers(self) -> list[Provider]:
         providers = []
 
-        for p in self.config.get("providers", []):
-            if cred := p.get("credentials"):
+        for provider_info in self.config.get("providers", {}):
+            if cred := provider_info.get("credentials"):
                 self.config.load_credentials(cred)
             else:
                 eprint("No credentials in config!", True)
 
-            if not (domain := p.get("domain")):
+            if not (domain := provider_info.get("domain")):
                 eprint("No domain in config!", True)
 
             provider = Provider(
-                name=p.get("name", ""),
+                name=provider_info.get("name", ""),
                 domain=domain,
-                proxy=p.get("proxy", None),
+                proxy=provider_info.get("proxy", None),
                 credentials=self.config.credentials,
             )
 
-            if p.get("add_pub_trackers", False):
+            if provider_info.get("add_pub_trackers", False):
                 self.add_pub_trackers = True
 
-            if announces := p.get("announces", []):
+            if announces := provider_info.get("announces", []):
                 self.announces.extend(list(announces))
 
             providers.append(provider)
 
         return providers
 
-    def _get_download_url(self, page_url: str) -> str:
+    @staticmethod
+    def _get_download_url(page_url: str) -> str:
         return re.sub(
             r"view/(\d+)",
             r"download/\1.torrent",
@@ -427,19 +443,6 @@ class Uploader:
 
         return display_info
 
-    def _validate_config(self) -> None:
-        required = ["preferences", "providers"]
-        for key in required:
-            if key not in self.config:
-                eprint(f"Missing {key} in config!", True)
-
-        if (
-            (pref := self.config.get("preferences"))
-            and not pref.get("mediainfo")
-            and not self.args.no_mediainfo
-        ):
-            wprint("MediaInfo disabled in config")
-
     def _edit_torrent(
         self,
         provider: Provider,
@@ -447,7 +450,7 @@ class Uploader:
         display_name: str,
     ) -> bool:
         try:
-            response = httpx.post(
+            response = niquests.post(
                 f"{provider.domain}/view/{torrent_id}/edit",
                 files={
                     "display_name": (None, display_name),
@@ -481,7 +484,7 @@ class Uploader:
                     "origin": provider.domain,
                     "referer": f"{provider.domain}/view/{torrent_id}/edit",
                 },
-                proxies={"all://": provider.proxy} if provider.proxy else None,
+                proxies={"all": provider.proxy} if provider.proxy else None,
             )
             return response.status_code == 302
         except Exception as e:
@@ -491,7 +494,7 @@ class Uploader:
     def _try_upload(
         self, provider: Provider, torrent_data: bytes, name: str, display_name: str
     ) -> UploadResult | None:
-        response = httpx.post(
+        response = niquests.post(
             f"{provider.domain}/api/v2/upload",
             files={
                 "torrent": (
@@ -501,7 +504,7 @@ class Uploader:
                 ),
                 "torrent_data": (
                     None,
-                    json.dumps(
+                    orjson.dumps(
                         {
                             "name": display_name,
                             "category": self.upload_config.category,
@@ -513,17 +516,17 @@ class Uploader:
                             "trusted": self.upload_config.trusted,
                             "information": self.upload_config.info,
                         }
-                    ),
+                    ).decode(),
                 ),
             },
             auth=(provider.credentials.username, provider.credentials.password),
             headers=self.headers,
-            proxies={"all://": provider.proxy} if provider.proxy else None,
+            proxies={"all": provider.proxy} if provider.proxy else None,
         )
 
         try:
             result = response.json()
-        except json.JSONDecodeError:
+        except niquests.JSONDecodeError:
             eprint(f"Upload failed: {response.text}")
             return None
 

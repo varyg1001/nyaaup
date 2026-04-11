@@ -10,7 +10,7 @@ torrent_creator: torf # torrenttools, torf
 preferences:
   add_pub_trackers: false # If you want to include https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt trackers in the torrent
   advert: "" # Advert to put in description.
-  database: myanimelist # What database to use for info and title in display name. AniList or MyAnimeList
+  database: anilist # What database to use for info and title in display name. AniList or MyAnimeList
   edit_code: # If you keep it blank, it will be random.
   id: "" # Telegram channel id
   info: database # Information in Nyaa. Use `database` for MyAnimeList or AniList link.

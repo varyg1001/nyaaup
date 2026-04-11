@@ -1,16 +1,11 @@
-import json
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING
 
+import orjson
 from langcodes import Language
 from pymediainfo import MediaInfo
 
 from nyaaup.utils.logging import eprint, wprint
-
-if TYPE_CHECKING:
-    from nyaaup.utils.uploader import Uploader
-
 
 SUB_CODEC_MAP = {"UTF-8": "SRT"}
 AUDIO_CODEC_MAP = {
@@ -27,18 +22,20 @@ CHANNEL_MAP = {
 }
 
 
-def parse_mediainfo(uploader: "Uploader", file_path: Path) -> str | None:
+def parse_mediainfo(file_path: Path):
     try:
-        uploader.mediainfo = _get_mediainfo(file_path)
+        mediainfo = _get_mediainfo(file_path)
 
-        if not uploader.mediainfo[0]["Duration"] or any(
+        if not mediainfo[0]["Duration"] or any(
             m.get("@type", "") in ("Audio", "General") and not m.get("BitRate")
-            for m in uploader.mediainfo
+            for m in mediainfo
         ):
-            uploader.mediainfo = _get_mediainfo(file_path, 1)
+            mediainfo = _get_mediainfo(file_path, 1)
     except Exception as e:
         eprint(f"MediaInfo error: {e}")
-        return None
+        mediainfo = []
+
+    return mediainfo
 
 
 def _get_mediainfo(
@@ -46,7 +43,7 @@ def _get_mediainfo(
 ) -> list[dict[str, str | int]]:
     mediainfo: dict[str, str | int] = {}
     try:
-        mediainfo = json.loads(
+        mediainfo = orjson.loads(
             MediaInfo.parse(file_path, output="JSON", parse_speed=parse_speed, full=True)
         )
     except Exception as e:
@@ -125,16 +122,23 @@ def get_description(
             else:
                 codec = codec + " "
 
+            dimensions = (
+                f"**{info.get('Width')}x{info.get('Height')}**"
+                if info.get("Width")
+                else None
+            )
+
             video_info += ", ".join(
-                [
-                    x
-                    for x in [
-                        f"**{codec}{level}**",
-                        f"**{info.get('Width')}x{info.get('Height')}**" + v_bitrate,
-                        f"**{info.get('FrameRate_String')}**",
-                    ]
-                    if x
-                ]
+                filter(
+                    None,
+                    [
+                        f"**{codec}{level}**" if codec else None,
+                        f"{dimensions}{v_bitrate}" if dimensions else None,
+                        f"**{info.get('FrameRate_String')}**"
+                        if info.get("FrameRate_String")
+                        else None,
+                    ],
+                )
             )
 
             video_t_num += 1
@@ -150,17 +154,16 @@ def get_description(
 
             audio_info.append(
                 ", ".join(
-                    [
-                        x
-                        for x in [
+                    filter(
+                        None,
+                        [
                             get_track_info(info),
                             f"{AUDIO_CODEC_MAP.get(str(info['Format']), info['Format'])}"
-                            + f"{CHANNEL_MAP.get(str(info.get('Channels', '')), '?')}"
-                            + f"{' Atmos' if atmos else ''}"
-                            + a_bitrate,
-                        ]
-                        if x
-                    ]
+                            f"{CHANNEL_MAP.get(str(info.get('Channels', '')), '?')}"
+                            f"{' Atmos' if atmos else ''}"
+                            f"{a_bitrate}",
+                        ],
+                    )
                 )
             )
 
@@ -168,14 +171,13 @@ def get_description(
             subtitle_len.add(str(info.get("Language", "")))
             subtitle_info.append(
                 ", ".join(
-                    [
-                        x
-                        for x in [
+                    filter(
+                        None,
+                        [
                             get_track_info(info),
                             f"{SUB_CODEC_MAP.get(str(info['Format']), info['Format'])}",
-                        ]
-                        if x
-                    ]
+                        ],
+                    )
                 )
             )
 

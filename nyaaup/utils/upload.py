@@ -6,7 +6,7 @@ from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
 
 import aiofiles
-import httpx
+import niquests
 import oxipng
 from rich.progress import (
     BarColumn,
@@ -29,7 +29,7 @@ MAX_SIZE = 5 * 1024 * 1024  # 5 MB
 
 async def _upload_image(
     image_path: Path,
-    client: httpx.AsyncClient,
+    client: niquests.AsyncSession,
     upload_task,
     progress,
     upload_config,
@@ -197,7 +197,7 @@ async def _get_snapshot_links(
             total=len(snapshots),
         )
 
-        async with httpx.AsyncClient() as client:
+        async with niquests.AsyncSession() as client:
             images = await _upload_all_images(
                 snapshots,
                 client=client,

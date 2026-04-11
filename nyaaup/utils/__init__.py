@@ -2,8 +2,8 @@ from difflib import SequenceMatcher
 from enum import Enum
 
 import cloup
-import httpx
 import humanize
+import niquests
 from rich.console import Console
 from rich.progress import TimeRemainingColumn
 from rich.text import Text
@@ -66,7 +66,7 @@ def cat_help(console: Console) -> None:
 
 def tg_post(config, message: str | None = None) -> None:
     if message and config.upload_config.tg_token and config.upload_config.tg_id:
-        with httpx.Client(transport=httpx.HTTPTransport(retries=5)) as client:
+        with niquests.Session(retries=5) as client:
             client.post(
                 url=f"https://api.telegram.org/bot{config.upload_config.tg_token}/sendMessage",
                 params={

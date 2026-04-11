@@ -1,9 +1,9 @@
 import math
 import subprocess
+from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING
 
-import httpx
+import niquests
 from rich.progress import (
     BarColumn,
     Progress,
@@ -17,38 +17,43 @@ from nyaaup.utils import CustomTransferSpeedColumn
 from nyaaup.utils.collections import as_list
 from nyaaup.utils.logging import eprint, iprint, wprint
 
-if TYPE_CHECKING:
-    from nyaaup.utils.uploader import Uploader
 
-
-def get_public_trackers(announces: list[str]) -> list[str]:
+@lru_cache(maxsize=1)
+def get_public_trackers() -> list[str]:
     try:
-        response = httpx.get(
-            "https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt"
+        res = niquests.get(
+            "https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt",
+            retries=5,
         )
-        response.raise_for_status()
-        announces.extend([x for x in response.text.splitlines() if x])
-        return announces
-    except httpx.HTTPError as e:
+        res.raise_for_status()
+        return list(filter(None, res.text.splitlines()))
+    except niquests.RequestException as e:
         eprint(str(e))
-        return announces
+        return []
 
 
 def create_torrent(
-    uploader: "Uploader", name: str, filename: Path, overwrite: bool, torrent_tool: str
+    name: str,
+    filename: Path,
+    cache_dir: Path,
+    announces: list[str],
+    overwrite: bool,
+    torrent_tool: str,
 ) -> bool:
     if torrent_tool == "torrenttools":
-        result: bool = create_torrent_torrenttools(uploader, name, filename, overwrite)
+        result: bool = create_torrent_torrenttools(
+            name, filename, cache_dir, announces, overwrite
+        )
     else:
-        result = create_torrent_torf(uploader, name, filename, overwrite)
+        result = create_torrent_torf(name, filename, cache_dir, announces, overwrite)
 
     return result
 
 
 def create_torrent_torrenttools(
-    uploader: "Uploader", name: str, filename: Path, overwrite: bool
+    name: str, filename: Path, cache_dir: Path, announces: list[str], overwrite: bool
 ) -> bool:
-    torrent_file = Path(f"{uploader.cache_dir}/{name}.torrent")
+    torrent_file = Path(f"{cache_dir}/{name}.torrent")
 
     if torrent_file.exists():
         if overwrite:
@@ -60,9 +65,6 @@ def create_torrent_torrenttools(
 
     iprint("Creating torrent...", 0)
 
-    if uploader.add_pub_trackers:
-        uploader.announces = get_public_trackers(uploader.announces)
-
     subprocess.run(
         [
             "torrenttools",
@@ -73,7 +75,7 @@ def create_torrent_torrenttools(
             "--exclude",
             r".*\.(ffindex|jpg|nfo|png|torrent|txt|json)$",
             "--announce",
-            " ".join(as_list(uploader.announces)),
+            " ".join(as_list(announces)),
             "--piece-size",
             "16M",
             "--output",
@@ -87,9 +89,9 @@ def create_torrent_torrenttools(
 
 
 def create_torrent_torf(
-    uploader: "Uploader", name: str, filename: Path, overwrite: bool
+    name: str, filename: Path, cache_dir: Path, announces: list[str], overwrite: bool
 ) -> bool:
-    torrent_file = Path(f"{uploader.cache_dir}/{name}.torrent")
+    torrent_file = Path(f"{cache_dir}/{name}.torrent")
 
     if torrent_file.is_file():
         if overwrite:
@@ -100,9 +102,6 @@ def create_torrent_torf(
             return True
 
     iprint("Creating torrent...", 0)
-
-    if uploader.add_pub_trackers:
-        uploader.announces = get_public_trackers(uploader.announces)
 
     piece_size: int = 2**18
 
@@ -117,7 +116,7 @@ def create_torrent_torf(
 
     torrent = Torrent(
         filename,
-        trackers=uploader.announces,
+        trackers=announces,
         creation_date=None,
         created_by=None,
         piece_size=piece_size,

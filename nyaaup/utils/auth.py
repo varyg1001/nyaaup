@@ -47,7 +47,7 @@ class AuthHandler:
             or self.auth_config.domain
             or self.auth_config.credential
         ):
-            eprint("No arguments provided!", fatal="exit")
+            eprint("No arguments provided!", fatal=True)
 
     def process_credential(self, conf: Config) -> None:
         """Process credential if provided"""
@@ -64,7 +64,7 @@ class AuthHandler:
             if not self.auth_config.credential:
                 eprint(
                     "Could not find specified provider and no credential provided!",
-                    fatal="exit",
+                    fatal=True,
                 )
             self.config["providers"] = []
 

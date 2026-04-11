@@ -17,15 +17,35 @@ from nyaaup.utils.uploader import Uploader
 @cloup.command()
 @cloup.option_group(
     "Upload Tags",
-    cloup.option("-u", "--uncensored", is_flag=True, help="Use Uncensored tag in title."),
     cloup.option(
-        "-ms", "--multi-subs", is_flag=True, help="Use Multi-Subs tag in title."
+        "-u",
+        "--uncensored",
+        is_flag=True,
+        help="Use Uncensored tag in display name.",
     ),
     cloup.option(
-        "-da", "--dual-audio", is_flag=True, help="Use Dual-Audio tag in title."
+        "-b",
+        "--batch",
+        is_flag=True,
+        help="Use Batch tag in display name.",
     ),
     cloup.option(
-        "-ma", "--multi-audios", is_flag=True, help="Use Multi-Audios tag in title."
+        "-ms",
+        "--multi-subs",
+        is_flag=True,
+        help="Use Multi-Subs tag in display name.",
+    ),
+    cloup.option(
+        "-da",
+        "--dual-audio",
+        is_flag=True,
+        help="Use Dual-Audio tag in display name.",
+    ),
+    cloup.option(
+        "-ma",
+        "--multi-audios",
+        is_flag=True,
+        help="Use Multi-Audios tag in display name.",
     ),
     cloup.option(
         "-a/-na",
@@ -38,10 +58,18 @@ from nyaaup.utils.uploader import Uploader
 @cloup.option_group(
     "Upload Settings",
     cloup.option(
-        "-an", "--anonymous", is_flag=True, default=False, help="Set upload as anonymous."
+        "-an",
+        "--anonymous",
+        is_flag=True,
+        default=False,
+        help="Set upload as anonymous.",
     ),
     cloup.option(
-        "-hi", "--hidden", is_flag=True, default=False, help="Set upload as hidden."
+        "-hi",
+        "--hidden",
+        is_flag=True,
+        default=False,
+        help="Set upload as hidden.",
     ),
     cloup.option(
         "-co",
@@ -51,14 +79,26 @@ from nyaaup.utils.uploader import Uploader
         help="Set upload as complete batch.",
     ),
     cloup.option(
-        "-re", "--remake", is_flag=True, default=False, help="Set upload as remake."
+        "-re",
+        "--remake",
+        is_flag=True,
+        default=False,
+        help="Set upload as remake.",
     ),
     cloup.option(
-        "-s", "--skip-upload", is_flag=True, default=False, help="Skip torrent upload."
+        "-s",
+        "--skip-upload",
+        is_flag=True,
+        default=False,
+        help="Skip torrent upload.",
     ),
     cloup.option("-c", "--category", type=str, help="Select a category."),
     cloup.option(
-        "-w", "--watch-dir", type=str, metavar="DIR", help="Path of the watch directory."
+        "-w",
+        "--watch-dir",
+        type=str,
+        metavar="DIR",
+        help="Path of the watch directory.",
     ),
 )
 @cloup.option_group(
@@ -69,22 +109,51 @@ from nyaaup.utils.uploader import Uploader
         type=str,
         help="Set edit code for Mediainfo on Rentry.co",
     ),
-    cloup.option("-i", "--info", type=str, help="Set information."),
-    cloup.option("-n", "--note", type=str, help="Put a note in to the description."),
-    cloup.option("-ad", "--advert", type=str, help="Put advert in to the description."),
     cloup.option(
-        "-t", "--telegram", is_flag=True, default=False, help="Post to telegram."
+        "-i",
+        "--info",
+        type=str,
+        help="Set information.",
     ),
     cloup.option(
-        "-l", "--link", type=str, metavar="URL", help="Link to set anime manually."
+        "-n",
+        "--note",
+        type=str,
+        help="Put a note in to the description.",
     ),
-    cloup.option("-sl", "--skip-database", is_flag=True, help="Skip anime database."),
+    cloup.option(
+        "-ad",
+        "--advert",
+        type=str,
+        help="Put advert in to the description.",
+    ),
+    cloup.option(
+        "-t",
+        "--telegram",
+        is_flag=True,
+        default=False,
+        help="Post to telegram.",
+    ),
+    cloup.option(
+        "-l",
+        "--link",
+        type=str,
+        metavar="URL",
+        help="Link to set anime manually.",
+    ),
+    cloup.option(
+        "-sl",
+        "--skip-database",
+        is_flag=True,
+        help="Skip anime database.",
+    ),
     cloup.option(
         "-d",
         "--database",
         default=None,
+        flag_value="myanimelist",
         type=cloup.Choice(["myanimelist", "anilist"], case_sensitive=False),
-        help="Anime database to use for info. (Default: myanimelist)",
+        help="Anime database to use for info. (Default: anilist)",
     ),
 )
 @cloup.option_group(
@@ -120,8 +189,13 @@ from nyaaup.utils.uploader import Uploader
         help="Create torrent file even if exists. (Default: True)",
     ),
 )
-@cloup.option("-ch", "--category-help", is_flag=True, help="Print available categories.")
-@cloup.argument("path", type=Path, nargs=-1, required=False)
+@cloup.option(
+    "-ch",
+    "--category-help",
+    is_flag=True,
+    help="Print available categories.",
+)
+@cloup.argument("path", type=cloup.types.path(path_type=Path), nargs=-1, required=False)
 @cloup.pass_context
 def up(ctx, **kwargs):
     """Upload torrents to Nyaa"""
@@ -158,14 +232,16 @@ def up(ctx, **kwargs):
                     not uploader.upload_config.info_form_config
                     and uploader.is_anime_category
                 ):
-                    if uploader.upload_config.database == "myanimelist" and (
-                        mal_title := process_mal_info(uploader, name)
-                    ):
-                        name_plus.append(mal_title)
-                    elif uploader.upload_config.database == "anilist" and (
-                        anilist_title := process_anilist_info(uploader, name)
-                    ):
-                        name_plus.append(anilist_title)
+                    if uploader.upload_config.database == "myanimelist":
+                        if mal_title := process_mal_info(uploader, name):
+                            name_plus.append(mal_title)
+                        elif anilist_title := process_anilist_info(uploader, name):
+                            name_plus.append(anilist_title)
+                    elif uploader.upload_config.database == "anilist":
+                        if anilist_title := process_anilist_info(uploader, name):
+                            name_plus.append(anilist_title)
+                        elif mal_title := process_mal_info(uploader, name):
+                            name_plus.append(mal_title)
 
                 if uploader.upload_config.info:
                     display_info.add(
@@ -180,6 +256,8 @@ def up(ctx, **kwargs):
                 name_plus.append("Multi-Subs")
             if uploader.args.uncensored:
                 name_plus.append("Uncensored")
+            if uploader.args.batch:
+                name_plus.append("Batch")
 
             display_name = uploader.format_display_name(name, name_plus)
 

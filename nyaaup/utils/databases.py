@@ -1,8 +1,9 @@
 import re
 import time
 
-import httpx
+import niquests
 from mal import Anime, AnimeSearch
+from niquests.packages.urllib3 import Retry
 from rich.console import Console
 
 from nyaaup.utils import similar
@@ -11,13 +12,16 @@ from nyaaup.utils.logging import eprint, wprint
 from nyaaup.utils.uploader import Uploader
 
 
-def extract_name_from_filename(file_name: str) -> str:
+def extract_name_from_filename(file_name: str) -> tuple[str, bool]:
     name = re.sub(r"[\.|\-]S\d+.*", "", file_name)
+    movie = False
     if name == file_name:
         name = re.sub(r"[\.|\-]\d{4}\..*", "", file_name)
+        if name != file_name:
+            movie = True
     name = name.replace(".", " ")[:100]
 
-    return name
+    return name, movie
 
 
 def get_anilist_link(anilist_url: str, search_name: str) -> dict[str, str | int]:
@@ -58,7 +62,9 @@ def get_anilist_link(anilist_url: str, search_name: str) -> dict[str, str | int]
             "variables": {"search": search_name},
         }
 
-    with httpx.Client(transport=httpx.HTTPTransport(retries=5)) as client:
+    with niquests.Session(
+        retries=Retry(total=5, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
+    ) as client:
         res = client.post(
             url="https://graphql.anilist.co",
             headers={"Content-Type": "application/json", "Accept": "application/json"},
@@ -91,6 +97,38 @@ def get_anilist_link(anilist_url: str, search_name: str) -> dict[str, str | int]
             return first_or_else(data, {})
 
     return {}
+
+
+def mal_search(query: str):
+    try:
+        with niquests.Session(
+            retries=Retry(
+                total=5, backoff_factor=1, status_forcelist=[500, 502, 503, 504]
+            )
+        ) as client:
+            res = client.get(
+                url="https://api.myanimelist.net/v3/search",
+                params={
+                    "q": query,
+                    "limit": "50",
+                    "offset": "0",
+                    "type": "all",
+                    "fields": "anime{alternative_titles,media_type,num_episodes,status,end_date,synopsis,mean,genres,rank,num_list_users,start_season,broadcast,nsfw,created_at,updated_at}",
+                },
+                headers={
+                    "Accept": "application/json",
+                    "Accept-Encoding": "gzip",
+                    "Cache-Control": "public, max-age=60",
+                    "Connection": "Keep-Alive",
+                    "User-Agent": "MAL (android, 2.3.16)",
+                    "X-MAL-Client-ID": "df368c0b8286b739ee77f0b905960700",
+                },
+            )
+            res.raise_for_status()
+            return res.json()
+    except niquests.RequestException as e:
+        wprint(f"Failed to search MAL: {e}")
+        return []
 
 
 def get_mal_link(mal_url: str, search_name: str, console: Console) -> Anime | None:
@@ -134,13 +172,13 @@ def _get_anilist_title(
 ) -> str | None:
     title: dict[str, str] = anilist_data.get("title", {})
     if uploader.is_non_english_category and title.get("english"):
-        if title.get("english").casefold() not in search_name.casefold():
+        if title.get("english", "").casefold() not in search_name.casefold():
             return title.get("english")
         else:
             return ""
     elif title.get("romaji"):
-        if title.get("romaji").casefold() not in search_name.casefold():
-            if len(title.get("romaji")) > 85:
+        if title.get("romaji", "").casefold() not in search_name.casefold():
+            if len(title.get("romaji", "")) > 85:
                 return title.get("romaji")[:80]
             else:
                 return title.get("romaji")
@@ -175,7 +213,7 @@ def _get_mal_title(uploader: Uploader, mal_data: Anime, search_name: str) -> str
 
 def process_mal_info(uploader: Uploader, name: str, max_retries: int = 3) -> str:
     """Process MAL info and return information and name additions"""
-    search_name: str = extract_name_from_filename(name)
+    search_name, _ = extract_name_from_filename(name)
 
     max_retries = 3
     mal_data: Anime | None = None
@@ -210,7 +248,7 @@ def process_mal_info(uploader: Uploader, name: str, max_retries: int = 3) -> str
 
 def process_anilist_info(uploader: Uploader, name: str) -> str:
     """Process AniList info and return information and name additions"""
-    search_name: str = extract_name_from_filename(name)
+    search_name, _ = extract_name_from_filename(name)
 
     anilist_data = get_anilist_link(uploader.args.link, search_name)
 
