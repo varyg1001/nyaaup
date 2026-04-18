@@ -353,7 +353,7 @@ class Uploader:
             ),
             database=self.args.database
             if self.args.database
-            else pref.get("database", "myanimelist"),
+            else pref.get("database", "anilist"),
             kek_headers={},
             info="",
         )
