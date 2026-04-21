@@ -151,7 +151,6 @@ from nyaaup.utils.uploader import Uploader
         "-d",
         "--database",
         default=None,
-        flag_value="myanimelist",
         type=cloup.Choice(["myanimelist", "anilist"], case_sensitive=False),
         help="Anime database to use for info. (Default: anilist)",
     ),
