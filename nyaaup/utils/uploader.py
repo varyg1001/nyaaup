@@ -201,12 +201,19 @@ class Uploader:
 
     def send_notification(self, result: UploadResult) -> None:
         if self.upload_config.tg_token and self.upload_config.tg_id:
-            message = (
-                f"\n{result.name}\n\n"
-                f"Nyaa link: {result.url}\n\n"
-                f'<a href="{result.download_url}">Torrent file</a>'
+            message = f"<b>{result.name}</b>\n\n- <b>Category</b>: {self._get_category_name(self.upload_config.category)}\n\n"
+            buttons = [
+                [
+                    {"text": "🔗 View on Nyaa", "url": result.url},
+                    {"text": "📥 Download Torrent", "url": result.download_url},
+                ]
+            ]
+            tg_post(
+                self.upload_config.tg_token,
+                self.upload_config.tg_id,
+                message,
+                buttons,
             )
-            tg_post(self, message)
 
     def format_display_name(self, name: str, name_plus: list[str]) -> str:
         name_nyaa = name.replace(".", " ")
@@ -419,6 +426,16 @@ class Uploader:
             r"download/\1.torrent",
             page_url,
         )
+
+    def _get_category_name(self, category: str | Category) -> str | None:
+        if isinstance(category, Category):
+            return category.display_name
+
+        for cat in Category:
+            if category in [cat.id, cat.numeric_id, cat.display_name]:
+                return cat.display_name
+
+        return None
 
     def _get_category(self, category: str | Category) -> str | None:
         if isinstance(category, Category):

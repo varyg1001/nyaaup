@@ -299,7 +299,10 @@ def up(ctx, **kwargs):
                         uploader.upload_config.telegram_enabled
                         and not uploader.upload_config.hidden
                     ):
-                        uploader.send_notification(upload_result)
+                        try:
+                            uploader.send_notification(upload_result)
+                        except Exception as e:
+                            wprint(f"Failed to send notification: {e}")
                     watch_dir = (
                         uploader.args.watch_dir or uploader.upload_config.watch_dir
                     )

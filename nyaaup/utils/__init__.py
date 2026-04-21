@@ -4,6 +4,7 @@ from enum import Enum
 import cloup
 import humanize
 import niquests
+import orjson
 from rich.console import Console
 from rich.progress import TimeRemainingColumn
 from rich.text import Text
@@ -46,7 +47,7 @@ class Category(Enum):
     def __init__(self, id: str, display_name: str, numeric_id: str):
         self.id = id
         self.display_name = display_name
-        self.numeric_id = numeric_id
+        self.numeric_id: str = numeric_id
 
 
 def similar(x: str, y: str) -> float:
@@ -64,17 +65,32 @@ def cat_help(console: Console) -> None:
     console.print(categories)
 
 
-def tg_post(config, message: str | None = None) -> None:
-    if message and config.upload_config.tg_token and config.upload_config.tg_id:
+def tg_post(
+    tg_token: str | None = None,
+    tg_id: str | None = None,
+    message: str | None = None,
+    buttons: list | None = None,
+) -> None:
+    if message and tg_token and tg_id:
+        reply_markup = {}
+        if buttons:
+            reply_markup = {"inline_keyboard": buttons}
+
         with niquests.Session(retries=5) as client:
-            client.post(
-                url=f"https://api.telegram.org/bot{config.upload_config.tg_token}/sendMessage",
-                params={
+            res = client.post(
+                url=f"https://api.telegram.org/bot{tg_token}/sendMessage",
+                json={
                     "text": message,
-                    "chat_id": config.upload_config.tg_id,
+                    "chat_id": tg_id,
                     "parse_mode": "html",
                     "disable_web_page_preview": True,
+                    **(
+                        {"reply_markup": orjson.dumps(reply_markup).decode()}
+                        if reply_markup
+                        else {}
+                    ),
                 },
             )
+            res.raise_for_status()
     else:
         wprint("Telegram token or chat id not set.")
