@@ -204,7 +204,7 @@ class Uploader:
             message = f"<b>{result.name}</b>\n\n- <b>Category</b>: {self._get_category_name(self.upload_config.category)}\n\n"
             message = (
                 f"\n<b>{result.name}</b>\n\n"
-                f"- <b>Category</b>: {self._get_category_name(self.upload_config.category)}"
+                f"- <b>Category</b>: {self._get_category_name(self.upload_config.category)}\n"
                 "- <b>Link</b>:"
                 f'<a href="{result.url}">View site</a> | '
                 f'<a href="{result.download_url}">Torrent file</a>'
