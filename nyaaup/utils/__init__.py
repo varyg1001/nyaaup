@@ -68,22 +68,16 @@ def tg_post(
     tg_token: str | None = None,
     tg_id: str | None = None,
     message: str | None = None,
-    buttons: list | None = None,
 ) -> None:
     if message and tg_token and tg_id:
-        reply_markup = {}
-        if buttons:
-            reply_markup = {"inline_keyboard": buttons}
-
         with niquests.Session(retries=5) as client:
             res = client.post(
                 url=f"https://api.telegram.org/bot{tg_token}/sendMessage",
-                json={
+                params={
                     "text": message,
                     "chat_id": tg_id,
                     "parse_mode": "html",
                     "disable_web_page_preview": True,
-                    **({"reply_markup": reply_markup} if reply_markup else {}),
                 },
             )
             res.raise_for_status()

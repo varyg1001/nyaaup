@@ -202,17 +202,17 @@ class Uploader:
     def send_notification(self, result: UploadResult) -> None:
         if self.upload_config.tg_token and self.upload_config.tg_id:
             message = f"<b>{result.name}</b>\n\n- <b>Category</b>: {self._get_category_name(self.upload_config.category)}\n\n"
-            buttons = [
-                [
-                    {"text": "🔗 View on Nyaa", "url": result.url},
-                    {"text": "📥 Download Torrent", "url": result.download_url},
-                ]
-            ]
+            message = (
+                f"\n<b>{result.name}</b>\n\n"
+                f"- <b>Category</b>: {self._get_category_name(self.upload_config.category)}"
+                "- <b>Link</b>:"
+                f'<a href="{result.url}">View site</a> | '
+                f'<a href="{result.download_url}">Torrent file</a>'
+            )
             tg_post(
                 self.upload_config.tg_token,
                 self.upload_config.tg_id,
                 message,
-                buttons,
             )
 
     def format_display_name(self, name: str, name_plus: list[str]) -> str:
