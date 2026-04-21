@@ -4,7 +4,6 @@ from enum import Enum
 import cloup
 import humanize
 import niquests
-import orjson
 from rich.console import Console
 from rich.progress import TimeRemainingColumn
 from rich.text import Text
@@ -84,11 +83,7 @@ def tg_post(
                     "chat_id": tg_id,
                     "parse_mode": "html",
                     "disable_web_page_preview": True,
-                    **(
-                        {"reply_markup": orjson.dumps(reply_markup).decode()}
-                        if reply_markup
-                        else {}
-                    ),
+                    **({"reply_markup": reply_markup} if reply_markup else {}),
                 },
             )
             res.raise_for_status()
