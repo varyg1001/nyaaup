@@ -22,7 +22,7 @@ def extract_name_from_filename(file_name: str) -> tuple[str, bool, str | None]:
         if name != file_name:
             is_movie = True
     else:
-        season = find(r"[\.|\-](S\d+).*", file_name)
+        season = find(r"[\.|\-]S(\d+).*", file_name)
     name = name.replace(".", " ")[:100]
 
     return name, is_movie, season
@@ -254,7 +254,7 @@ def process_anilist_info(uploader: Uploader, name: str) -> str:
     """Process AniList info and return information and name additions"""
     search_name, is_movie, season = extract_name_from_filename(name)
 
-    if not is_movie and season:
+    if not is_movie and season and season not in ["01", "1"]:
         search_name = f"{search_name} season {season}"
 
     anilist_data = get_anilist_link(uploader.args.link, search_name)
