@@ -7,7 +7,7 @@ from niquests.packages.urllib3 import Retry
 from rich.console import Console
 
 from nyaaup.utils import similar
-from nyaaup.utils.regex import find, similar
+from nyaaup.utils.regex import find
 from nyaaup.utils.collections import first, first_or_else, first_or_none
 from nyaaup.utils.logging import eprint, wprint
 from nyaaup.utils.uploader import Uploader
