@@ -6,22 +6,26 @@ from mal import Anime, AnimeSearch
 from niquests.packages.urllib3 import Retry
 from rich.console import Console
 
-from nyaaup.utils import similar
+from nyaaup.utils import find, similar
 from nyaaup.utils.collections import first, first_or_else, first_or_none
 from nyaaup.utils.logging import eprint, wprint
 from nyaaup.utils.uploader import Uploader
 
 
-def extract_name_from_filename(file_name: str) -> tuple[str, bool]:
+def extract_name_from_filename(file_name: str) -> tuple[str, bool, str | None]:
     name = re.sub(r"[\.|\-]S\d+.*", "", file_name)
-    movie = False
+    is_movie = False
+    season = None
+
     if name == file_name:
         name = re.sub(r"[\.|\-]\d{4}\..*", "", file_name)
         if name != file_name:
-            movie = True
+            is_movie = True
+    else:
+        season = find(r"[\.|\-](S\d+).*", file_name)
     name = name.replace(".", " ")[:100]
 
-    return name, movie
+    return name, is_movie, season
 
 
 def get_anilist_link(anilist_url: str, search_name: str) -> dict[str, str | int]:
@@ -213,7 +217,7 @@ def _get_mal_title(uploader: Uploader, mal_data: Anime, search_name: str) -> str
 
 def process_mal_info(uploader: Uploader, name: str, max_retries: int = 3) -> str:
     """Process MAL info and return information and name additions"""
-    search_name, _ = extract_name_from_filename(name)
+    search_name, _, _ = extract_name_from_filename(name)
 
     max_retries = 3
     mal_data: Anime | None = None
@@ -248,7 +252,10 @@ def process_mal_info(uploader: Uploader, name: str, max_retries: int = 3) -> str
 
 def process_anilist_info(uploader: Uploader, name: str) -> str:
     """Process AniList info and return information and name additions"""
-    search_name, _ = extract_name_from_filename(name)
+    search_name, is_movie, season = extract_name_from_filename(name)
+
+    if not is_movie and season:
+        search_name = f"{search_name} season {season}"
 
     anilist_data = get_anilist_link(uploader.args.link, search_name)
 
