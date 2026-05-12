@@ -55,7 +55,10 @@ from nyaaup.utils.userconfig import Config
     type=Path,
     default=None,
     metavar="path",
-    help="Cookies file from nyaa. (Cookies must be in the standard Netscape cookies file format)",
+    help=(
+        "Cookies file from nyaa. (Cookies must be in the standard Netscape "
+        "cookies file format)"
+    ),
 )
 @cloup.pass_context
 def auth(ctx, **kwargs):

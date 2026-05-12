@@ -59,7 +59,8 @@ def _process_database_info(
 
         if uploader.upload_config.info:
             display_info.add(
-                f"[bold white]Database link: [cornflower_blue not bold]{uploader.upload_config.info}[white]"
+                f"[bold white]Database link: [cornflower_blue not bold]"
+                f"{uploader.upload_config.info}[white]"
             )
     return name_plus
 
@@ -287,7 +288,12 @@ def _handle_post_upload(
     is_flag=True,
     help="Print available categories.",
 )
-@cloup.argument("path", type=cloup.types.path(path_type=Path), nargs=-1, required=False)
+@cloup.argument(
+    "path",
+    type=cloup.types.path(path_type=Path),
+    nargs=-1,
+    required=False,
+)
 @cloup.pass_context
 def up(ctx, **kwargs):
     """Upload torrents to Nyaa"""

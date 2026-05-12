@@ -22,7 +22,8 @@ from nyaaup.utils.logging import eprint, iprint, wprint
 def get_public_trackers() -> list[str]:
     try:
         res = niquests.get(
-            "https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_best.txt",
+            "https://raw.githubusercontent.com/ngosang/trackerslist"
+            "/master/trackers_best.txt",
             retries=5,
         )
         res.raise_for_status()

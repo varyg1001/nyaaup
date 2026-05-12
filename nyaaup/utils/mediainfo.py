@@ -44,7 +44,12 @@ def _get_mediainfo(
     mediainfo: dict[str, str | int] = {}
     try:
         mediainfo = orjson.loads(
-            MediaInfo.parse(file_path, output="JSON", parse_speed=parse_speed, full=True)
+            MediaInfo.parse(
+                file_path,
+                output="JSON",
+                parse_speed=parse_speed,
+                full=True,
+            )
         )
     except Exception as e:
         wprint(f"Failed to get mediainfo: {e}")

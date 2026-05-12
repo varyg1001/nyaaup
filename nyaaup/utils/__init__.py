@@ -61,7 +61,8 @@ def cat_help(console: Console) -> None:
 
     for cat in Category:
         categories.add(
-            f"[{cat.numeric_id}] [cornflower_blue not bold]{cat.display_name}[white /not bold]"
+            f"[{cat.numeric_id}] [cornflower_blue not bold]"
+            f"{cat.display_name}[white /not bold]"
         )
 
     console.print(categories)

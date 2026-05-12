@@ -245,7 +245,10 @@ async def get_snapshot_tree(
     return images
 
 
-def rentry_upload(config: SimpleNamespace, max_retries: int = 3) -> dict[Any, Any] | None:
+def rentry_upload(
+    config: SimpleNamespace,
+    max_retries: int = 3,
+) -> dict[Any, Any] | None:
     base_url = "https://rentry.co"
     with Session(
         client_identifier="firefox_135", random_tls_extension_order=True
