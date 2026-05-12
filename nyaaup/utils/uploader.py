@@ -215,7 +215,8 @@ class Uploader:
                 message,
             )
 
-    def format_display_name(self, name: str, name_plus: list[str]) -> str:
+    @staticmethod
+    def format_display_name(name: str, name_plus: list[str]) -> str:
         name_nyaa = name.replace(".", " ")
         if channel := re.search(r"[A-Z]{3}[2|5|7] [0|1]", name_nyaa):
             c = channel[0]
@@ -280,7 +281,8 @@ class Uploader:
 
         return display_info
 
-    def display_success(self, display_info: Tree, result: UploadResult, provider):
+    @staticmethod
+    def display_success(display_info: Tree, result: UploadResult, provider):
         info = Tree(f"[bold white]Links for {provider.name}[not bold]")
         info.add(
             f"[bold white]Page link: [cornflower_blue not bold][link={result.url}]{result.url}[/link][white]"
@@ -325,7 +327,16 @@ class Uploader:
 
     def _setup_config(self) -> None:
         self.config = Config()
+        pref = self._validate_config()
+        self._init_upload_config(pref)
 
+        self.providers = self._setup_providers()
+        if self.add_pub_trackers:
+            self.announces = list(dict.fromkeys(self.announces + get_public_trackers()))
+
+        self._setup_headers(pref)
+
+    def _validate_config(self) -> dict[str, Any]:
         required = ["preferences", "providers"]
         for key in required:
             if key not in self.config:
@@ -336,6 +347,9 @@ class Uploader:
         if not pref.get("mediainfo") and not self.args.no_mediainfo:
             wprint("MediaInfo disabled in config")
 
+        return pref
+
+    def _init_upload_config(self, pref: dict[str, Any]) -> None:
         self.upload_config = SimpleNamespace(
             category=self._get_category(self.args.category),
             anonymous="anonymous" if self.args.anonymous else None,
@@ -363,15 +377,13 @@ class Uploader:
         )
 
         if self.args.link:
-            if "://myanimelist.net/" in self.args.link.lower():
+            link_lower = self.args.link.lower()
+            if "://myanimelist.net/" in link_lower:
                 self.upload_config.database = "myanimelist"
-            elif "://anilist.co/" in self.args.link.lower():
+            elif "://anilist.co/" in link_lower:
                 self.upload_config.database = "anilist"
 
-        self.providers = self._setup_providers()
-        if self.add_pub_trackers:
-            self.announces = list(dict.fromkeys(self.announces + get_public_trackers()))
-
+    def _setup_headers(self, pref: dict[str, Any]) -> None:
         self.headers = {
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:136.0) Gecko/20100101 Firefox/136.0",
             "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -424,7 +436,8 @@ class Uploader:
             page_url,
         )
 
-    def _get_category_name(self, category: str | Category) -> str | None:
+    @staticmethod
+    def _get_category_name(category: str | Category) -> str | None:
         if isinstance(category, Category):
             return category.display_name
 
@@ -434,7 +447,8 @@ class Uploader:
 
         return None
 
-    def _get_category(self, category: str | Category) -> str | None:
+    @staticmethod
+    def _get_category(category: str | Category) -> str | None:
         if isinstance(category, Category):
             return category.id
 
@@ -444,9 +458,8 @@ class Uploader:
 
         return None
 
-    def _add_media_info_display(
-        self, display_info: Tree, mediainfo_url: str, edit_code: str
-    ):
+    @staticmethod
+    def _add_media_info_display(display_info: Tree, mediainfo_url: str, edit_code: str):
         medlink = Tree(
             f"[bold white]MediaInfo link: [cornflower_blue not bold][link={mediainfo_url}]{mediainfo_url}[/link][white]"
         )
@@ -555,7 +568,8 @@ class Uploader:
             name=display_name,
         )
 
-    def _handle_upload_errors(self, errors: dict[str, Any] | str | list[str]) -> None:
+    @staticmethod
+    def _handle_upload_errors(errors: dict[str, Any] | str | list[str]) -> None:
         if isinstance(errors, str):
             eprint(f"Failed to upload: {errors}")
         elif isinstance(errors, list):

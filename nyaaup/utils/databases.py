@@ -82,24 +82,22 @@ def get_anilist_link(anilist_url: str, search_name: str) -> dict[str, str | int]
 
     if anilist_url:
         return res.get("data", {}).get("Media")
-    else:
-        if data := res.get("data", {}).get("Page", {}).get("media", []):
-            for result in data:
-                name_in = (search_name or "").casefold()
-                name_en = (result.get("title", {}).get("english") or "").casefold()
-                name_ori = (result.get("title", {}).get("romaji") or "").casefold()
-                name_synonyms = result.get("synonyms", [])
 
-                if (
-                    (similar(name_en, name_in) >= 0.75)
-                    or (similar(name_ori, name_in) >= 0.75)
-                    or any(
-                        x for x in name_synonyms if similar(x.casefold(), name_in) >= 0.75
-                    )
-                ):
-                    return result
+    if data := res.get("data", {}).get("Page", {}).get("media", []):
+        for result in data:
+            name_in = (search_name or "").casefold()
+            name_en = (result.get("title", {}).get("english") or "").casefold()
+            name_ori = (result.get("title", {}).get("romaji") or "").casefold()
+            name_synonyms = result.get("synonyms", [])
 
-            return first_or_else(data, {})
+            if (
+                (similar(name_en, name_in) >= 0.75)
+                or (similar(name_ori, name_in) >= 0.75)
+                or any(x for x in name_synonyms if similar(x.casefold(), name_in) >= 0.75)
+            ):
+                return result
+
+        return first_or_else(data, {})
 
     return {}
 
@@ -179,16 +177,14 @@ def _get_anilist_title(
     if uploader.is_non_english_category and title.get("english"):
         if title.get("english", "").casefold() not in search_name.casefold():
             return title.get("english")
-        else:
-            return ""
+        return ""
     elif title.get("romaji"):
         if title.get("romaji", "").casefold() not in search_name.casefold():
             if len(title.get("romaji", "")) > 85:
                 return title.get("romaji")[:80]
-            else:
-                return title.get("romaji")
-        else:
-            return ""
+            return title.get("romaji")
+
+        return ""
 
     return None
 
@@ -200,7 +196,8 @@ def _get_mal_title(uploader: Uploader, mal_data: Anime, search_name: str) -> str
         and mal_data.title_english.casefold() not in search_name.casefold()
     ):
         return mal_data.title_english
-    elif mal_data.title and mal_data.title.casefold() not in search_name.casefold():
+
+    if mal_data.title and mal_data.title.casefold() not in search_name.casefold():
         if len(mal_data.title) > 85:
             if (
                 mal_data.title_synonyms
@@ -208,10 +205,8 @@ def _get_mal_title(uploader: Uploader, mal_data: Anime, search_name: str) -> str
                 and mal_data.title_synonyms[0].casefold() not in search_name.casefold()
             ):
                 return mal_data.title_synonyms[0]
-            else:
-                return mal_data.title[80:]
-        else:
-            return mal_data.title
+            return mal_data.title[80:]
+        return mal_data.title
 
     return ""
 
@@ -272,8 +267,7 @@ def process_anilist_info(uploader: Uploader, name: str) -> str:
         title = _get_anilist_title(uploader, anilist_data, search_name)
         if title is not None:
             return title
-        else:
-            wprint("Failed to get AniList title")
+        wprint("Failed to get AniList title")
     else:
         wprint("Failed to get AniList data")
 
