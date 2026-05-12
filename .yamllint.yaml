@@ -5,7 +5,7 @@ rules:
     forbid: non-empty
   comments:
     require-starting-space: false
-  comments-indentation: disable # Causes false positives
+  comments-indentation: disable  # Causes false positives
   document-end:
     present: false
   document-start:
@@ -18,7 +18,7 @@ rules:
   float-values:
     forbid-inf: true
     forbid-nan: true
-    forbid-scientific-notation: false # Causes false positives
+    forbid-scientific-notation: false  # Causes false positives
     require-numeral-before-decimal: true
   indentation:
     spaces: 2
@@ -28,7 +28,7 @@ rules:
     quote-type: double
     required: only-when-needed
     allow-quoted-quotes: true
-  truthy: disable # Not needed with YAML 1.2
+  truthy: disable  # Not needed with YAML 1.2
 
 ignore: |
   .venv

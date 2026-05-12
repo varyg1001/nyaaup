@@ -1,7 +1,6 @@
 name: Build
 
-on:
-  workflow_dispatch
+on: workflow_dispatch
 
 jobs:
   linux-build:
@@ -10,10 +9,10 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -23,17 +22,20 @@ jobs:
           python -m pip install .
 
       - name: Build
-        run: pyinstaller --icon logo/logo.ico -F __main__.py -n nyaaup
-
-      - name: Create changelog file
-        run: python -c "print('\n'.join(open('changelog.md', 'r').read().split('\n\n# nyaaup')[0].split('\n')[1:]))" >> changelog.txt
+        run: pyinstaller --icon logo/logo.ico -F nyaaup/__init__.py -n nyaaup
 
       - name: Fetch changelog and version
+        id: get-info
         run: |
-          version=$(python -c "print(open('changelog.md', 'r').read().split('\n')[0].split(' ')[2].replace(':', ''))")
-          changelog=$(cat changelog.txt)
-          echo -e "Version: $version\n\nChangelog:\n$changelog"
-          echo "RELEASE_VERSION=$version" >> "$GITHUB_ENV"
+          VERSION_LINE=$(grep -m1 -E '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md)
+          PACKAGE_VERSION=$(echo "$VERSION_LINE" | sed -E 's/^## \[([0-9]+\.[0-9]+\.[0-9]+)\].*/\1/')
+
+          # Extract the changelog section corresponding to the version
+          CHANGELOG_ENTRY=$(awk "/^## \\[$PACKAGE_VERSION\\]/ {found=1; next} /^## \\[/ {if (found) exit} found" CHANGELOG.md)
+
+          echo "$CHANGELOG_ENTRY" > changelog.txt
+          echo "version=$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "RELEASE_VERSION=$PACKAGE_VERSION" >> "$GITHUB_ENV"
 
       - name: Move dist/nyaaup to nyaaup_linux
         run: mv dist/nyaaup nyaaup_linux
@@ -42,7 +44,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           token: ${{ secrets.GH_TOKEN }}
-          tag_name: ${{ env.RELEASE_VERSION }}
+          tag_name: ${{ steps.get-info.outputs.version }}
           body_path: changelog.txt
           files: nyaaup_linux
 
@@ -53,10 +55,10 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -67,7 +69,7 @@ jobs:
 
       - name: Fetch version
         run: |
-          $version=$(python -c "print(open('changelog.md', 'r').read().split('\n')[0].split(' ')[2].replace(':', ''))")
+          $version=python -c "import re; print(re.search(r'## \[([0-9.]+)', open('CHANGELOG.md').read()).group(1))"
           echo "Version: $version"
           echo "RELEASE_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
 

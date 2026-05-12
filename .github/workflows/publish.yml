@@ -21,10 +21,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
@@ -97,10 +97,9 @@ jobs:
       - name: Create or Update GitHub Release and Upload Assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.event.inputs.tag || needs.build.outputs.version }}
+          RELEASE_CHANGELOG: ${{ needs.build.outputs.changelog }}
         run: |
-          RELEASE_TAG="${{ github.event.inputs.tag || needs.build.outputs.version }}"
-          RELEASE_CHANGELOG="${{ needs.build.outputs.changelog }}"
-
           if [ -z "$RELEASE_TAG" ]; then
             echo "Error: Could not determine release tag. Please provide an input tag or ensure version is in CHANGELOG.md."
             exit 1
