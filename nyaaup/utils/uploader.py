@@ -180,8 +180,8 @@ class Uploader:
     def try_upload_with_retries(
         self, display_name: str, name: str, provider: Provider, max_retries: int = 3
     ) -> UploadResult | None:
-        torrent_path = self.cache_dir / f"{name}.torrent"
-        with open(torrent_path, "rb") as f:
+        torrent_path = Path(self.cache_dir) / f"{name}.torrent"
+        with torrent_path.open("rb") as f:
             torrent_data = f.read()
 
         for attempt in range(max_retries):
@@ -353,11 +353,8 @@ class Uploader:
             edit_code=self.args.edit_code or pref.get("edit_code"),
             tg_token=pref.get("token"),
             torrent_creator=self.config.get("torrent_creator", "torf"),
-            info_form_config=(
-                False
-                if (pref.get("info", "").lower() == "database") or not pref.get("info")
-                else True
-            ),
+            info_form_config=(pref.get("info", "").lower() == "database")
+            or not pref.get("info"),
             database=self.args.database
             if self.args.database
             else pref.get("database", "anilist"),

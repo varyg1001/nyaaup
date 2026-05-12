@@ -43,8 +43,8 @@ class Category(Enum):
     LIVE_RAW = ("4_4", "Live Action - Raw", "6")
     ANIME_MUSIC_VIDEO = ("1_1", "Anime - Anime Music Video", "7")
 
-    def __init__(self, id: str, display_name: str, numeric_id: str):
-        self.id = id
+    def __init__(self, category_id: str, display_name: str, numeric_id: str):
+        self.id = category_id
         self.display_name = display_name
         self.numeric_id: str = numeric_id
 

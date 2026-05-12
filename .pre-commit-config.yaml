@@ -2,12 +2,10 @@
 #  See https://pre-commit.com/hooks.html for more hooks
 
 repos:
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.10
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.11.12
     hooks:
-      - id: ruff
-        args: [--fix]
-      - id: ruff-format
+      - id: uv-lock
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
@@ -20,7 +18,6 @@ repos:
       - id: check-shebang-scripts-are-executable
       - id: check-symlinks
       - id: check-toml
-      - id: check-xml
       - id: check-yaml
       - id: destroyed-symlinks
       - id: end-of-file-fixer
@@ -46,14 +43,15 @@ repos:
     hooks:
       - id: yamllint
 
-  - repo: https://github.com/asottile/yesqa
-    rev: v1.5.0
-    hooks:
-      - id: yesqa
-        name: yesqa
-
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.2
     hooks:
       - id: codespell
         name: codespell - fix common typos
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.12
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format

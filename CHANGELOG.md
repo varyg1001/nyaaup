@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.3.0] - 2026-05-12
+
+### Added
+
+- Support for batch upload tag with the `--batch` option.
+- Migration to `uv` as the build backend.
+
+### Fixed
+
+- Enhanced AniList search logic to better handle specific seasons (e.g., season 1 matching).
+- Refined Telegram notification.
+- Resolved database-related stability issues.
+- Updated the internal changelog URL to point to the correct location.
+
+### Changed
+
+- Optimized internal processing logic for better efficiency.
+- Updated all project dependencies to their latest stable versions.
+
 ## [6.2.0] - 2026-03-11
 
 ### Fixed

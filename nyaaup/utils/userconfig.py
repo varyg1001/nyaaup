@@ -4,7 +4,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from platformdirs import PlatformDirs
-from rich import print
+from rich import print as rich_print
 from ruamel.yaml import YAML
 
 from nyaaup.utils.logging import eprint
@@ -77,7 +77,7 @@ class Config:
             self._create()
             self.update(data)
 
-        print("\n[bold green]Config successfully updated![white]")
+        rich_print("\n[bold green]Config successfully updated![white]")
 
     def get(self, key, default=None) -> str | dict:
         """Get value from config_data with optional default"""
