@@ -43,7 +43,8 @@ def command_header(f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
         Console().print(
-            f"[b]nyaaup[/b] [magenta bold]v{__version__}[/]\n\n[dim]Auto torrent uploader to Nyaa\n",
+            f"[b]nyaaup[/b] [magenta bold]v{__version__}[/]\n\n"
+            "[dim]Auto torrent uploader to Nyaa\n",
             justify="center",
         )
 

@@ -140,7 +140,7 @@ def mal_search(query: str):
 
 def get_mal_link(mal_url: str, search_name: str, console: Console) -> Anime | None:
     if mal_url:
-        with console.status("[bold magenta]Getting MyAnimeList info from input link..."):
+        with console.status("[bold magenta]Getting MAL info from input link..."):
             mal_id = int(str(mal_url).split("/")[4])
 
             return Anime(mal_id)
@@ -182,7 +182,8 @@ def _get_anilist_title(
         if title.get("english", "").casefold() not in search_name.casefold():
             return title.get("english")
         return ""
-    elif title.get("romaji"):
+
+    if title.get("romaji"):
         if title.get("romaji", "").casefold() not in search_name.casefold():
             if len(title.get("romaji", "")) > 85:
                 return title.get("romaji")[:80]

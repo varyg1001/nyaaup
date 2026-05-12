@@ -1,5 +1,8 @@
+import os
+import shutil
 from difflib import SequenceMatcher
 from enum import Enum
+from pathlib import Path
 
 import cloup
 import humanize
@@ -74,12 +77,21 @@ def tg_post(
             res = client.post(
                 url=f"https://api.telegram.org/bot{tg_token}/sendMessage",
                 params={
-                    "text": message,
-                    "chat_id": tg_id,
+                    "text": str(message),
+                    "chat_id": str(tg_id),
                     "parse_mode": "html",
-                    "disable_web_page_preview": True,
+                    "disable_web_page_preview": "true",
                 },
             )
             res.raise_for_status()
     else:
         wprint("Telegram token or chat id not set.")
+
+
+def which(*executables):
+    return first_or_none(
+        sorted(
+            (Path(x) for x in (shutil.which(x) for x in executables) if x),
+            key=lambda x: os.environ["PATH"].split(os.pathsep).index(str(x.parent)),
+        ),
+    )

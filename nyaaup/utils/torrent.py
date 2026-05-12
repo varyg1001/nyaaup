@@ -13,7 +13,7 @@ from rich.progress import (
 )
 from torf import Torrent
 
-from nyaaup.utils import CustomTransferSpeedColumn
+from nyaaup.utils import CustomTransferSpeedColumn, which
 from nyaaup.utils.collections import as_list
 from nyaaup.utils.logging import eprint, iprint, wprint
 
@@ -65,9 +65,12 @@ def create_torrent_torrenttools(
 
     iprint("Creating torrent...", 0)
 
+    if not (executable := which("torrenttools")):
+        eprint("torrenttools not found", fatal=True)
+
     subprocess.run(
         [
-            "torrenttools",
+            executable,
             "create",
             str(filename),
             "--no-created-by",

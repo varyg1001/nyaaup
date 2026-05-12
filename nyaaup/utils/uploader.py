@@ -192,7 +192,8 @@ class Uploader:
 
         for attempt in range(max_retries):
             try:
-                if result := self._try_upload(provider, torrent_data, name, display_name):
+                result = self._try_upload(provider, torrent_data, name, display_name)
+                if result:
                     return result
             except niquests.RequestException as e:
                 delay = 2 ** (attempt - 1)
@@ -295,7 +296,8 @@ class Uploader:
             f"[link={result.url}]{result.url}[/link][white]"
         )
         info.add(
-            f"[bold white]Download link: [cornflower_blue not bold]{result.download_url}[white]"
+            f"[bold white]Download link: [cornflower_blue not bold]"
+            f"{result.download_url}[white]"
         )
 
         display_info.add(info)

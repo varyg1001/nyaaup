@@ -14,6 +14,99 @@ from nyaaup.utils.upload import get_snapshot_tree
 from nyaaup.utils.uploader import Uploader
 
 
+def _process_tags(uploader: Uploader, result, name_plus: list[str]) -> list[str]:
+    """Process and append tags to name_plus."""
+    dual_audio = False
+    multi_audio = False
+    multi_sub = False
+
+    if uploader.args.auto:
+        dual_audio = result.audio_len == 2
+        multi_audio = result.audio_len > 2
+        multi_sub = result.sub_len > 1
+
+    if dual_audio:
+        name_plus.append("Dual-Audio")
+    elif multi_audio:
+        name_plus.append("Multi-Audio")
+    if multi_sub:
+        name_plus.append("Multi-Subs")
+    if uploader.args.uncensored:
+        name_plus.append("Uncensored")
+    if uploader.args.batch:
+        name_plus.append("Batch")
+
+    return name_plus
+
+
+def _process_database_info(
+    uploader: Uploader, name: str, display_info: Tree
+) -> list[str]:
+    """Process AniList/MAL information and return title additions."""
+    name_plus = []
+    if uploader.is_anime_category and not uploader.args.skip_database:
+        if not uploader.upload_config.info_form_config and uploader.is_anime_category:
+            if uploader.upload_config.database == "myanimelist":
+                if mal_title := process_mal_info(uploader, name):
+                    name_plus.append(mal_title)
+                elif anilist_title := process_anilist_info(uploader, name):
+                    name_plus.append(anilist_title)
+            elif uploader.upload_config.database == "anilist":
+                if anilist_title := process_anilist_info(uploader, name):
+                    name_plus.append(anilist_title)
+                elif mal_title := process_mal_info(uploader, name):
+                    name_plus.append(mal_title)
+
+        if uploader.upload_config.info:
+            display_info.add(
+                f"[bold white]Database link: [cornflower_blue not bold]{uploader.upload_config.info}[white]"
+            )
+    return name_plus
+
+
+def _handle_watch_dir(uploader: Uploader, file_path: Path, display_info: Tree):
+    """Handle copying the file to the watch directory."""
+    watch_dir = uploader.args.watch_dir or uploader.upload_config.watch_dir
+    if watch_dir:
+        try:
+            watch_dir = Path(watch_dir)
+            if uploader.copy_to_watch_dir(file_path, watch_dir):
+                display_info.add(
+                    "[bold white]Successfully copied to watch directory[white]"
+                )
+            else:
+                display_info.add("[bold white]Failed to copy to watch directory[white]")
+        except Exception as e:
+            eprint(f"Failed to load watch directory: {e}")
+
+
+def _handle_post_upload(
+    uploader: Uploader,
+    upload_result,
+    provider,
+    duration,
+    display_info: Tree,
+    file_path: Path,
+):
+    """Handle post-upload tasks like notifications, watch dir, and images."""
+    if uploader.upload_config.telegram_enabled and not uploader.upload_config.hidden:
+        try:
+            uploader.send_notification(upload_result)
+        except Exception as e:
+            wprint(f"Failed to send notification: {e}")
+
+    _handle_watch_dir(uploader, file_path, display_info)
+
+    display_info = uploader.display_success(display_info, upload_result, provider)
+
+    if uploader.check_cookies(provider) and uploader.upload_config.pic_num > 0:
+        display_info = uploader.handle_image_upload(
+            upload_result, display_info, provider, duration
+        )
+
+    return display_info
+
+
 @cloup.command()
 @cloup.option_group(
     "Upload Tags",
@@ -202,15 +295,9 @@ def up(ctx, **kwargs):
 
     for file_path in uploader.args.path:
         display_info = Tree("[bold white]Information[not bold]")
-
         uploader.description = ""
         uploader.file = ""
         uploader.mediainfo = []
-
-        name_plus: list[str] = []
-        dual_audio: bool = False
-        multi_audio: bool = False
-        multi_sub: bool = False
 
         name: str = uploader.get_file_name(file_path)
         style: str = "red"
@@ -218,60 +305,27 @@ def up(ctx, **kwargs):
 
         if result := uploader.process_file(file_path, display_info):
             display_info = result.display_info
-            if uploader.args.auto:
-                dual_audio = result.audio_len == 2
-                multi_audio = result.audio_len > 2
-                multi_sub = result.sub_len > 1
+            name_plus = _process_database_info(uploader, name, display_info)
+            name_plus = _process_tags(uploader, result, name_plus)
 
             if uploader.upload_config.pic_num > 0:
                 uploader.description += "\n\n---\n\n"
 
-            if uploader.is_anime_category and not uploader.args.skip_database:
-                if (
-                    not uploader.upload_config.info_form_config
-                    and uploader.is_anime_category
-                ):
-                    if uploader.upload_config.database == "myanimelist":
-                        if mal_title := process_mal_info(uploader, name):
-                            name_plus.append(mal_title)
-                        elif anilist_title := process_anilist_info(uploader, name):
-                            name_plus.append(anilist_title)
-                    elif uploader.upload_config.database == "anilist":
-                        if anilist_title := process_anilist_info(uploader, name):
-                            name_plus.append(anilist_title)
-                        elif mal_title := process_mal_info(uploader, name):
-                            name_plus.append(mal_title)
-
-                if uploader.upload_config.info:
-                    display_info.add(
-                        f"[bold white]Database link: [cornflower_blue not bold]{uploader.upload_config.info}[white]"
-                    )
-
-            if dual_audio:
-                name_plus.append("Dual-Audio")
-            elif multi_audio:
-                name_plus.append("Multi-Audio")
-            if multi_sub:
-                name_plus.append("Multi-Subs")
-            if uploader.args.uncensored:
-                name_plus.append("Uncensored")
-            if uploader.args.batch:
-                name_plus.append("Batch")
-
             display_name = uploader.format_display_name(name, name_plus)
 
             for provider in uploader.providers:
-                if video := first_or_none(
+                video = first_or_none(
                     [x for x in uploader.mediainfo if x["@type"] == "Video"]
-                ):
-                    duration = float(video.get("Duration"))
-                else:
-                    duration = float(uploader.mediainfo[0].get("Duration"))
+                )
+                duration = (
+                    float(video.get("Duration"))
+                    if video
+                    else float(uploader.mediainfo[0].get("Duration"))
+                )
 
-                ok_cookies = uploader.check_cookies(provider)
                 if (
                     uploader.upload_config.pic_num > 0
-                    and not ok_cookies
+                    and not uploader.check_cookies(provider)
                     and not uploader.args.skip_upload
                 ):
                     try:
@@ -284,52 +338,23 @@ def up(ctx, **kwargs):
                         ):
                             display_info.add(images)
                     except Exception as e:
-                        wprint("Failed to upload images: ", e)
+                        wprint(f"Failed to upload images: {e}")
                         uploader.upload_config.pic_num = 0
 
                 iprint("Uploading to Nyaa...")
-
                 upload_result = uploader.try_upload_with_retries(
                     display_name, name, provider
                 )
 
                 if upload_result:
-                    if (
-                        uploader.upload_config.telegram_enabled
-                        and not uploader.upload_config.hidden
-                    ):
-                        try:
-                            uploader.send_notification(upload_result)
-                        except Exception as e:
-                            wprint(f"Failed to send notification: {e}")
-                    watch_dir = (
-                        uploader.args.watch_dir or uploader.upload_config.watch_dir
+                    display_info = _handle_post_upload(
+                        uploader,
+                        upload_result,
+                        provider,
+                        duration,
+                        display_info,
+                        file_path,
                     )
-
-                    if watch_dir:
-                        try:
-                            watch_dir = Path(watch_dir)
-                        except Exception as e:
-                            eprint(f"Failed to load watch directory: {e}")
-
-                        if uploader.copy_to_watch_dir(file_path, watch_dir):
-                            display_info.add(
-                                "[bold white]Successfully copied to watch directory[white]"
-                            )
-                        else:
-                            display_info.add(
-                                "[bold white]Failed to copy to watch directory[white]"
-                            )
-
-                    display_info = uploader.display_success(
-                        display_info, upload_result, provider
-                    )
-
-                    if ok_cookies and uploader.upload_config.pic_num > 0:
-                        display_info = uploader.handle_image_upload(
-                            upload_result, display_info, provider, duration
-                        )
-
                     style = "bold green"
                     title = "Torrent successfully uploaded!"
                 else:

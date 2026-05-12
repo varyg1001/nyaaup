@@ -64,13 +64,12 @@ def get_track_info(data: dict[str, str | int]) -> str:
     if track_name and "(" in lang:
         lang = lang.split(" (")[0]
         return get_return(lang, str(track_name))
-    elif "(" in lang:
+    if "(" in lang:
         lang = lang.split(" (")[0]
         return get_return(lang)
-    elif track_name:
+    if track_name:
         return get_return(lang, str(track_name))
-    else:
-        return get_return(lang)
+    return get_return(lang)
 
 
 def get_return(lang: str, track_name: str | None = None) -> str:
@@ -79,10 +78,84 @@ def get_return(lang: str, track_name: str | None = None) -> str:
             return f"**{lang}** [{track_name}]"
         if r := re.search(r"(.*) \((CC|SDH|Forced|Dubtitle|MTL)\)", track_name):
             return f"**{lang}** ({r[1]}) [{r[2]}]"
+        return f"**{lang}** ({track_name})"
+    return f"**{lang}**"
+
+
+def _process_video_track(info: dict[str, str | int]) -> str:
+    v_bitrate = ""
+    try:
+        b_raw = float(float(info["StreamSize"]) * 8 / float(info["Duration"]))
+        if b_raw / 1000 < 10000:
+            b = f"{b_raw / 1000:.0f} kbps"
         else:
-            return f"**{lang}** ({track_name})"
+            b = f"{b_raw / 1000000:.2f} Mbps"
+        v_bitrate = f" @ **{b}**"
+    except (KeyError, ZeroDivisionError):
+        wprint("Couldn't get video bitrate!")
+
+    codec = ""
+    if codec_ := str(info.get("InternetMediaType")):
+        codec = codec_.split("/")[1] + " "
+    elif codec_ := str(info.get("Format")):
+        codec = codec_
+
+    level = f"**{info.get('Format_Profile')}@L{info.get('Format_Level')}**"
+    if "None" in level:
+        level = ""
     else:
-        return f"**{lang}**"
+        codec = codec + " "
+
+    dimensions = (
+        f"**{info.get('Width')}x{info.get('Height')}**" if info.get("Width") else None
+    )
+
+    return ", ".join(
+        filter(
+            None,
+            [
+                f"**{codec}{level}**" if codec else None,
+                f"{dimensions}{v_bitrate}" if dimensions else None,
+                f"**{info.get('FrameRate_String')}**"
+                if info.get("FrameRate_String")
+                else None,
+            ],
+        )
+    )
+
+
+def _process_audio_track(info: dict[str, str | int]) -> str:
+    a_bitrate = ""
+    try:
+        a_bitrate = f" @ {round(float(info['BitRate']) / 1000)} kbps"
+    except (KeyError, ValueError):
+        wprint("Couldn't get audio bitrate!")
+
+    atmos = "JOC" in str(info.get("Format_AdditionalFeatures", ""))
+    return ", ".join(
+        filter(
+            None,
+            [
+                get_track_info(info),
+                f"{AUDIO_CODEC_MAP.get(str(info['Format']), info['Format'])}"
+                f"{CHANNEL_MAP.get(str(info.get('Channels', '')), '?')}"
+                f"{' Atmos' if atmos else ''}"
+                f"{a_bitrate}",
+            ],
+        )
+    )
+
+
+def _process_subtitle_track(info: dict[str, str | int]) -> str:
+    return ", ".join(
+        filter(
+            None,
+            [
+                get_track_info(info),
+                f"{SUB_CODEC_MAP.get(str(info['Format']), info['Format'])}",
+            ],
+        )
+    )
 
 
 def get_description(
@@ -98,88 +171,16 @@ def get_description(
 
     for info in mediainfo:
         if info["@type"] == "Video":
-            v_bitrate = ""
-            try:
-                b_raw = float(float(info["StreamSize"]) * 8 / float(info["Duration"]))
-                if b_raw / 1000 < 10000:
-                    b = f"{b_raw / 1000:.0f} kbps"
-                else:
-                    b = f"{b_raw / 1000000:.2f} Mbps"
-                v_bitrate = f" @ **{b}**"
-            except KeyError:
-                wprint("Couldn't get video bitrate!")
-
-            codec = ""
-            if codec_ := str(info.get("InternetMediaType")):
-                codec = codec_.split("/")[1] + " "
-            elif codec_ := str(info.get("Format")):
-                codec = codec_
-
-            level = f"**{info.get('Format_Profile')}@L{info.get('Format_Level')}**"
-
-            if "None" in level:
-                level = ""
-            else:
-                codec = codec + " "
-
-            dimensions = (
-                f"**{info.get('Width')}x{info.get('Height')}**"
-                if info.get("Width")
-                else None
-            )
-
-            video_info += ", ".join(
-                filter(
-                    None,
-                    [
-                        f"**{codec}{level}**" if codec else None,
-                        f"{dimensions}{v_bitrate}" if dimensions else None,
-                        f"**{info.get('FrameRate_String')}**"
-                        if info.get("FrameRate_String")
-                        else None,
-                    ],
-                )
-            )
-
+            video_info += _process_video_track(info)
             video_t_num += 1
 
         elif info["@type"] == "Audio":
             audio_len.add(str(info.get("Language", "")))
-            a_bitrate = ""
-            try:
-                a_bitrate = f" @ {round(float(info['BitRate']) / 1000)} kbps"
-            except KeyError:
-                wprint("Couldn't get audio bitrate!")
-            atmos = "JOC" in str(info.get("Format_AdditionalFeatures", ""))
-
-            audio_info.append(
-                ", ".join(
-                    filter(
-                        None,
-                        [
-                            get_track_info(info),
-                            f"{AUDIO_CODEC_MAP.get(str(info['Format']), info['Format'])}"
-                            f"{CHANNEL_MAP.get(str(info.get('Channels', '')), '?')}"
-                            f"{' Atmos' if atmos else ''}"
-                            f"{a_bitrate}",
-                        ],
-                    )
-                )
-            )
+            audio_info.append(_process_audio_track(info))
 
         elif info["@type"] == "Text":
             subtitle_len.add(str(info.get("Language", "")))
-            subtitle_info.append(
-                ", ".join(
-                    filter(
-                        None,
-                        [
-                            get_track_info(info),
-                            f"{SUB_CODEC_MAP.get(str(info['Format']), info['Format'])}",
-                        ],
-                    )
-                )
-            )
+            subtitle_info.append(_process_subtitle_track(info))
 
     if video_t_num != 1:
         eprint(f"Multiple videos detected ({video_t_num})!", True)

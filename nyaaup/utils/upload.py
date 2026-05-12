@@ -19,7 +19,8 @@ from rich.progress import (
 from rich.tree import Tree
 from tls_client import Session
 
-from nyaaup.utils.logging import wprint
+from nyaaup.utils import which
+from nyaaup.utils.logging import eprint, wprint
 
 if TYPE_CHECKING:
     from nyaaup.utils.uploader import Uploader
@@ -88,8 +89,11 @@ async def _generate_snapshot(
             else interval * (num + 1)
         )
 
+        if not (executable := which("ffmpeg")):
+            eprint("ffmpeg not found", fatal=True)
+
         process = await asyncio.create_subprocess_exec(
-            "ffmpeg",
+            executable,
             "-y",
             "-v",
             "error",
