@@ -93,7 +93,7 @@ def get_anilist_link(anilist_url: str, search_name: str) -> dict[str, str | int]
             if (
                 (similar(name_en, name_in) >= 0.75)
                 or (similar(name_ori, name_in) >= 0.75)
-                or any(x for x in name_synonyms if similar(x.casefold(), name_in) >= 0.75)
+                or any(similar(x.casefold(), name_in) >= 0.75 for x in name_synonyms)
             ):
                 return result
 
@@ -116,7 +116,11 @@ def mal_search(query: str):
                     "limit": "50",
                     "offset": "0",
                     "type": "all",
-                    "fields": "anime{alternative_titles,media_type,num_episodes,status,end_date,synopsis,mean,genres,rank,num_list_users,start_season,broadcast,nsfw,created_at,updated_at}",
+                    "fields": (
+                        "anime{alternative_titles,media_type,num_episodes,status,"
+                        "end_date,synopsis,mean,genres,rank,num_list_users,"
+                        "start_season,broadcast,nsfw,created_at,updated_at}"
+                    ),
                 },
                 headers={
                     "Accept": "application/json",

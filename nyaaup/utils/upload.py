@@ -250,7 +250,10 @@ def rentry_upload(config: SimpleNamespace, max_retries: int = 3) -> dict[Any, An
             res = session.get(
                 url=base_url,
                 headers={
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/135.0",
+                    "User-Agent": (
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) "
+                        "Gecko/20100101 Firefox/135.0"
+                    ),
                     "Origin": base_url,
                     "Content-Type": "application/x-www-form-urlencoded",
                 },

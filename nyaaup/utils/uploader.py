@@ -59,6 +59,11 @@ class Uploader:
         self.file: str | Path = ""
         self.cache_dir: str | Path = ""
 
+        self.config: Config = None  # type: ignore
+        self.upload_config: SimpleNamespace = None  # type: ignore
+        self.providers: list[Provider] = []
+        self.headers: dict[str, str] = {}
+
         self._validate_inputs()
         self._setup_config()
 
@@ -160,11 +165,12 @@ class Uploader:
         chapter_str = ["No", "Yes"][bool(mediainfo[0].get("MenuCount", False))]
         duration_str = mediainfo[0].get("Duration_String3", "?")
 
+        sub_str = " │ ".join(sub_info) if sub_info else "**N/A**"
         self.description += (
             f"`Tech Specs:`\n"
             f"* `Video:` {video_info}\n"
             f"* `Audios ({audio_len}):` {' │ '.join(audio_info)}\n"
-            f"* `Subtitles ({sub_len}):` {' │ '.join(sub_info) if sub_info else '**N/A**'}\n"
+            f"* `Subtitles ({sub_len}):` {sub_str}\n"
             f"* `Chapters:` **{chapter_str}**\n"
             f"* `Duration:` **~{duration_str}**\n"
         )
@@ -201,10 +207,10 @@ class Uploader:
 
     def send_notification(self, result: UploadResult) -> None:
         if self.upload_config.tg_token and self.upload_config.tg_id:
-            message = f"<b>{result.name}</b>\n\n- <b>Category</b>: {self._get_category_name(self.upload_config.category)}\n\n"
+            cat_name = self._get_category_name(self.upload_config.category)
             message = (
                 f"\n<b>{result.name}</b>\n\n"
-                f"- <b>Category</b>: {self._get_category_name(self.upload_config.category)}\n"
+                f"- <b>Category</b>: {cat_name}\n"
                 "- <b>Link</b>: "
                 f'<a href="{result.url}">View site</a> | '
                 f'<a href="{result.download_url}">Torrent file</a>'
@@ -285,7 +291,8 @@ class Uploader:
     def display_success(display_info: Tree, result: UploadResult, provider):
         info = Tree(f"[bold white]Links for {provider.name}[not bold]")
         info.add(
-            f"[bold white]Page link: [cornflower_blue not bold][link={result.url}]{result.url}[/link][white]"
+            "[bold white]Page link: [cornflower_blue not bold]"
+            f"[link={result.url}]{result.url}[/link][white]"
         )
         info.add(
             f"[bold white]Download link: [cornflower_blue not bold]{result.download_url}[white]"
@@ -357,7 +364,9 @@ class Uploader:
             complete="complete" if self.args.complete else None,
             remake="remake" if self.args.remake else None,
             trusted="trusted" if self.config.get("trusted") else None,
-            mediainfo_enabled=not self.args.no_mediainfo and pref.get("mediainfo", True),
+            mediainfo_enabled=(
+                not self.args.no_mediainfo and pref.get("mediainfo", True)
+            ),
             telegram_enabled=self.args.telegram or pref.get("telegram", False),
             tg_id=pref.get("id"),
             watch_dir=dir_P if (dir_P := pref.get("watch_dir")) else None,
@@ -385,7 +394,10 @@ class Uploader:
 
     def _setup_headers(self, pref: dict[str, Any]) -> None:
         self.headers = {
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:136.0) Gecko/20100101 Firefox/136.0",
+            "user-agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:136.0) "
+                "Gecko/20100101 Firefox/136.0"
+            ),
             "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "accept-language": "en-US,en;q=0.9",
             "dnt": "1",
@@ -461,7 +473,8 @@ class Uploader:
     @staticmethod
     def _add_media_info_display(display_info: Tree, mediainfo_url: str, edit_code: str):
         medlink = Tree(
-            f"[bold white]MediaInfo link: [cornflower_blue not bold][link={mediainfo_url}]{mediainfo_url}[/link][white]"
+            "[bold white]MediaInfo link: [cornflower_blue not bold]"
+            f"[link={mediainfo_url}]{mediainfo_url}[/link][white]"
         )
         medlink.add(
             f"[bold white]Edit code: [cornflower_blue not bold]{edit_code}[white]"
