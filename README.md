@@ -37,10 +37,11 @@ Usage: nyaaup up [OPTIONS] [PATH]...
    Upload torrents to Nyaa
 
 Upload Tags:
-   -u, --uncensored              Use Uncensored tag in title.
-   -ms, --multi-subs             Use Multi-Subs tag in title.
-   -da, --dual-audio             Use Dual-Audio tag in title.
-   -ma, --multi-audios           Use Multi-Audios tag in title.
+   -u, --uncensored              Use Uncensored tag in display name.
+   -b, --batch                   Use Batch tag in display name.
+   -ms, --multi-subs             Use Multi-Subs tag in display name.
+   -da, --dual-audio             Use Dual-Audio tag in display name.
+   -ma, --multi-audios           Use Multi-Audios tag in display name.
    -a, --auto / -na, --no-auto   Auto detect Multi-Subs, Multi-Audios or Dual-Audio. (Default: True)
 
 Upload Settings:
@@ -60,7 +61,7 @@ Content Information:
    -t, --telegram                         Post to telegram.
    -l, --link URL                         Link to set anime manually.
    -sl, --skip-database                   Skip anime database.
-   -d, --database [myanimelist|anilist]   Anime database to use for info. (Default: myanimelist)
+   -d, --database [myanimelist|anilist]   Anime database to use for info. (Default: anilist)
 
 Media Settings:
    -p, --pictures-number EXTENSION         Number of pictures to use (Default: 3).
