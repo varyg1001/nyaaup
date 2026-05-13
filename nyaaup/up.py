@@ -45,7 +45,7 @@ def _process_database_info(
     """Process AniList/MAL information and return title additions."""
     name_plus = []
     if uploader.is_anime_category and not uploader.args.skip_database:
-        if not uploader.upload_config.info_form_config and uploader.is_anime_category:
+        if not uploader.upload_config.info_form_config:
             if uploader.upload_config.database == "myanimelist":
                 if mal_title := process_mal_info(uploader, name):
                     name_plus.append(mal_title)
@@ -312,6 +312,7 @@ def up(ctx, **kwargs):
         if result := uploader.process_file(file_path, display_info):
             display_info = result.display_info
             name_plus = _process_database_info(uploader, name, display_info)
+            print(name_plus)
             name_plus = _process_tags(uploader, result, name_plus)
 
             if uploader.upload_config.pic_num > 0:

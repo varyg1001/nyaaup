@@ -378,8 +378,8 @@ class Uploader:
             edit_code=self.args.edit_code or pref.get("edit_code"),
             tg_token=pref.get("token"),
             torrent_creator=self.config.get("torrent_creator", "torf"),
-            info_form_config=(pref.get("info", "").lower() == "database")
-            or not pref.get("info"),
+            info_form_config=pref.get("info", "").lower() != "database"
+            and bool(pref.get("info")),
             database=self.args.database
             if self.args.database
             else pref.get("database", "anilist"),
