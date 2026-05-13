@@ -312,7 +312,6 @@ def up(ctx, **kwargs):
         if result := uploader.process_file(file_path, display_info):
             display_info = result.display_info
             name_plus = _process_database_info(uploader, name, display_info)
-            print(name_plus)
             name_plus = _process_tags(uploader, result, name_plus)
 
             if uploader.upload_config.pic_num > 0:
