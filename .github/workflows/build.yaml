@@ -25,7 +25,7 @@ jobs:
           python -m pip install .
 
       - name: Build
-        run: pyinstaller --icon logo/logo.ico -F nyaaup/__init__.py -n nyaaup
+        run: pyinstaller --icon logo/logo.ico -F nyaaup/__init__.py -n nyaaup --collect-all tls_client --collect-all mal --collect-all pymediainfo --collect-all cloup --collect-all click --collect-all rich --collect-all niquests --collect-all ruamel.yaml --collect-all langcodes --collect-all language-data
 
       - name: Fetch changelog and version
         id: get-info
@@ -40,22 +40,23 @@ jobs:
           echo "version=$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
           echo "RELEASE_VERSION=$PACKAGE_VERSION" >> "$GITHUB_ENV"
 
-      - name: Move dist/nyaaup to nyaaup_linux
-        run: mv dist/nyaaup nyaaup_linux
+      - name: Rename binary
+        run: mv dist/nyaaup nyaaup-v${{ steps.get-info.outputs.version }}-linux-x64
 
       - name: Upload release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ steps.get-info.outputs.version }}
+          FILENAME: nyaaup-v${{ steps.get-info.outputs.version }}-linux-x64
         run: |
           if gh release view "$RELEASE_TAG" --repo ${{ github.repository }}; then
-            gh release upload "$RELEASE_TAG" nyaaup_linux --repo ${{ github.repository }} --clobber
+            gh release upload "$RELEASE_TAG" "$FILENAME" --repo ${{ github.repository }} --clobber
           else
             gh release create "$RELEASE_TAG" \
               --repo ${{ github.repository }} \
               --title "Release $RELEASE_TAG" \
               --notes-file changelog.txt \
-              nyaaup_linux
+              "$FILENAME"
           fi
 
   windows-build:
@@ -85,25 +86,26 @@ jobs:
 
       - name: Build
         run: |
-          pyinstaller --icon logo/logo.ico -F nyaaup/__init__.py -n nyaaup --hidden-import=mal
+          pyinstaller --icon logo/logo.ico -F nyaaup/__init__.py -n nyaaup --collect-all tls_client --collect-all mal --collect-all pymediainfo --collect-all cloup --collect-all click --collect-all rich --collect-all niquests --collect-all ruamel.yaml --collect-all langcodes --collect-all language-data
 
-      - name: Move dist/nyaaup.exe to nyaaup.exe
-        run: mv dist/nyaaup.exe nyaaup.exe
+      - name: Rename binary
+        run: mv dist/nyaaup.exe nyaaup-v${{ env.RELEASE_VERSION }}-windows-x64.exe
 
       - name: Upload release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ env.RELEASE_VERSION }}
+          FILENAME: nyaaup-v${{ env.RELEASE_VERSION }}-windows-x64.exe
         shell: bash
         run: |
           if gh release view "$RELEASE_TAG" --repo ${{ github.repository }}; then
-            gh release upload "$RELEASE_TAG" nyaaup.exe --repo ${{ github.repository }} --clobber
+            gh release upload "$RELEASE_TAG" "$FILENAME" --repo ${{ github.repository }} --clobber
           else
             gh release create "$RELEASE_TAG" \
               --repo ${{ github.repository }} \
               --title "Release $RELEASE_TAG" \
               --notes "" \
-              nyaaup.exe
+              "$FILENAME"
           fi
 
       - name: Workflow finished
