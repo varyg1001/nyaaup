@@ -1,4 +1,5 @@
 import asyncio
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -297,6 +298,11 @@ def _handle_post_upload(
 @cloup.pass_context
 def up(ctx, **kwargs):
     """Upload torrents to Nyaa"""
+
+    if len(sys.argv) < 3:
+        print(ctx.get_help())
+        sys.exit(1)
+
     uploader = Uploader(ctx, SimpleNamespace(**kwargs))
 
     for file_path in uploader.args.path:

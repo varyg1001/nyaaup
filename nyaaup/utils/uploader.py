@@ -325,7 +325,10 @@ class Uploader:
             sys.exit(1)
 
         if not self.args.path:
-            eprint("No input!\n")
+            if "-i" not in sys.argv:
+                eprint("Input option not found!\n")
+            else:
+                eprint("No valid input!\n")
             print(self.ctx.get_help())
             sys.exit(1)
 

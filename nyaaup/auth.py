@@ -52,7 +52,7 @@ from nyaaup.utils.userconfig import Config
 @cloup.option(
     "-co",
     "--cookie",
-    type=Path,
+    type=cloup.types.path(path_type=Path),
     default=None,
     metavar="path",
     help=(
@@ -66,7 +66,7 @@ def auth(ctx, **kwargs):
     if any(x in sys.argv for x in ctx.help_option_names):
         return
 
-    if len(sys.argv) == 1:
+    if len(sys.argv) < 3:
         print(ctx.get_help())
         sys.exit(1)
 
