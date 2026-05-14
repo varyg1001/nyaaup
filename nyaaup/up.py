@@ -305,9 +305,9 @@ def up(ctx, **kwargs):
         uploader.file = ""
         uploader.mediainfo = []
 
-        name: str = uploader.get_file_name(file_path)
-        style: str = "red"
-        title: str = "Upload failed"
+        name = uploader.get_file_name(file_path)
+        style = "red"
+        title = "Upload failed"
 
         if result := uploader.process_file(file_path, display_info):
             display_info = result.display_info

@@ -2,6 +2,9 @@ name: Build
 
 on: workflow_dispatch
 
+permissions:
+  contents: write
+
 jobs:
   linux-build:
     name: Linux
@@ -41,12 +44,19 @@ jobs:
         run: mv dist/nyaaup nyaaup_linux
 
       - name: Upload release
-        uses: softprops/action-gh-release@v1
-        with:
-          token: ${{ secrets.GH_TOKEN }}
-          tag_name: ${{ steps.get-info.outputs.version }}
-          body_path: changelog.txt
-          files: nyaaup_linux
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.get-info.outputs.version }}
+        run: |
+          if gh release view "$RELEASE_TAG" --repo ${{ github.repository }}; then
+            gh release upload "$RELEASE_TAG" nyaaup_linux --repo ${{ github.repository }} --clobber
+          else
+            gh release create "$RELEASE_TAG" \
+              --repo ${{ github.repository }} \
+              --title "Release $RELEASE_TAG" \
+              --notes-file changelog.txt \
+              nyaaup_linux
+          fi
 
   windows-build:
     name: Windows
@@ -81,11 +91,20 @@ jobs:
         run: mv dist/nyaaup.exe nyaaup.exe
 
       - name: Upload release
-        uses: softprops/action-gh-release@v1
-        with:
-          token: ${{ secrets.GH_TOKEN }}
-          tag_name: ${{ env.RELEASE_VERSION }}
-          files: nyaaup.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ env.RELEASE_VERSION }}
+        shell: bash
+        run: |
+          if gh release view "$RELEASE_TAG" --repo ${{ github.repository }}; then
+            gh release upload "$RELEASE_TAG" nyaaup.exe --repo ${{ github.repository }} --clobber
+          else
+            gh release create "$RELEASE_TAG" \
+              --repo ${{ github.repository }} \
+              --title "Release $RELEASE_TAG" \
+              --notes "" \
+              nyaaup.exe
+          fi
 
       - name: Workflow finished
         run: echo "Workflow finished."
