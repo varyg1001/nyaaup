@@ -1,18 +1,24 @@
 # Nyaaup
 
+[![PyPI version](https://img.shields.io/pypi/v/nyaaup.svg)](https://pypi.org/project/nyaaup/)
+[![GitHub release](https://img.shields.io/github/v/release/varyg1001/nyaaup)](https://github.com/varyg1001/nyaaup/releases)
+
 Nyaaup is an auto uploader to [Nyaa sites](https://github.com/nyaadevs/nyaa), mainly for videos.
 
 ## Requirements
 
-- [Python](https://python.org/) 3.10 to 3.13
+- [Python](https://python.org/) 3.10 to 3.14
 - [UV](https://docs.astral.sh/uv/) (to install Python package dependencies)
 
 ### Dependencies
 
 - [FFmpeg](https://ffmpeg.org/) for image generating.
-- [ImageMagick](https://imagemagick.org/script/download.php) for pyoxipng
 
 ### Installation
+
+#### binary (Windows & Linux)
+
+Download the latest pre-built binaries for Windows and Linux from the [GitHub Releases](https://github.com/varyg1001/nyaaup/releases) page.
 
 #### pypi
 
@@ -100,7 +106,7 @@ nyaaup auth -c user:pass
 ```
 
 ```shell
-nyaaup -p 5 -c 1 -a -m https://myanimelist.net/anime/58935 /path/example.mkv
+nyaaup -p 5 -c 1 -a -m https://anilist.co/anime/199029 /path/sad_example.mkv
 ```
 
 ```shell
