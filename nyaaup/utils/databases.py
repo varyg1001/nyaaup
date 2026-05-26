@@ -210,7 +210,7 @@ def _get_mal_title(uploader: Uploader, mal_data: Anime, search_name: str) -> str
                 and mal_data.title_synonyms[0].casefold() not in search_name.casefold()
             ):
                 return mal_data.title_synonyms[0]
-            return mal_data.title[80:]
+            return mal_data.title[:80]
         return mal_data.title
 
     return ""
