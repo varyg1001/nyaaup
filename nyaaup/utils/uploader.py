@@ -228,7 +228,7 @@ class Uploader:
         name_nyaa = name.replace(".", " ")
         if codec := find(r"H 26[4|5|6]", name_nyaa):
             name_nyaa = name_nyaa.replace(codec, codec.replace(" ", "."))
-        if channel := find(r"[A-Z]{3,2}[2|5|7] [0|1]", name_nyaa):
+        if channel := find(r"[A-Z]{2,3}[2|5|7] [0|1]", name_nyaa):
             name_nyaa = name_nyaa.replace(channel, channel.replace(" ", "."))
 
         return f"{name_nyaa} ({', '.join(name_plus)})" if name_plus else name_nyaa
