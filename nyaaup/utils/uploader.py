@@ -18,6 +18,7 @@ from rich.tree import Tree
 from nyaaup.utils import Category, cat_help, tg_post
 from nyaaup.utils.logging import eprint, wprint
 from nyaaup.utils.mediainfo import get_description, parse_mediainfo
+from nyaaup.utils.regex import find
 from nyaaup.utils.torrent import create_torrent, get_public_trackers
 from nyaaup.utils.upload import get_snapshot_tree, rentry_upload
 from nyaaup.utils.userconfig import Config
@@ -225,9 +226,10 @@ class Uploader:
     @staticmethod
     def format_display_name(name: str, name_plus: list[str]) -> str:
         name_nyaa = name.replace(".", " ")
-        if channel := re.search(r"[A-Z]{3}[2|5|7] [0|1]", name_nyaa):
-            c = channel[0]
-            name_nyaa = name_nyaa.replace(c, c.replace(" ", "."))
+        if codec := find(r"H 26[4|5|6]", name_nyaa):
+            name_nyaa = name_nyaa.replace(codec, codec.replace(" ", "."))
+        if channel := find(r"[A-Z]{3,2}[2|5|7] [0|1]", name_nyaa):
+            name_nyaa = name_nyaa.replace(channel, channel.replace(" ", "."))
 
         return f"{name_nyaa} ({', '.join(name_plus)})" if name_plus else name_nyaa
 
