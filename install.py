@@ -12,7 +12,7 @@ if not shutil.which("uv"):
     subprocess.run([sys.executable, "-m", "pip", "install", "uv"], check=True)
 
 print("\n[*] Syncing dependencies...")
-subprocess.run(["uv", "sync", "--frozen", "--link-mode=copy"], check=True)
+subprocess.run(["uv", "sync", "--frozen", "--link-mode=copy", "--no-dev"], check=True)
 
 print("\n[*] Installing launcher script")
 binary_path = Path(

@@ -28,7 +28,7 @@ dependencies = [
     "aiofiles>=24.1.0,<25.0.0",
     "cloup>=3.0.5,<4.0.0",
     "orjson>=3.11.8",
-    "niquests>=3.18.5",
+    "niquests[utls]>=3.18.5",
 ]
 
 [project.urls]
