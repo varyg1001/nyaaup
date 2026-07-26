@@ -5,6 +5,8 @@
 
 Nyaaup is an auto uploader to [Nyaa sites](https://github.com/nyaadevs/nyaa), mainly for videos.
 
+Uploader for nekobt: https://github.com/encoding-hun/pptu
+
 ## Requirements
 
 - [Python](https://python.org/) 3.10 to 3.14

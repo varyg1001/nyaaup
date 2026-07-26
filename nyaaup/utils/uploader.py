@@ -3,6 +3,7 @@ import re
 import shutil
 import sys
 import time
+import urllib.parse
 from dataclasses import dataclass
 from pathlib import Path
 from types import SimpleNamespace
@@ -393,10 +394,11 @@ class Uploader:
         )
 
         if self.args.link:
-            link_lower = self.args.link.lower()
-            if "://myanimelist.net/" in link_lower:
+            parsed = urllib.parse.urlparse(self.args.link)
+            hostname = (parsed.hostname or "").lower()
+            if hostname == "myanimelist.net" or hostname.endswith(".myanimelist.net"):
                 self.upload_config.database = "myanimelist"
-            elif "://anilist.co/" in link_lower:
+            elif hostname == "anilist.co" or hostname.endswith(".anilist.co"):
                 self.upload_config.database = "anilist"
 
     def _setup_headers(self, pref: dict[str, Any]) -> None:

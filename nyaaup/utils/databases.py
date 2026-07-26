@@ -225,14 +225,17 @@ def process_mal_info(uploader: Uploader, name: str, max_retries: int = 3) -> str
     for attempt in range(max_retries):
         try:
             mal_data = get_mal_link(uploader.args.link, search_name, uploader.console)
+            break
         except Exception as e:
             delay = 2 ** (attempt - 1)
             wprint(f"Attempt {attempt + 1} failed for: {e}")
             if attempt == max_retries - 1:
                 eprint("All MyAnimeList attempts failed")
-                return ""
+            else:
+                time.sleep(delay)
 
-            time.sleep(delay)
+    if not mal_data and not uploader.args.link:
+        return ""
 
     if uploader.args.link:
         uploader.upload_config.info = uploader.args.link
