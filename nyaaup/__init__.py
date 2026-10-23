@@ -12,7 +12,7 @@ from nyaaup.auth import auth
 from nyaaup.up import up
 from nyaaup.utils import DefaultCommandGroup
 
-__version__ = "6.3.2"
+__version__ = "6.3.3"
 
 console = Console()
 
@@ -44,7 +44,9 @@ def command_header(f):
     def wrapper(*args, **kwargs):
         Console().print(
             f"[b]nyaaup[/b] [magenta bold]v{__version__}[/]\n\n"
-            "[dim]Auto torrent uploader to Nyaa\n",
+            "[dim]Auto torrent uploader to Nyaa\n\n"
+            "[yellow]Nyaaup will likely be deprecated in favor of "
+            "https://github.com/encoding-hun/pptu[/]\n",
             justify="center",
         )
 
