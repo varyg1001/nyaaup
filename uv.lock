@@ -811,7 +811,7 @@ wheels = [
 
 [[package]]
 name = "nyaaup"
-version = "6.3.4"
+version = "6.3.5"
 source = { editable = "." }
 default-groups = "all"
 dependencies = [
@@ -828,7 +828,7 @@ dependencies = [
     { name = "platformdirs", version = "4.12.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "platformdirs", version = "4.14.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pymal-ng", version = "1.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "pymal-ng", version = "2.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "pymal-ng", version = "2.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pymediainfo" },
     { name = "pyoxipng" },
     { name = "rich" },
@@ -1301,7 +1301,7 @@ wheels = [
 
 [[package]]
 name = "pymal-ng"
-version = "2.0.0"
+version = "2.0.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version >= '3.11.5'",
@@ -1314,9 +1314,9 @@ dependencies = [
     { name = "pillow", version = "13.0.0", source = { registry = "https://pypi.org/simple" } },
     { name = "singleton-factory" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f2/88/3dc2928d6a5b8442999855eeae7326eec091835a7164a2ce82c855c836f1/pymal_ng-2.0.0.tar.gz", hash = "sha256:685611a9a9ac16eb0b83c0e6d7bbe02c7e8e281cbb81b9e8e3fb1fc8c395c14d", size = 36621, upload-time = "2026-10-24T08:58:34.818Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/8c/35/6e7342882fb6a650a26084a5d1b1f73c38a3a4d37df3366dfab1f1548abd/pymal_ng-2.0.1.tar.gz", hash = "sha256:f57210da39eb259aeea6f7addcce56c8ad4ee42e0a52c04d7686d539568c7d32", size = 36619, upload-time = "2026-11-13T17:19:04.443Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a3/ea/c10ecd6817c14d865309975d645f22297da9ce1ed46f8eff914ce71bf429/pymal_ng-2.0.0-py3-none-any.whl", hash = "sha256:9eca5810df34b3f9c46e71b8409274d01f5a352c27d7c4df36f74a3a85f9985f", size = 50975, upload-time = "2026-10-24T08:58:33.367Z" },
+    { url = "https://files.pythonhosted.org/packages/14/46/c279f4d8b29494905bd31fe55293aedac81627db77db5ca7eccf75635d37/pymal_ng-2.0.1-py3-none-any.whl", hash = "sha256:f761c85fb198b5f6d4705e4e7323049c2a033025f604ae437920ed7dcf9ceee6", size = 50977, upload-time = "2026-11-13T17:19:02.936Z" },
 ]
 
 [[package]]
